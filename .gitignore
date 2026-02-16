@@ -1,0 +1,51 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist-packages/
+.eggs/
+
+# Virtual Environment
+venv/
+.venv/
+env/
+
+# Build
+build/PrivacyGuard/
+dist/PrivacyGuard.app/
+*.spec
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and Temp
+*.tmp
+*.log
+*.bak
+
+# Test outputs
+tests/reports/*.html
+tests/output/
+
+# Release builds (keep structure)
+# releases/*.zip
+# releases/*.dmg
+
+# Local config
+.env
+.env.local
+
+# Development backups
+backups/

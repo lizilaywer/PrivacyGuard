@@ -1,0 +1,22 @@
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃  ⚠️  Windows 打包问题待验证                                        ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+问题: onnxruntime DLL 加载失败
+状态: spec 文件已修改，待 Windows 端验证
+
+已完成的修改:
+  ✅ PrivacyGuard_windows.spec 已更新
+     - 添加 collect_dynamic_libs('onnxruntime')
+     - 添加 collect_data_files('onnxruntime')
+     - 添加完整隐式导入链
+
+在 Windows 上执行:
+  cd platforms\windows\build
+  build_windows.bat
+
+详细进度:
+  docs/current/PROGRESS_WINDOWS_BUILD.md
+
+---
+创建时间: 2026-02-13
