@@ -12,8 +12,8 @@
      - 添加完整隐式导入链
 
 在 Windows 上执行:
-  cd platforms\windows\build
-  build_windows.bat
+  cd packaging\windows\scripts
+  2_一键打包.bat
 
 详细进度:
   docs/current/PROGRESS_WINDOWS_BUILD.md

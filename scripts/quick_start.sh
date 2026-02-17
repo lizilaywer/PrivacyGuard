@@ -62,9 +62,7 @@ run_tests() {
 # macOS 打包
 build_macos() {
     echo -e "${BLUE}>>> macOS 打包...${NC}"
-    cd build
-    bash build_macos_app.sh
-    cd "$PROJECT_DIR"
+    bash packaging/macos/scripts/build_macos_app.sh
 }
 
 # 查看版本

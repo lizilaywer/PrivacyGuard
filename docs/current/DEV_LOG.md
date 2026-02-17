@@ -312,7 +312,7 @@ PrivacyApp v24 稳定性测试
 - 在 spec 文件中手动指定隐式导入
 - 在文档中说明误报情况
 
-**详细记录**: 参见 `platforms/windows/docs/BUILD_LOG.md`
+**详细记录**: 参见 `packaging/windows/docs/BUILD_LOG.md`
 
 #### 双平台状态
 

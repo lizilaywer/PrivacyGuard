@@ -33,7 +33,7 @@
 ┌─────────────────────┐         ┌─────────────────────┐
 │    macOS 平台        │         │    Windows 平台      │
 │  (开发和测试)        │         │  (打包和发布)        │
-│  platforms/macos/   │         │  platforms/windows/  │
+│  packaging/macos/   │         │  packaging/windows/  │
 └─────────────────────┘         └─────────────────────┘
 ```
 
@@ -133,11 +133,11 @@ REM 2. 查看版本信息
 type main.py | findstr VERSION
 
 REM 3. 执行打包
-cd platforms\windows\build
-build_windows.bat
+cd packaging\windows\scripts
+2_一键打包.bat
 
 REM 4. 测试打包结果
-cd ..\releases\v36.0-Windows
+cd ..\..\..\releases\windows
 PrivacyGuard.exe
 ```
 
@@ -184,7 +184,7 @@ VERSION = "36.0 - 新功能描述"
 'CFBundleShortVersionString': '36.0',
 ```
 
-**Windows spec** (`platforms/windows/build/PrivacyGuard_windows.spec`):
+**Windows spec** (`packaging/windows/config/PrivacyGuard_windows.spec`):
 不需要修改（从 main.py 读取）
 
 #### 4. 创建版本标签
@@ -310,11 +310,11 @@ REM 2. 查看版本号
 findstr "VERSION" main.py
 
 REM 3. 一键打包
-cd platforms\windows\build
-build_windows.bat
+cd packaging\windows\scripts
+2_一键打包.bat
 
 REM 4. 测试打包结果
-cd ..\releases\v36.0-Windows
+cd ..\..\..\releases\windows
 PrivacyGuard.exe
 
 REM 5. 上传发布包
@@ -524,7 +524,7 @@ cd build
 bash build_macos_app.sh
 
 # 3. 复制发布包
-cp dist/PrivacyGuard-*.dmg ../../platforms/macos/releases/
+cp dist/PrivacyGuard-*.dmg ../../releases/macos/
 
 # 4. 推送标签
 git push origin "v$VERSION"

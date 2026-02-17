@@ -23,12 +23,12 @@
 
 ```bash
 cd /Users/a49144/Desktop/临时coding/PrivacyApp
-bash build/build_macos_app.sh
+bash packaging/macos/scripts/build_macos_app.sh
 ```
 
 打包完成后，文件位于：
 - 应用包：`dist/PrivacyGuard.app`
-- DMG 安装包：`releases/PrivacyGuard-{版本}-macOS.dmg`
+- DMG 安装包：`releases/macos/PrivacyGuard-{版本}-macOS.dmg`
 
 ---
 
@@ -72,10 +72,17 @@ PrivacyApp/
 ├── main.py                 # 主程序
 ├── theme.py                # 主题文件
 ├── requirements.txt        # 依赖列表
-├── build/
-│   ├── build_macos_app.sh  # 打包脚本
-│   ├── PrivacyGuard.spec   # PyInstaller 配置
-│   └── PrivacyGuard.icns   # 应用图标（必需）
+├── packaging/
+│   └── macos/
+│       ├── scripts/        # 打包脚本
+│       │   ├── build_macos_app.sh
+│       │   ├── sign_macos_app.sh
+│       │   └── notarize_macos_app.sh
+│       ├── config/         # 配置文件
+│       │   ├── PrivacyGuard.spec
+│       │   └── entitlements.plist
+│       └── assets/         # 资源文件
+│           └── PrivacyGuard.icns
 └── venv/                   # 虚拟环境
 ```
 
@@ -100,10 +107,10 @@ rm -rf build/build dist/
 
 ```bash
 # 方式一：使用打包脚本（推荐）
-bash build/build_macos_app.sh
+bash packaging/macos/scripts/build_macos_app.sh
 
 # 方式二：手动打包
-pyinstaller --clean --noconfirm build/PrivacyGuard.spec
+pyinstaller --clean --noconfirm packaging/macos/config/PrivacyGuard.spec
 ```
 
 ### 步骤 3: 验证应用
@@ -169,7 +176,7 @@ open dist/PrivacyGuard.app
 
 ### 签名脚本
 
-创建 `build/sign_macos_app.sh`：
+签名脚本位于 `packaging/macos/scripts/sign_macos_app.sh`：
 
 ```bash
 #!/bin/bash
@@ -191,12 +198,12 @@ done
 
 # 签名主可执行文件
  codesign --force --sign "${IDENTITY}" \
-    --entitlements build/entitlements.plist \
+    --entitlements packaging/macos/config/entitlements.plist \
     "${APP_PATH}/Contents/MacOS/${APP_NAME}"
 
 # 签名整个应用包
  codesign --force --deep --sign "${IDENTITY}" \
-    --entitlements build/entitlements.plist \
+    --entitlements packaging/macos/config/entitlements.plist \
     "${APP_PATH}"
 
 echo "✅ 签名完成"
@@ -207,7 +214,7 @@ echo "验证签名:"
 
 ### 权限配置文件
 
-创建 `build/entitlements.plist`：
+权限配置文件位于 `packaging/macos/config/entitlements.plist`：
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -250,9 +257,9 @@ echo "验证签名:"
    - 访问：https://appleid.apple.com/
    - 生成 App 专用密码（用于命令行上传）
 
-2. **创建公证脚本**
+2. **公证脚本**
 
-创建 `build/notarize_macos_app.sh`：
+公证脚本位于 `packaging/macos/scripts/notarize_macos_app.sh`：
 
 ```bash
 #!/bin/bash
@@ -291,13 +298,13 @@ xcrun stapler validate "${DMG_PATH}"
 
 ```bash
 # 1. 创建 DMG（见下节）
-bash build/build_macos_app.sh
+bash packaging/macos/scripts/build_macos_app.sh
 
 # 2. 签名应用
-bash build/sign_macos_app.sh
+bash packaging/macos/scripts/sign_macos_app.sh
 
 # 3. 公证
-bash build/notarize_macos_app.sh
+bash packaging/macos/scripts/notarize_macos_app.sh
 ```
 
 ---

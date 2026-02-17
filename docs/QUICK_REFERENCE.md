@@ -72,7 +72,7 @@ VERSION = "36.0 - 新功能描述"
    └─> git push origin main
 
 5. Windows 打包（在 Windows 上）
-   └─> platforms\windows\build\build_windows.bat
+   └─> packaging\windows\scripts\2_一键打包.bat
 ```
 
 ---
@@ -127,8 +127,8 @@ cd build
 bash build_macos_app.sh
 
 # Windows 打包（在 Windows 上）
-cd platforms\windows\build
-build_windows.bat
+cd packaging\windows\scripts
+2_一键打包.bat
 
 # 或使用 Python 脚本
 python build_windows.py
@@ -138,8 +138,8 @@ python build_windows.py
 
 ```cmd
 # 安装依赖
-cd platforms\windows\build
-install_dependencies.bat
+cd packaging\windows\scripts
+1_初始化环境.bat
 
 # 检查编码
 chcp 65001
@@ -169,22 +169,28 @@ PrivacyApp/
 │   │   └── STATUS.md           # 项目状态
 │   └── guides/
 │       └── CLAUDE_CODE_TIPS.md # Claude Code 开发经验
-├── build/
-│   ├── build_macos_app.sh      # macOS 打包脚本
-│   └── PrivacyGuard.spec       # PyInstaller 配置 (macOS)
-├── platforms/
-│   ├── macos/                  # macOS 平台
-│   │   └── docs/
-│   │       └── BUILD_GUIDE.md  # macOS 构建指南
-│   └── windows/                # Windows 平台
-│       ├── build/
-│       │   ├── build_windows.bat      # Windows 打包脚本
-│       │   ├── build_windows.py       # Python 打包脚本
-│       │   └── PrivacyGuard_windows.spec  # PyInstaller 配置
-│       └── docs/
-│           ├── BUILD_GUIDE.md         # Windows 构建指南
-│           ├── BUILD_LOG.md           # Windows 打包日志
-│           └── TROUBLESHOOTING.md     # 故障排除
+├── packaging/
+│   ├── macos/                  # macOS 打包
+│   │   ├── scripts/
+│   │   │   ├── build_macos_app.sh     # macOS 打包脚本
+│   │   │   ├── sign_macos_app.sh      # 代码签名脚本
+│   │   │   └── notarize_macos_app.sh  # 公证脚本
+│   │   ├── config/
+│   │   │   ├── PrivacyGuard.spec      # PyInstaller 配置
+│   │   │   └── entitlements.plist     # 权限配置
+│   │   └── assets/
+│   │       └── PrivacyGuard.icns      # 图标
+│   └── windows/                # Windows 打包
+│       ├── scripts/
+│       │   ├── 1_初始化环境.bat
+│       │   ├── 2_一键打包.bat
+│       │   ├── 3_完整打包带安装程序.bat
+│       │   └── 4_仅创建安装程序.bat
+│       ├── config/
+│       │   ├── PrivacyGuard_windows.spec
+│       │   └── PrivacyGuard_Setup.iss
+│       └── assets/
+│           └── icon.ico
 └── scripts/
     └── check_progress.py       # 进度查询
 ```
@@ -235,10 +241,10 @@ PrivacyApp/
 | **项目状态** | 当前状态 | `docs/current/STATUS.md` |
 | **更新日志** | 版本历史 | `CHANGELOG.md` |
 | **Claude Code 技巧** | AI 开发经验 | `docs/guides/CLAUDE_CODE_TIPS.md` |
-| **Windows 构建** | Windows 打包 | `platforms/windows/docs/BUILD_GUIDE.md` |
-| **Windows 打包日志** | 打包问题记录 | `platforms/windows/docs/BUILD_LOG.md` |
-| **Windows 故障排除** | 常见问题 | `platforms/windows/docs/TROUBLESHOOTING.md` |
-| **macOS 构建** | macOS 打包 | `platforms/macos/docs/BUILD_GUIDE.md` |
+| **Windows 构建** | Windows 打包 | `packaging/windows/docs/BUILD_GUIDE.md` |
+| **Windows 打包日志** | 打包问题记录 | `packaging/windows/docs/BUILD_LOG.md` |
+| **Windows 故障排除** | 常见问题 | `packaging/windows/docs/TROUBLESHOOTING.md` |
+| **macOS 构建** | macOS 打包 | `packaging/macos/docs/BUILD_GUIDE.md` |
 
 ---
 
@@ -349,9 +355,9 @@ alias pg-log='cd ~/Desktop/临时coding/PrivacyApp && cat docs/DEV_LOG.md'
 | 如何开发 | `docs/DEVELOPMENT_WORKFLOW.md` |
 | 当前进度 | `docs/STATUS.md` |
 | 未来规划 | `docs/ROADMAP.md` |
-| Windows 打包 | `platforms/windows/docs/BUILD_GUIDE.md` |
-| macOS 打包 | `platforms/macos/docs/BUILD_GUIDE.md` |
-| 常见问题 | `platforms/windows/docs/TROUBLESHOOTING.md` |
+| Windows 打包 | `packaging/windows/docs/BUILD_GUIDE.md` |
+| macOS 打包 | `packaging/macos/docs/BUILD_GUIDE.md` |
+| 常见问题 | `packaging/windows/docs/TROUBLESHOOTING.md` |
 
 ---
 

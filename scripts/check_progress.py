@@ -172,7 +172,7 @@ class ProgressChecker:
         print()
         print("  发布相关:")
         print("    • macOS 打包:   bash build/build_macos_app.sh")
-        print("    • Windows 打包: platforms/windows/build/build_windows.bat (在 Windows 上)")
+        print("    • Windows 打包: packaging/windows/scripts/2_一键打包.bat (在 Windows 上)")
         print()
         print("  文档相关:")
         print("    • 项目状态:     cat docs/STATUS.md")

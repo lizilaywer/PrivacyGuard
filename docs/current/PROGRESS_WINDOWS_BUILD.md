@@ -23,7 +23,7 @@ ImportError: DLL load failed while importing onnxruntime_pybind11_state:
 
 ## 已完成的修改
 
-### 修改文件: `platforms/windows/build/PrivacyGuard_windows.spec`
+### 修改文件: `packaging/windows/config/PrivacyGuard_windows.spec`
 
 **1. 添加导入**
 ```python
@@ -60,7 +60,7 @@ datas=[
 
 ### 1. 重新打包
 ```cmd
-cd platforms\windows\build
+cd packaging\windows\scripts
 build_windows.bat
 ```
 
@@ -102,9 +102,9 @@ pip install onnxruntime
 
 | 文件 | 路径 |
 |------|------|
-| Spec 文件 | `platforms/windows/build/PrivacyGuard_windows.spec` |
-| 构建脚本 | `platforms/windows/build/build_windows.bat` |
-| 构建配置 | `platforms/windows/build/build_windows.py` |
+| Spec 文件 | `packaging/windows/config/PrivacyGuard_windows.spec` |
+| 构建脚本 | `packaging/windows/scripts/2_一键打包.bat` |
+| 构建配置 | `packaging/windows/config/build_windows.py` |
 
 ---
 

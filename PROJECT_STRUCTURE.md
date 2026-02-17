@@ -14,14 +14,32 @@ PrivacyApp/
 │   ├── theme.py                # 主题系统
 │   └── requirements.txt        # Python依赖列表
 │
-├── 📁 build/                   # 构建相关
-│   ├── build_macos_app.sh      # macOS打包脚本
-│   ├── build_windows_app.bat   # Windows打包脚本
-│   ├── PrivacyGuard.spec       # PyInstaller配置（macOS）
-│   ├── PrivacyGuard_windows.spec # PyInstaller配置（Windows）
-│   ├── PrivacyGuard.icns       # macOS图标
-│   ├── icon.ico                # Windows图标
-│   └── generate_icon.py        # 图标生成工具
+├── 📁 packaging/               # 【NEW】打包配置（核心改进）
+│   │
+│   ├── windows/                # Windows打包方案（完全独立）
+│   │   ├── scripts/            # 一键打包脚本
+│   │   │   ├── 1_初始化环境.bat
+│   │   │   ├── 2_一键打包.bat
+│   │   │   ├── 3_完整打包带安装程序.bat
+│   │   │   └── 4_仅创建安装程序.bat
+│   │   ├── config/             # 配置文件
+│   │   │   ├── PrivacyGuard_windows.spec
+│   │   │   └── PrivacyGuard_Setup.iss
+│   │   └── assets/             # 资源文件
+│   │       └── icon.ico
+│   │
+│   └── macos/                  # macOS打包方案（完全独立）
+│       ├── scripts/            # 打包脚本
+│       │   ├── build_macos_app.sh
+│       │   ├── sign_macos_app.sh
+│       │   └── notarize_macos_app.sh
+│       ├── config/             # 配置文件
+│       │   ├── PrivacyGuard.spec
+│       │   └── entitlements.plist
+│       └── assets/             # 资源文件
+│           └── PrivacyGuard.icns
+│
+├── 📁 build/                   # 【仅保留】构建缓存（.gitignore）
 │
 ├── 📁 docs/                    # 文档目录
 │   ├── README.md               # 项目主文档
@@ -59,16 +77,14 @@ PrivacyApp/
 │   ├── icon/                   # 图标工具
 │   └── docs/                   # 文档工具
 │
-├── 📁 platforms/               # 平台特定
-│   ├── macos/                  # macOS配置
-│   └── windows/                # Windows配置
+├── 📁 releases/                # 发布包
+│   ├── windows/                # Windows发布包
+│   ├── macos/                  # macOS发布包
+│   ├── v36.4/                  # 各版本发布
+│   └── archive/                # 历史发布包
 │
 ├── 📁 backups/                 # 开发备份
 │   └── archive/                # 历史归档
-│
-├── 📁 releases/                # 发布包
-│   ├── v36.4/                  # 各版本发布
-│   └── *.dmg                   # 安装包
 │
 ├── 📁 dist/                    # 构建输出
 │   ├── PrivacyGuard.app/       # macOS应用
@@ -104,16 +120,28 @@ PrivacyApp/
 | `CHANGELOG.md` | 开发者/用户 | 版本历史记录 |
 | `CLAUDE.md` | 开发者 | Claude Code开发指南 |
 | `docs/marketing/开源宣传规划方案.md` | 运营 | 完整推广策略 |
-| `docs/packaging/*.md` | 开发者 | 打包指南 |
+| `packaging/README.md` | 开发者 | 打包系统说明 |
+| `packaging/windows/docs/` | 开发者 | Windows打包指南 |
+| `packaging/macos/docs/` | 开发者 | macOS打包指南 |
+| `docs/packaging/*.md` | 开发者 | 详细打包文档（旧） |
 
-### 脚本
+### 打包脚本
 
-| 脚本 | 用途 |
-|------|------|
-| `build_macos_app.sh` | macOS应用打包 |
-| `build_windows_app.bat` | Windows应用打包 |
-| `start_app.sh` | 开发环境启动 |
-| `check_progress.py` | 项目进度检查 |
+| 脚本 | 路径 | 用途 |
+|------|------|------|
+| `1_初始化环境.bat` | `packaging/windows/scripts/` | Windows环境初始化 |
+| `2_一键打包.bat` | `packaging/windows/scripts/` | Windows仅打包exe |
+| `3_完整打包带安装程序.bat` | `packaging/windows/scripts/` | Windows打包+安装程序 |
+| `build_macos_app.sh` | `packaging/macos/scripts/` | macOS应用打包 |
+| `sign_macos_app.sh` | `packaging/macos/scripts/` | macOS代码签名 |
+| `notarize_macos_app.sh` | `packaging/macos/scripts/` | macOS应用公证 |
+
+### 开发脚本
+
+| 脚本 | 路径 | 用途 |
+|------|------|------|
+| `start_app.sh` | 根目录 | 开发环境启动 |
+| `check_progress.py` | `scripts/` | 项目进度检查 |
 
 ---
 
@@ -129,7 +157,8 @@ PrivacyApp/
 
 1. [CLAUDE.md](CLAUDE.md) - 开发指南
 2. [docs/DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md) - 工作流程
-3. [docs/packaging/](docs/packaging/) - 打包指南
+3. [packaging/](packaging/) - 打包配置和指南
+4. [docs/packaging/](docs/packaging/) - 详细打包文档
 
 ### 我是贡献者
 

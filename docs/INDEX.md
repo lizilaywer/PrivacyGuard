@@ -53,19 +53,19 @@
 
 | 文档 | 说明 | 位置 |
 |------|------|------|
-| **构建指南** | macOS 打包说明 | [../platforms/macos/docs/BUILD_GUIDE.md](../platforms/macos/docs/BUILD_GUIDE.md) |
-| **平台说明** | macOS 平台概述 | [../platforms/macos/README.md](../platforms/macos/README.md) |
+| **构建指南** | macOS 打包说明 | [../packaging/macos/docs/BUILD_GUIDE.md](../packaging/macos/docs/BUILD_GUIDE.md) |
+| **平台说明** | macOS 平台概述 | [../packaging/macos/README.md](../packaging/macos/README.md) |
 
 #### Windows
 
 | 文档 | 说明 | 位置 |
 |------|------|------|
-| **构建指南** | Windows 打包说明 | [../platforms/windows/docs/BUILD_GUIDE.md](../platforms/windows/docs/BUILD_GUIDE.md) |
-| **打包日志** | 打包问题和解决方案 | [../platforms/windows/docs/BUILD_LOG.md](../platforms/windows/docs/BUILD_LOG.md) |
-| **故障排除** | 常见问题解答 | [../platforms/windows/docs/TROUBLESHOOTING.md](../platforms/windows/docs/TROUBLESHOOTING.md) |
-| **测试指南** | Windows 测试方法 | [../platforms/windows/docs/TESTING_GUIDE.md](../platforms/windows/docs/TESTING_GUIDE.md) |
-| **发布说明** | Windows 版本说明 | [../platforms/windows/docs/RELEASE_NOTES.md](../platforms/windows/docs/RELEASE_NOTES.md) |
-| **平台说明** | Windows 平台概述 | [../platforms/windows/README.md](../platforms/windows/README.md) |
+| **构建指南** | Windows 打包说明 | [../packaging/windows/docs/BUILD_GUIDE.md](../packaging/windows/docs/BUILD_GUIDE.md) |
+| **打包日志** | 打包问题和解决方案 | [../packaging/windows/docs/BUILD_LOG.md](../packaging/windows/docs/BUILD_LOG.md) |
+| **故障排除** | 常见问题解答 | [../packaging/windows/docs/TROUBLESHOOTING.md](../packaging/windows/docs/TROUBLESHOOTING.md) |
+| **测试指南** | Windows 测试方法 | [../packaging/windows/docs/TESTING_GUIDE.md](../packaging/windows/docs/TESTING_GUIDE.md) |
+| **发布说明** | Windows 版本说明 | [../packaging/windows/docs/RELEASE_NOTES.md](../packaging/windows/docs/RELEASE_NOTES.md) |
+| **平台说明** | Windows 平台概述 | [../packaging/windows/README.md](../packaging/windows/README.md) |
 
 ### 合规文档
 
@@ -79,7 +79,7 @@
 | 文档 | 说明 | 位置 |
 |------|------|------|
 | **跨平台指南** | 双平台开发策略 | [CROSS_PLATFORM_GUIDE.md](CROSS_PLATFORM_GUIDE.md) |
-| **平台实现总结** | 平台支持实现 | [../platforms/IMPLEMENTATION_SUMMARY.md](../platforms/IMPLEMENTATION_SUMMARY.md) |
+| **平台实现总结** | 平台支持实现 | [../packaging/IMPLEMENTATION_SUMMARY.md](../packaging/IMPLEMENTATION_SUMMARY.md) |
 | **Windows 构建指南** | 详细 Windows 构建 | [WINDOWS_BUILD_GUIDE.md](WINDOWS_BUILD_GUIDE.md) |
 
 ### 发布文档
@@ -102,15 +102,15 @@
 
 ### 我要打包发布
 
-1. macOS: 阅读 [platforms/macos/docs/BUILD_GUIDE.md](../platforms/macos/docs/BUILD_GUIDE.md)
-2. Windows: 阅读 [platforms/windows/docs/BUILD_GUIDE.md](../platforms/windows/docs/BUILD_GUIDE.md)
-3. 查看 [platforms/windows/docs/BUILD_LOG.md](../platforms/windows/docs/BUILD_LOG.md) 了解常见问题
+1. macOS: 阅读 [packaging/macos/docs/BUILD_GUIDE.md](../packaging/macos/docs/BUILD_GUIDE.md)
+2. Windows: 阅读 [packaging/windows/docs/BUILD_GUIDE.md](../packaging/windows/docs/BUILD_GUIDE.md)
+3. 查看 [packaging/windows/docs/BUILD_LOG.md](../packaging/windows/docs/BUILD_LOG.md) 了解常见问题
 4. 更新 [CHANGELOG.md](../CHANGELOG.md)
 
 ### 我遇到了问题
 
 1. 查看 [current/RECOVERY_GUIDE.md](current/RECOVERY_GUIDE.md)
-2. Windows 问题查看 [platforms/windows/docs/TROUBLESHOOTING.md](../platforms/windows/docs/TROUBLESHOOTING.md)
+2. Windows 问题查看 [packaging/windows/docs/TROUBLESHOOTING.md](../packaging/windows/docs/TROUBLESHOOTING.md)
 3. 查看开发日志 [current/DEV_LOG.md](current/DEV_LOG.md)
 
 ### 我要了解合规要求
@@ -159,9 +159,9 @@ PrivacyApp/
 │   ├── v35.x/                  # 上个版本
 │   └── _archive/               # 历史归档
 │
-├── platforms/                   # 平台相关
-│   ├── macos/                   # macOS 平台 (主要)
-│   └── windows/                 # Windows 平台
+├── packaging/                   # 打包配置
+│   ├── macos/                   # macOS 打包配置
+│   └── windows/                 # Windows 打包配置
 │
 ├── releases/                    # 发布记录
 │   └── v36.0-release/

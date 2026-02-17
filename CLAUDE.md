@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PrivacyGuard 脱敏卫士** is a Python + PyQt6 desktop application for intelligent data redaction in PDF and Word documents.
 
-**Current Version**: v36.2
+**Current Version**: v36.4
 **Primary Language**: Python 3.11
 **Main File**: `main.py` (~2600 lines, monolithic architecture)
 
@@ -250,7 +250,7 @@ Current status: No known vulnerabilities in dependencies.
 ```python
 # Located at top of main.py
 APP_NAME = "PrivacyGuard 脱敏卫士"
-VERSION = "36.2 - Security Hardening"
+VERSION = "36.4 - Code Refactoring"
 MIN_RECT_WIDTH = 5           # Minimum rectangle width (pixels)
 ZOOM_MIN = 0.5               # Minimum zoom level
 ZOOM_MAX = 4.0               # Maximum zoom level

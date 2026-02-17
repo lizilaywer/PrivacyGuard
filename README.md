@@ -81,8 +81,9 @@ PrivacyApp/
 │   ├── v35.x/          # 上个版本
 │   └── _archive/       # 历史归档
 │
-├── platforms/           # 平台相关
-│   └── macos/          # macOS (主要)
+├── packaging/           # 打包配置
+│   ├── macos/          # macOS 打包
+│   └── windows/        # Windows 打包
 │
 ├── releases/            # 发布包
 ├── build/               # 构建脚本

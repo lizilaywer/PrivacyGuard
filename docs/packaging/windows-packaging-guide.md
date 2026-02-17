@@ -23,13 +23,12 @@
 
 ```cmd
 cd C:\Users\YourName\Desktop\PrivacyApp
-build\build_windows_app.bat
+packaging\windows\scripts\3_完整打包带安装程序.bat
 ```
 
 打包完成后，文件位于：
-- 文件夹模式：`dist\PrivacyGuard\`
-- 单文件模式：`dist\PrivacyGuard.exe`
-- 安装程序：`releases\PrivacyGuard-36.4-Setup.exe`
+- 便携版：`dist\PrivacyGuard.exe`
+- 安装程序：`releases\windows\PrivacyGuard-36.4-Setup.exe`
 
 ---
 
@@ -73,10 +72,18 @@ PrivacyApp/
 ├── main.py                      # 主程序
 ├── theme.py                     # 主题文件
 ├── requirements.txt             # 依赖列表
-├── build/
-│   ├── build_windows_app.bat    # 打包脚本
-│   ├── PrivacyGuard_windows.spec # PyInstaller 配置
-│   └── icon.ico                 # 应用图标（必需）
+├── packaging/
+│   └── windows/
+│       ├── scripts/             # 打包脚本
+│       │   ├── 1_初始化环境.bat
+│       │   ├── 2_一键打包.bat
+│       │   ├── 3_完整打包带安装程序.bat
+│       │   └── 4_仅创建安装程序.bat
+│       ├── config/              # 配置文件
+│       │   ├── PrivacyGuard_windows.spec
+│       │   └── PrivacyGuard_Setup.iss
+│       └── assets/              # 资源文件
+│           └── icon.ico         # 应用图标
 └── venv/                        # 虚拟环境
 ```
 
@@ -99,7 +106,7 @@ del /q dist\*
 
 ### 步骤 2: 创建 Spec 文件
 
-创建 `build/PrivacyGuard_windows.spec`：
+配置文件位于 `packaging/windows/config/PrivacyGuard_windows.spec`：
 
 ```python
 # -*- mode: python ; coding: utf-8 -*-
@@ -213,7 +220,7 @@ exe = EXE(
 
 ### 步骤 3: 创建版本信息文件
 
-创建 `build/version_info.txt`：
+版本信息文件位于 `packaging/windows/config/version_info.txt`：
 
 ```
 VSVersionInfo(
@@ -251,7 +258,7 @@ VSVersionInfo(
 #### 方式一：单文件模式（推荐）
 
 ```cmd
-pyinstaller --clean --noconfirm build\PrivacyGuard_windows.spec
+pyinstaller --clean --noconfirm packaging\windows\config\PrivacyGuard_windows.spec
 ```
 
 输出：`dist\PrivacyGuard.exe`
@@ -346,7 +353,7 @@ signtool verify /pa dist\PrivacyGuard.exe
 
 #### 批量签名脚本
 
-创建 `build/sign_windows_app.bat`：
+签名脚本示例（保存为 `scripts/sign_windows_app.bat`）：
 
 ```batch
 @echo off
@@ -401,7 +408,7 @@ if %ERRORLEVEL% == 0 (
 
 #### 2. 创建安装脚本
 
-创建 `build/PrivacyGuard_Setup.iss`：
+Inno Setup 脚本位于 `packaging/windows/config/PrivacyGuard_Setup.iss`：
 
 ```pascal
 ; PrivacyGuard 安装程序脚本
@@ -480,7 +487,7 @@ end;
 
 ```cmd
 :: 命令行编译
-"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" build\PrivacyGuard_Setup.iss
+"C:\Program Files (x86)\Inno Setup 6\ISCC.exe" packaging\windows\config\PrivacyGuard_Setup.iss
 
 :: 或在 Inno Setup IDE 中打开 .iss 文件，点击 Build
 ```
@@ -719,7 +726,7 @@ releases/
 
 ## 完整打包脚本
 
-创建 `build/build_windows_app.bat`：
+完整打包脚本参考 `packaging/windows/scripts/3_完整打包带安装程序.bat`：
 
 ```batch
 @echo off
