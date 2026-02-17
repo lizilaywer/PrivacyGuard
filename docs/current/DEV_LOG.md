@@ -2,9 +2,144 @@
 
 ## 项目信息
 - **项目名称**: PrivacyGuard 脱敏卫士
-- **当前版本**: v36.3 (Word 显示修复版)
-- **开发日期**: 2026-02-16
-- **状态**: ✅ 已修复 (macOS + Windows 双平台)
+- **当前版本**: v36.5 (安全修复版)
+- **开发日期**: 2026-02-17
+- **状态**: ✅ 已发布 (macOS + Windows 双平台)
+
+---
+
+## v36.5 - 安全修复 (2026-02-17)
+
+### 🔒 Critical 安全修复
+
+#### 1. WordWorker 裸异常捕获 (main.py:1349)
+**问题**: `except Exception as e:` 捕获所有异常，可能掩盖系统级异常
+
+**修复**:
+```python
+# 修复前:
+except Exception as e:
+
+# 修复后:
+except (IOError, OSError, RuntimeError, ValueError,
+        AttributeError, KeyError, IndexError) as e:
+```
+
+**风险等级**: Critical → ✅ 已修复
+
+#### 2. TempFileManager 线程安全 (main.py:85-182)
+**问题**: 多线程环境下 `temp_files` 列表操作非线程安全
+
+**修复**:
+- 添加实例级别锁 `_instance_lock`
+- 添加类级别锁 `_global_lock`
+- 所有列表操作加锁保护
+
+**风险等级**: High → ✅ 已修复
+
+#### 3. word_data 竞争条件 (main.py:1293-1352)
+**问题**: Worker 线程与主线程共享 `word_data` 无锁保护
+
+**修复**:
+- 添加 `QMutex _word_data_lock`
+- 使用深拷贝发送数据副本
+- 访问时加锁保护
+
+**风险等级**: High → ✅ 已修复
+
+### ✅ 验证结果
+
+- [x] 语法检查通过
+- [x] 稳定性测试通过 (6/6)
+- [x] macOS App 打包成功 (708MB)
+- [x] DMG 安装包创建成功 (309MB)
+
+### 📦 发布包
+
+```
+releases/macos/PrivacyGuard-36.4-macOS.dmg (309MB) ✅
+SHA256: 9a77ec5bbd0d3b26db604427465d03e55ae73e559c5c2ee7126110cb89a2336d
+```
+
+### 📋 备份
+
+```
+backups/v36.5_security_fix_20260217_205211/
+```
+
+---
+
+## v36.4 - macOS 打包与 .doc 格式修复 (2026-02-17)
+
+### 🍎 macOS 应用打包
+
+**完成内容**:
+- ✅ 成功打包 macOS 应用 `PrivacyGuard.app` (708MB)
+- ✅ 创建 DMG 安装包 `PrivacyGuard-36.4-macOS.dmg` (308MB)
+- ✅ 生成 SHA256 校验和
+- ✅ 修复打包脚本路径计算错误 (`build_macos_app.sh:20`)
+
+**打包输出**:
+```
+dist/PrivacyGuard.app
+releases/macos/PrivacyGuard-36.4-macOS.dmg (308MB)
+releases/macos/PrivacyGuard-36.4-macOS.dmg.sha256
+```
+
+### 🐛 .doc 格式转换修复 (macOS)
+
+**问题**: 打包后的 App 无法找到 LibreOffice，导致 .doc 文件转换失败
+
+**错误信息**:
+```
+LibreOffice 转换出错: [Errno 2] No such file or directory: 'soffice'
+```
+
+**根本原因**:
+- 打包后的 macOS App 运行在沙盒环境中，PATH 变量不完整
+- 无法通过 `soffice` 命令直接调用 LibreOffice
+
+**修复方案** (`main.py:2860-2872`):
+```python
+# v36.4: 在 macOS 上使用 LibreOffice 完整路径
+soffice_cmd = 'soffice'
+if platform.system() == 'Darwin':
+    libreoffice_path = '/Applications/LibreOffice.app/Contents/MacOS/soffice'
+    if os.path.exists(libreoffice_path):
+        soffice_cmd = libreoffice_path
+```
+
+### 📦 Windows 打包脚本修复
+
+**修复内容**:
+- 修复 UTF-8 编码问题（改为系统默认代码页）
+- 修复路径包含空格时的解析错误
+- 修复 version.txt 空行读取问题
+- 添加 Inno Setup 多路径查找
+- 添加文件存在检查
+
+**涉及文件**:
+```
+packaging/windows/scripts/1_初始化环境.bat
+packaging/windows/scripts/2_一键打包.bat
+packaging/windows/scripts/3_完整打包带安装程序.bat
+packaging/windows/scripts/4_仅创建安装程序.bat
+```
+
+### ✅ 验证清单
+
+- [x] macOS App 正常启动
+- [x] .doc 文件转换正常（使用 LibreOffice）
+- [x] .docx 文件打开正常
+- [x] PDF 打开/保存正常
+- [x] OCR 扫描功能正常
+- [x] Word 预览和脱敏功能正常
+
+### 📋 提交记录
+
+```
+备份: backups/v36.4_macos_build_20260217_203303/
+```
 
 ---
 

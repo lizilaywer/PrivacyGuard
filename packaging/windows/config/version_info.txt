@@ -1,0 +1,11 @@
+# PrivacyGuard Windows 版本信息
+
+应用名称: PrivacyGuard 脱敏卫士
+版本号: 36.4
+内部版本: 36.4.0.0
+公司名称: PrivacyGuard Team
+版权信息: Copyright (C) 2026 PrivacyGuard Team
+产品名称: PrivacyGuard 脱敏卫士
+描述: 智能文档脱敏工具 - 支持 PDF 和 Word 文档的敏感信息识别与脱敏处理
+
+更新日期: 2026-02-17

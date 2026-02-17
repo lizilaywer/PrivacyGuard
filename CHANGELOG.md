@@ -6,6 +6,20 @@
 
 ## [36.4] - 2026-02-17
 
+### 🍎 macOS 应用打包发布
+
+#### 新增内容
+- **macOS 应用打包** (`packaging/macos/`)
+  - 成功打包 `PrivacyGuard.app` (708MB)
+  - 创建 DMG 安装包 `PrivacyGuard-36.4-macOS.dmg` (308MB)
+  - 生成 SHA256 校验和
+  - 支持拖拽安装到 Applications
+
+- **.doc 格式转换修复** (macOS)
+  - 修复打包 App 中 PATH 不完整导致无法找到 LibreOffice 的问题
+  - 添加 macOS 平台 LibreOffice 完整路径检测 (`/Applications/LibreOffice.app/Contents/MacOS/soffice`)
+  - 影响范围: `main.py` `_convert_with_libreoffice()` 方法
+
 ### 🔧 代码重构与资源管理优化
 
 #### 修复内容
@@ -20,16 +34,22 @@
   - 新增 `_wrap_html_document()` 辅助方法处理 HTML 包装
   - 主函数从 ~555 行缩减至 ~21 行
 
-#### 技术细节
-- **资源管理**: 使用 try-finally 模式确保 fitz.Document 对象正确释放
-- **代码质量**: 单一职责原则，将 HTML 包装逻辑与脚本注入逻辑分离
-- **可维护性**: JavaScript 代码作为常量提取，便于独立维护
+### 📦 Windows 打包脚本修复
+
+#### 修复内容
+- 修复 UTF-8 编码问题（改为系统默认代码页）
+- 修复路径包含空格时的解析错误
+- 修复 version.txt 空行读取问题
+- 添加 Inno Setup 多路径查找
+- 添加文件存在检查
 
 #### 验证清单
 - ✅ 语法检查通过
 - ✅ 应用正常启动
 - ✅ PDF 打开/关闭正常
 - ✅ Word 预览正常
+- ✅ .doc 文件转换正常 (macOS + LibreOffice)
+- ✅ macOS App 打包成功
 
 ---
 

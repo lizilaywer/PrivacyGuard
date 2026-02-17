@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- 允许调试（发布时可移除） -->
+    <key>com.apple.security.get-task-allow</key>
+    <true/>
+
+    <!-- 允许访问用户选择的文件 -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+
+    <!-- 允许访问下载文件夹 -->
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+
+    <!-- 禁用沙盒（对于需要访问任意路径的应用） -->
+    <!-- 注意: 如果使用沙盒，需要额外的配置 -->
+    <!-- <key>com.apple.security.app-sandbox</key>
+    <true/> -->
+</dict>
+</plist>

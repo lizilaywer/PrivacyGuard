@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import time
 import shutil
+import threading  # v36.5: 线程锁支持
 import atexit  # v36.2: 用于确保临时文件清理
 import tempfile  # v36.2: 临时文件管理
 from io import BytesIO
@@ -34,7 +35,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 
 # === 软件配置 ===
 APP_NAME = "PrivacyGuard 脱敏卫士"
-VERSION = "36.4 - Code Refactoring"
+VERSION = "36.5 - Security Fix"
 
 # === 常量定义 ===
 MIN_RECT_WIDTH = 5           # 最小矩形宽度（像素）
@@ -83,13 +84,14 @@ class WorkerCancelledError(PrivacyAppError):
 
 # === 临时文件管理器 ===
 class TempFileManager:
-    """统一临时文件管理器，确保资源正确释放（v36.2: 安全加固版）
+    """统一临时文件管理器，确保资源正确释放（v36.5: 线程安全版）
 
     安全特性:
     - 使用 atexit 注册退出清理钩子，确保程序退出时自动清理
     - 类级别注册表追踪所有实例
     - 使用具体异常类型处理删除错误 (OSError, IOError)
     - 防止临时文件泄露
+    - v36.5: 添加线程锁保护，确保多线程安全
 
     使用示例:
         manager = TempFileManager()
@@ -100,12 +102,15 @@ class TempFileManager:
 
     # 类级别注册表，跟踪所有实例
     _instances = []
+    _global_lock = threading.Lock()  # v36.5: 类级别锁
 
     def __init__(self):
         self.temp_files = []
         self.temp_dirs = []
+        self._instance_lock = threading.Lock()  # v36.5: 实例级别锁
         # 注册到类级别列表
-        TempFileManager._instances.append(self)
+        with TempFileManager._global_lock:
+            TempFileManager._instances.append(self)
         # 注册 atexit 清理（只注册一次）
         self._register_atexit()
 
@@ -126,48 +131,66 @@ class TempFileManager:
                 print(f"[TempFileManager] 清理实例失败: {e}")
 
     def create_temp_file(self, suffix='', content=None):
-        """创建临时文件并追踪"""
+        """创建临时文件并追踪（v36.5: 线程安全）"""
         import tempfile
         temp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
-        self.temp_files.append(temp.name)
+        temp_name = temp.name
+        temp.close()  # 立即关闭文件句柄
+
+        # v36.5: 线程安全地添加到列表
+        with self._instance_lock:
+            self.temp_files.append(temp_name)
 
         if content:
-            temp.write(content)
-            temp.close()
+            with open(temp_name, 'wb') as f:
+                f.write(content)
 
-        return temp.name
+        return temp_name
 
     def create_temp_dir(self):
-        """创建临时目录并追踪"""
+        """创建临时目录并追踪（v36.5: 线程安全）"""
         import tempfile
         temp_dir = tempfile.mkdtemp()
-        self.temp_dirs.append(temp_dir)
+
+        # v36.5: 线程安全地添加到列表
+        with self._instance_lock:
+            self.temp_dirs.append(temp_dir)
+
         return temp_dir
 
     def cleanup(self):
-        """清理所有临时文件和目录（v36.2: 使用具体异常类型）
+        """清理所有临时文件和目录（v36.5: 线程安全）
 
         Returns:
             list: 清理过程中的错误列表
         """
         errors = []
 
+        # v36.5: 线程安全地复制列表
+        with self._instance_lock:
+            files_to_clean = self.temp_files[:]
+            dirs_to_clean = self.temp_dirs[:]
+
         # 清理文件
-        for f in self.temp_files[:]:
+        for f in files_to_clean:
             try:
                 if os.path.exists(f):
                     os.remove(f)
-                    self.temp_files.remove(f)
+                    with self._instance_lock:
+                        if f in self.temp_files:
+                            self.temp_files.remove(f)
             except (OSError, IOError) as e:
                 errors.append(f"清理文件失败 {f}: {e}")
 
         # 清理目录
-        for d in self.temp_dirs[:]:
+        for d in dirs_to_clean:
             try:
                 if os.path.exists(d):
                     import shutil
                     shutil.rmtree(d)
-                    self.temp_dirs.remove(d)
+                    with self._instance_lock:
+                        if d in self.temp_dirs:
+                            self.temp_dirs.remove(d)
             except (OSError, IOError) as e:
                 errors.append(f"清理目录失败 {d}: {e}")
 
@@ -208,11 +231,15 @@ def validate_safe_path(path, allowed_extensions=None):
     if len(path) > 4096:
         return False, "路径过长"
 
-    # 检查危险字符
-    dangerous_chars = [';', '|', '&', '$', '`', '$(', '>', '<', '\n', '\r']
+    # 检查危险字符 (v36.5: 添加反斜杠和空字节检查)
+    dangerous_chars = [';', '|', '&', '$', '`', '$(', '>', '<', '\n', '\r', '\\', '%00', '%0a', '%0d']
     for char in dangerous_chars:
         if char in path:
             return False, f"路径包含危险字符: {repr(char)}"
+
+    # 检查空字节注入 (v36.5: 防止空字节绕过)
+    if '\x00' in path:
+        return False, "路径包含空字节"
 
     # 规范化路径
     try:
@@ -1344,12 +1371,16 @@ class WordWorker(QThread):
                             last_emit_time = time.time()
 
             # 发射已扫描的结果（无论完成与否）
-            self.finished_signal.emit(self.word_data)
+            # v36.5: 发送深拷贝避免数据竞争
+            import copy
+            self.finished_signal.emit(copy.deepcopy(self.word_data))
 
-        except Exception as e:
+        except (IOError, OSError, RuntimeError, ValueError,
+                AttributeError, KeyError, IndexError) as e:
             print(f"Word扫描错误: {e}")
             # 出错时也返回已处理结果
-            self.finished_signal.emit(self.word_data)
+            import copy
+            self.finished_signal.emit(copy.deepcopy(self.word_data))
 
     def _emit_progress(self, processed, total, last_emit_time):
         """背压控制的进度更新"""
@@ -1462,7 +1493,8 @@ _INTERACTIVE_JS_CODE = r"""
 
         // 选择了文本（主要路径）
         if (selectedText.length > 0) {
-            console.log('[ContextMenu] 选择了文本:', selectedText.substring(0, 20));
+            // v36.5: 移除敏感信息日志，仅记录操作类型
+            console.log('[ContextMenu] 选择了文本（已隐藏内容）');
             try {
                 const range = selection.getRangeAt(0);
                 showAddMenu(e.clientX, e.clientY, selection, selectedText);
@@ -1601,7 +1633,8 @@ _INTERACTIVE_JS_CODE = r"""
     }
 
     function callAddGlobal(key, text) {
-        console.log('[callAddGlobal] 调用全局脱敏: key=' + key + ', text=' + text?.substring(0, 30));
+        // v36.5: 移除敏感信息日志
+        console.log('[callAddGlobal] 调用全局脱敏（文本已隐藏）');
         if (pyBridge && webChannelReady) {
             // key 为 null 时表示纯全局模式
             pyBridge.add_manual_redaction_global(key || '', text);
@@ -1613,14 +1646,15 @@ _INTERACTIVE_JS_CODE = r"""
 
     function findTextPosition(selectedText, range) {
         try {
+            // v36.5: 移除敏感信息日志
             console.log('[findTextPosition] ========== 开始查找 ==========');
-            console.log('[findTextPosition] 选中文本:', JSON.stringify(selectedText.substring(0, 50)));
+            console.log('[findTextPosition] 选中文本（已隐藏内容）');
             console.log('[findTextPosition] Range:', {
                 startContainer: range.startContainer?.nodeName,
                 startOffset: range.startOffset,
                 endContainer: range.endContainer?.nodeName,
-                endOffset: range.endOffset,
-                text: range.toString().substring(0, 50)
+                endOffset: range.endOffset
+                // 移除 text 字段，避免泄露敏感信息
             });
 
             let container = range.commonAncestorContainer;
@@ -1924,6 +1958,7 @@ class MainWindow(QMainWindow):
         self.zoom_level = 1.0
         self.page_data = {}
         self.word_data = {}  # Word 文档数据结构
+        self._word_data_lock = QMutex()  # v36.5: 保护 word_data 线程安全
         self.doc_type = None  # 'pdf', 'docx', 'doc'
         self.replacement_text = "[已脱敏]"  # Word 替换文本
         self.active_rules = [DEFAULT_RULES["身份证号"], DEFAULT_RULES["手机号码"]]
@@ -2859,12 +2894,21 @@ sudo dnf install antiword
         if not is_safe:
             raise ConversionError("临时目录不安全", error_msg)
 
+        # v36.4: 在 macOS 上使用 LibreOffice 完整路径（打包 App 中 PATH 可能不完整）
+        import platform
+        soffice_cmd = 'soffice'
+        if platform.system() == 'Darwin':
+            libreoffice_path = '/Applications/LibreOffice.app/Contents/MacOS/soffice'
+            if os.path.exists(libreoffice_path):
+                soffice_cmd = libreoffice_path
+                print(f"[DOC转换] 使用 LibreOffice 完整路径: {soffice_cmd}")
+
         for attempt in range(max_retries + 1):
             try:
                 print(f"[DOC转换] 尝试 {attempt + 1}/{max_retries + 1}...")
 
                 cmd = [
-                    'soffice',
+                    soffice_cmd,
                     '--headless',
                     '--convert-to', 'docx',
                     '--outdir', temp_dir,
@@ -3464,16 +3508,20 @@ sudo dnf install antiword
         return iou > threshold or distance < 5
 
     def word_scan_finished(self, results):
-        """Word 文档扫描完成（v36.3: 支持部分结果）"""
-        total_items = len(self.word_data)
-        processed_items = len([k for k, v in results.items() if v.get('ocr')])
+        """Word 文档扫描完成（v36.5: 线程安全）"""
+        # v36.5: 使用锁保护 word_data 访问
+        # v36.5: 使用锁保护 word_data 访问
+        with QMutexLocker(self._word_data_lock):
+            total_items = len(self.word_data)
+            processed_items = len([k for k, v in results.items() if v.get('ocr')])
 
-        self.word_data = results
+            self.word_data = results
+
+            # 统计扫描结果
+            total_matches = sum(len(data['ocr']) for data in self.word_data.values())
+
         self.render_word_preview()
         self.progress.setValue(0)
-
-        # 统计扫描结果
-        total_matches = sum(len(data['ocr']) for data in self.word_data.values())
 
         # 判断是部分结果还是完整结果（v36.3）
         if processed_items < total_items:
