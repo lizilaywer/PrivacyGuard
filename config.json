@@ -1,0 +1,99 @@
+{
+  "version": "1.0",
+  "app": {
+    "name": "PrivacyGuard 脱敏卫士",
+    "window": {
+      "default_width": 1300,
+      "default_height": 900,
+      "min_width": 900,
+      "min_height": 600,
+      "dialog_settings_width": 550,
+      "dialog_settings_height": 700,
+      "dialog_image_list_width": 600,
+      "dialog_image_list_height": 500,
+      "dialog_feedback_width": 480,
+      "dialog_feedback_height": 600
+    },
+    "feedback_url": "https://fcnwakmkeuz7.feishu.cn/share/base/form/shrcnEM1JEbdIKzdB400egj9lHe"
+  },
+  "redaction": {
+    "default_rules": {
+      "身份证号": {
+        "pattern": "(?<!\\d)([1-9]\\d{5}(19|20)\\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\\d|3[01])\\d{3}[\\dXx]|\\d{15})(?!\\d)",
+        "enabled": true,
+        "description": "匹配15位或18位身份证号码"
+      },
+      "手机号码": {
+        "pattern": "(?<!\\d)(1[3-9]\\d{9})(?!\\d)",
+        "enabled": true,
+        "description": "匹配中国大陆手机号码"
+      },
+      "日期时间": {
+        "pattern": "\\d{4}[年\\-\\.]\\d{1,2}[月\\-\\.]\\d{1,2}[日]?",
+        "enabled": true,
+        "description": "匹配日期格式"
+      },
+      "电子邮箱": {
+        "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
+        "enabled": true,
+        "description": "匹配电子邮箱地址"
+      },
+      "银行卡号": {
+        "pattern": "(?<!\\d)([1-9]\\d{12,18})(?!\\d)",
+        "enabled": true,
+        "description": "匹配13-19位银行卡号"
+      }
+    },
+    "replacement_text": "[已脱敏]",
+    "scan": {
+      "default_level": 3.0,
+      "available_levels": [
+        1.5,
+        2.0,
+        3.0
+      ],
+      "level_labels": {
+        "1.5": "标准 (1.5x)",
+        "2.0": "高精 (2.0x 推荐)",
+        "3.0": "超精 (3.0x 最慢)"
+      }
+    },
+    "offset": {
+      "x_range": [
+        -20,
+        20
+      ],
+      "w_range": [
+        -20,
+        20
+      ],
+      "default_x": 5,
+      "default_w": -5
+    }
+  },
+  "ocr": {
+    "min_rect_width": 5,
+    "progress_update_interval": 0.05,
+    "zoom_min": 0.5,
+    "zoom_max": 4.0
+  },
+  "security": {
+    "validate_paths": true,
+    "allowed_extensions": [
+      ".pdf",
+      ".doc",
+      ".docx"
+    ]
+  },
+  "ui": {
+    "theme": "auto",
+    "animation_enabled": true,
+    "show_tips": true
+  },
+  "advanced": {
+    "debug_mode": false,
+    "temp_cleanup_on_exit": true,
+    "cv2_num_threads": 0,
+    "omp_num_threads": 1
+  }
+}

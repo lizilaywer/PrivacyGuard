@@ -29,29 +29,75 @@ from PyQt6.QtWebChannel import QWebChannel
 # 导入主题系统
 from theme import Theme
 
+# v36.5: 模块化重构 - 导入新的工具模块
+# v37.0: 添加配置系统支持
+try:
+    from privacyguard.utils import (
+        PrivacyAppError as PGError,
+        ConversionError as PGConversionError,
+        FileFormatError as PGFileFormatError,
+        TempFileManager as PGTempFileManager,
+        validate_safe_path as pg_validate_safe_path,
+        ConfigManager,
+        DEFAULT_CONFIG,
+    )
+    from privacyguard.workers import (
+        ImageMergeWorker as PGImageMergeWorker,
+        OCRWorker as PGOCRWorker,
+        WordWorker as PGWordWorker,
+    )
+    MODULAR_IMPORTS_AVAILABLE = True
+    CONFIG_AVAILABLE = True
+except ImportError:
+    MODULAR_IMPORTS_AVAILABLE = False
+    CONFIG_AVAILABLE = False
+    print("[警告] 无法导入模块化包，使用内置定义")
+
+# v37.0: 初始化配置管理器（向后兼容：失败时使用硬编码）
+config = None
+if CONFIG_AVAILABLE:
+    try:
+        config = ConfigManager()
+        print(f"[配置系统] 配置文件路径: {config.get_config_path()}")
+    except Exception as e:
+        print(f"[配置系统] 初始化失败: {e}")
+        config = None
+
 # === 核心防崩溃设置 ===
 cv2.setNumThreads(0)
 os.environ["OMP_NUM_THREADS"] = "1"
 
 # === 软件配置 ===
-APP_NAME = "PrivacyGuard 脱敏卫士"
-VERSION = "36.5 - Security Fix"
+# v37.0: 从配置读取，失败时使用硬编码后备
+APP_NAME = config.get("app.name", "PrivacyGuard 脱敏卫士") if config else "PrivacyGuard 脱敏卫士"
+VERSION = "37.0 - Config System"
 
 # === 常量定义 ===
-MIN_RECT_WIDTH = 5           # 最小矩形宽度（像素）
-PROGRESS_UPDATE_INTERVAL = 0.05  # 进度更新间隔（秒）
-ZOOM_MIN = 0.5               # 最小缩放比例
-ZOOM_MAX = 4.0               # 最大缩放比例
-DEBUG_MODE = os.getenv('PRIVACYGUARD_DEBUG', 'False').lower() == 'true'  # 调试模式开关 (v33.1)
+# v37.0: 从配置读取，失败时使用硬编码后备
+MIN_RECT_WIDTH = config.get("ocr.min_rect_width", 5) if config else 5
+PROGRESS_UPDATE_INTERVAL = config.get("ocr.progress_update_interval", 0.05) if config else 0.05
+ZOOM_MIN = config.get("ocr.zoom_min", 0.5) if config else 0.5
+ZOOM_MAX = config.get("ocr.zoom_max", 4.0) if config else 4.0
+DEBUG_MODE = os.getenv('PRIVACYGUARD_DEBUG', 'False').lower() == 'true' if not config else config.get("advanced.debug_mode", False)
 
 # === 默认规则库 ===
-DEFAULT_RULES = {
-    "身份证号": r"(?<!\d)([1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]|\d{15})(?!\d)",
-    "手机号码": r"(?<!\d)(1[3-9]\d{9})(?!\d)",
-    "日期时间": r"\d{4}[年\-\.]\d{1,2}[月\-\.]\d{1,2}[日]?",
-    "电子邮箱": r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
-    "银行卡号": r"(?<!\d)([1-9]\d{12,18})(?!\d)"
-}
+# v37.0: 从配置读取，支持新旧两种格式
+if config:
+    _rules_from_config = config.get_redaction_rules()
+    DEFAULT_RULES = {}
+    for name, rule in _rules_from_config.items():
+        if isinstance(rule, dict):
+            DEFAULT_RULES[name] = rule.get("pattern", "")
+        else:
+            DEFAULT_RULES[name] = str(rule)
+else:
+    DEFAULT_RULES = {
+        "身份证号": r"(?<!\d)([1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]|\d{15})(?!\d)",
+        "手机号码": r"(?<!\d)(1[3-9]\d{9})(?!\d)",
+        "日期时间": r"\d{4}[年\-\.]\d{1,2}[月\-\.]\d{1,2}[日]?",
+        "电子邮箱": r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
+        "银行卡号": r"(?<!\d)([1-9]\d{12,18})(?!\d)"
+    }
 
 # === 自定义异常类 ===
 class PrivacyAppError(Exception):
@@ -281,19 +327,58 @@ def resource_path(relative_path):
 
 # === 设置对话框 ===
 class SettingsDialog(QDialog):
-    def __init__(self, parent=None, current_rules=None, use_enhance=False, custom_keywords="", scan_level=2.0, offset_x=0, offset_w=0):
+    """设置对话框 - v37.0: 支持配置持久化"""
+
+    def __init__(self, parent=None, current_rules=None, use_enhance=False, custom_keywords="",
+                 scan_level=2.0, offset_x=0, offset_w=0, config_manager=None):
         super().__init__(parent)
+        self.config = config_manager
+
+        # v37.0: 从配置读取窗口尺寸
+        if self.config:
+            dialog_width = self.config.get("app.window.dialog_settings_width", 550)
+            dialog_height = self.config.get("app.window.dialog_settings_height", 700)
+        else:
+            dialog_width, dialog_height = 550, 700
+
         self.setWindowTitle("高级设置")
-        self.resize(550, 700)
+        self.resize(dialog_width, dialog_height)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
-        
+
         self.selected_rules = []
         self.use_enhance = use_enhance
         self.custom_keywords = custom_keywords
         self.scan_level = scan_level
         self.offset_x = offset_x
         self.offset_w = offset_w
-        
+
+        # v37.0: 从配置读取范围和标签
+        if self.config:
+            offset_config = self.config.get("redaction.offset", {})
+            x_range = offset_config.get("x_range", [-20, 20])
+            w_range = offset_config.get("w_range", [-20, 20])
+            scan_config = self.config.get("redaction.scan", {})
+            available_levels = scan_config.get("available_levels", [1.5, 2.0, 3.0])
+            level_labels = scan_config.get("level_labels", {
+                "1.5": "标准 (1.5x)",
+                "2.0": "高精 (2.0x 推荐)",
+                "3.0": "超精 (3.0x 最慢)"
+            })
+        else:
+            x_range = [-20, 20]
+            w_range = [-20, 20]
+            available_levels = [1.5, 2.0, 3.0]
+            level_labels = {
+                "1.5": "标准 (1.5x)",
+                "2.0": "高精 (2.0x 推荐)",
+                "3.0": "超精 (3.0x 最慢)"
+            }
+
+        self.x_range = x_range
+        self.w_range = w_range
+        self.available_levels = available_levels
+        self.level_labels = level_labels
+
         layout = QVBoxLayout(self)
 
         # 1. 规则
@@ -322,13 +407,14 @@ class SettingsDialog(QDialog):
         # 3. 精度与微调
         box_enhance = QGroupBox("3. 精度与微调")
         v_enhance = QVBoxLayout()
-        
+
         h_precision = QHBoxLayout()
         h_precision.addWidget(QLabel("扫描模式:"))
         self.combo_precision = QComboBox()
-        self.combo_precision.addItem("标准 (1.5x)", 1.5)
-        self.combo_precision.addItem("高精 (2.0x 推荐)", 2.0)
-        self.combo_precision.addItem("超精 (3.0x 最慢)", 3.0)
+        # v37.0: 从配置动态添加扫描级别选项
+        for level in self.available_levels:
+            label = self.level_labels.get(str(level), f"{level}x")
+            self.combo_precision.addItem(label, level)
         idx = self.combo_precision.findData(scan_level)
         self.combo_precision.setCurrentIndex(idx if idx >=0 else 1)
         h_precision.addWidget(self.combo_precision)
@@ -338,26 +424,26 @@ class SettingsDialog(QDialog):
         v_cal_1 = QVBoxLayout()
         v_cal_1.addWidget(QLabel("向左修正(px):"))
         self.spin_offset_x = QSpinBox()
-        self.spin_offset_x.setRange(-20, 20)
+        self.spin_offset_x.setRange(x_range[0], x_range[1])
         self.spin_offset_x.setValue(offset_x)
         v_cal_1.addWidget(self.spin_offset_x)
-        
+
         v_cal_2 = QVBoxLayout()
         v_cal_2.addWidget(QLabel("宽度收缩(px):"))
         self.spin_offset_w = QSpinBox()
-        self.spin_offset_w.setRange(-20, 20)
+        self.spin_offset_w.setRange(w_range[0], w_range[1])
         self.spin_offset_w.setValue(offset_w)
         v_cal_2.addWidget(self.spin_offset_w)
-        
+
         h_calibrate.addLayout(v_cal_1)
         h_calibrate.addLayout(v_cal_2)
         v_enhance.addLayout(h_calibrate)
         v_enhance.addWidget(QLabel("提示：仅对纯图片PDF生效"))
-        
+
         self.cb_enhance = QCheckBox("开启图像增强 (仅针对手写体)")
         self.cb_enhance.setChecked(use_enhance)
         v_enhance.addWidget(self.cb_enhance)
-        
+
         box_enhance.setLayout(v_enhance)
         layout.addWidget(box_enhance)
 
@@ -372,6 +458,16 @@ class SettingsDialog(QDialog):
         self.scan_level = self.combo_precision.currentData()
         self.offset_x = self.spin_offset_x.value()
         self.offset_w = self.spin_offset_w.value()
+
+        # v37.0: 保存到配置文件
+        if self.config:
+            try:
+                self.config.set("redaction.scan.default_level", self.scan_level, persist=False)
+                self.config.set("redaction.offset.default_x", self.offset_x, persist=False)
+                self.config.set("redaction.offset.default_w", self.offset_w, persist=True)
+            except Exception as e:
+                print(f"[设置] 保存配置失败: {e}")
+
         self.accept()
 
 # === 图片排序对话框 ===
@@ -380,7 +476,13 @@ class ImageListDialog(QDialog):
     def __init__(self, image_paths, parent=None):
         super().__init__(parent)
         self.setWindowTitle("调整图片顺序")
-        self.resize(600, 500)
+        # v37.0: 从配置读取窗口尺寸
+        if config:
+            dialog_width = config.get("app.window.dialog_image_list_width", 600)
+            dialog_height = config.get("app.window.dialog_image_list_height", 500)
+        else:
+            dialog_width, dialog_height = 600, 500
+        self.resize(dialog_width, dialog_height)
         self.image_paths = image_paths
 
         layout = QVBoxLayout(self)
@@ -430,7 +532,8 @@ class ImageListDialog(QDialog):
         return paths
 
 # === 配置常量 ===
-FEEDBACK_URL = "https://fcnwakmkeuz7.feishu.cn/share/base/form/shrcnEM1JEbdIKzdB400egj9lHe"  # 飞书反馈表单
+# v37.0: 从配置读取，失败时使用硬编码后备
+FEEDBACK_URL = config.get("app.feedback_url", "https://fcnwakmkeuz7.feishu.cn/share/base/form/shrcnEM1JEbdIKzdB400egj9lHe") if config else "https://fcnwakmkeuz7.feishu.cn/share/base/form/shrcnEM1JEbdIKzdB400egj9lHe"
 
 # === 反馈对话框 ===
 class FeedbackDialog(QDialog):
@@ -438,7 +541,13 @@ class FeedbackDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("关于与反馈")
-        self.resize(480, 600)
+        # v37.0: 从配置读取窗口尺寸
+        if config:
+            dialog_width = config.get("app.window.dialog_feedback_width", 480)
+            dialog_height = config.get("app.window.dialog_feedback_height", 600)
+        else:
+            dialog_width, dialog_height = 480, 600
+        self.resize(dialog_width, dialog_height)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
         # 获取当前主题
@@ -1943,9 +2052,27 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} v{VERSION} - Powered by li (汪立律师)")
 
+        # v37.0: 从配置读取窗口尺寸，失败时使用硬编码后备
+        if config:
+            min_width = config.get("app.window.min_width", 900)
+            min_height = config.get("app.window.min_height", 600)
+            default_width = config.get("app.window.default_width", 1300)
+            default_height = config.get("app.window.default_height", 900)
+            self.replacement_text = config.get("redaction.replacement_text", "[已脱敏]")
+            self.scan_level = config.get("redaction.scan.default_level", 2.0)
+            self.offset_x = config.get("redaction.offset.default_x", 0)
+            self.offset_w = config.get("redaction.offset.default_w", 0)
+        else:
+            min_width, min_height = 900, 600
+            default_width, default_height = 1300, 900
+            self.replacement_text = "[已脱敏]"
+            self.scan_level = 2.0
+            self.offset_x = 0
+            self.offset_w = 0
+
         # 窗口尺寸设置：最小尺寸 + 默认尺寸
-        self.setMinimumSize(900, 600)
-        self.resize(1300, 900)
+        self.setMinimumSize(min_width, min_height)
+        self.resize(default_width, default_height)
 
         # 窗口状态保存
         self.settings = QSettings("PrivacyGuard", "App")
@@ -1960,15 +2087,10 @@ class MainWindow(QMainWindow):
         self.word_data = {}  # Word 文档数据结构
         self._word_data_lock = QMutex()  # v36.5: 保护 word_data 线程安全
         self.doc_type = None  # 'pdf', 'docx', 'doc'
-        self.replacement_text = "[已脱敏]"  # Word 替换文本
-        self.active_rules = [DEFAULT_RULES["身份证号"], DEFAULT_RULES["手机号码"]]
+        self.active_rules = [DEFAULT_RULES.get("身份证号", ""), DEFAULT_RULES.get("手机号码", "")]
         self.use_enhance = False
         self.custom_keywords = ""
-        self.scan_level = 2.0
         self.current_color = QColor(0, 0, 0)
-
-        self.offset_x = 0
-        self.offset_w = 0
         self.dual_view = False
 
         # 预先创建 word_preview
@@ -2459,7 +2581,9 @@ class MainWindow(QMainWindow):
         self.render_view()
 
     def open_settings(self):
-        dlg = SettingsDialog(self, self.active_rules, self.use_enhance, self.custom_keywords, self.scan_level, self.offset_x, self.offset_w)
+        # v37.0: 传递配置管理器以支持配置持久化
+        dlg = SettingsDialog(self, self.active_rules, self.use_enhance, self.custom_keywords,
+                            self.scan_level, self.offset_x, self.offset_w, config_manager=config)
         if dlg.exec():
             self.active_rules = dlg.selected_rules
             self.use_enhance = dlg.use_enhance

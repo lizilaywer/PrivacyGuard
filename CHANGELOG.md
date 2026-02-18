@@ -4,6 +4,55 @@
 
 ---
 
+## [37.0] - 2026-02-17
+
+### ⚙️ 配置系统
+
+#### 新增内容
+- **JSON 配置文件系统** (`privacyguard/utils/config.py`)
+  - `ConfigManager` 单例类，支持线程安全（RLock 保护）
+  - 点分隔路径访问配置 (`get("app.window.default_width")`)
+  - 默认配置 + 用户配置合并机制
+  - 配置验证 (`validate()`) 和热重载支持 (`reload()`)
+  - 向后兼容（配置模块失败时降级到硬编码）
+
+- **配置文件结构** (`config.json`)
+  - `app`: 应用名称、窗口尺寸、反馈URL
+  - `redaction`: 脱敏规则、替换文本、扫描参数
+  - `ocr`: OCR 精度、缩放范围
+  - `security`: 路径验证、允许扩展名
+  - `ui`: 主题、动画、提示
+  - `advanced`: 调试模式、临时文件清理
+
+- **主程序集成**
+  - 导入 ConfigManager，失败时优雅降级
+  - 常量使用配置值（APP_NAME、窗口尺寸、扫描级别等）
+  - `SettingsDialog` 支持配置持久化
+  - 版本更新为 `37.0 - Config System`
+
+- **打包配置更新**
+  - macOS spec 文件添加 privacyguard 包和 config 文件
+  - Windows spec 文件添加 privacyguard 包和 config 文件
+  - 更新 hiddenimports 包含所有隐私保护模块
+
+#### 向后兼容
+```python
+# 配置加载失败时的降级处理
+if config:
+    APP_NAME = config.get("app.name", "PrivacyGuard 脱敏卫士")
+else:
+    APP_NAME = "PrivacyGuard 脱敏卫士"  # 硬编码后备
+```
+
+#### 验证清单
+- ✅ 语法检查通过
+- ✅ ConfigManager 单元测试通过
+- ✅ 配置保存/重载测试通过
+- ✅ 向后兼容测试通过
+- ✅ 应用启动测试通过
+
+---
+
 ## [36.4] - 2026-02-17
 
 ### 🍎 macOS 应用打包发布

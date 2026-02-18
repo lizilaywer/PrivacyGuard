@@ -32,7 +32,7 @@
 
    输出：
    - dist\PrivacyGuard.exe          （可运行的程序）
-   - releases\windows\PrivacyGuard-36.4.exe.sha256 （校验文件）
+   - releases\windows\PrivacyGuard-37.0.exe.sha256 （校验文件）
 
 --------------------------------------------------------------------------------
  3_完整打包带安装程序.bat 【推荐】
@@ -46,7 +46,7 @@
 
    输出：
    - dist\PrivacyGuard.exe                     （便携版）
-   - releases\windows\PrivacyGuard-36.4-Setup.exe      （安装程序）
+   - releases\windows\PrivacyGuard-37.0-Setup.exe      （安装程序）
    - 对应的 .sha256 校验文件
 
    ⚠️ 需要预先安装 Inno Setup：
@@ -73,7 +73,7 @@
     2. 双击运行 "3_完整打包带安装程序.bat"
        ↓ 等待 5-10 分钟
     3. 在 releases\windows 文件夹中找到安装程序
-       PrivacyGuard-36.4-Setup.exe
+       PrivacyGuard-37.0-Setup.exe
 
 日常打包（已初始化过）：
 
@@ -125,7 +125,7 @@ dist/                                 ← 打包输出目录（自动创建）
 └── PrivacyGuard.exe                  ← 打包好的程序
 
 releases/windows/                     ← Windows 发布目录（自动创建）
-├── PrivacyGuard-36.4-Setup.exe       ← 安装程序
+├── PrivacyGuard-37.0-Setup.exe       ← 安装程序
 └── *.sha256                          ← 校验文件
 
 ================================================================================

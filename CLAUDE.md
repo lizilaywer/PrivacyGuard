@@ -8,9 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PrivacyGuard 脱敏卫士** is a Python + PyQt6 desktop application for intelligent data redaction in PDF and Word documents.
 
-**Current Version**: v36.5
+**Current Version**: v37.0
 **Primary Language**: Python 3.11
 **Main File**: `main.py` (~2600 lines, monolithic architecture)
+**Config System**: JSON-based configuration with `ConfigManager` class
 
 **Key Capabilities**:
 - PDF redaction (image-based and text-based) using OCR (RapidOCR) and text extraction (PyMuPDF)
@@ -18,6 +19,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Manual redaction (precise mode for single selection, global mode for all occurrences)
 - Batch undo functionality
 - Web-based preview using QWebEngineView with JavaScript interaction
+
+**Configuration System (v37.0)**:
+- JSON-based configuration with `ConfigManager` singleton class
+- Hot-reload support and backward compatibility
+- Configuration categories: `app`, `redaction`, `ocr`, `security`, `ui`, `advanced`
+- Path access via dot notation: `config.get("app.window.default_width")`
 
 **Security Features (v36.2)**:
 - Path validation (`validate_safe_path()`) to prevent command injection and path traversal

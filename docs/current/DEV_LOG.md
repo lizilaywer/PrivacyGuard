@@ -2,9 +2,88 @@
 
 ## 项目信息
 - **项目名称**: PrivacyGuard 脱敏卫士
-- **当前版本**: v36.5 (安全修复版)
+- **当前版本**: v37.0 (配置系统版)
 - **开发日期**: 2026-02-17
 - **状态**: ✅ 已发布 (macOS + Windows 双平台)
+
+---
+
+## v37.0 - 配置系统 (2026-02-17)
+
+### ⚙️ 配置系统实现
+
+#### 1. 核心配置模块 (`privacyguard/utils/config.py`)
+**功能**: JSON 配置文件系统，支持热重载和向后兼容
+
+**特性**:
+- `ConfigManager` 单例类，线程安全（RLock 保护）
+- 点分隔路径访问配置 (`get("app.window.default_width")`)
+- 默认配置 + 用户配置合并机制
+- 配置验证 (`validate()`)
+- 变更监听回调 (`on_change()`)
+- 热重载支持 (`reload()`)
+
+**默认配置项**:
+```python
+DEFAULT_CONFIG = {
+    "app.name": "PrivacyGuard 脱敏卫士",
+    "app.window.default_width": 1300,
+    "app.window.default_height": 900,
+    "redaction.default_rules": {...},
+    "redaction.replacement_text": "[已脱敏]",
+    "redaction.scan.default_level": 2.0,
+    ...
+}
+```
+
+#### 2. 主程序集成 (main.py)
+**变更**:
+- 导入 ConfigManager，失败时优雅降级到硬编码
+- 常量使用配置值（APP_NAME、窗口尺寸、扫描级别等）
+- `SettingsDialog` 支持配置持久化
+- 版本更新为 `37.0 - Config System`
+
+**向后兼容代码**:
+```python
+config = None
+if CONFIG_AVAILABLE:
+    try:
+        config = ConfigManager()
+    except Exception as e:
+        print(f"[配置系统] 初始化失败: {e}")
+
+# 使用配置或硬编码后备
+APP_NAME = config.get("app.name", "PrivacyGuard 脱敏卫士") if config else "PrivacyGuard 脱敏卫士"
+```
+
+#### 3. 配置文件模板 (`config.json.template`)
+- 完整配置示例和说明
+- 支持配置分类：`app`、`redaction`、`ocr`、`security`、`ui`、`advanced`
+
+### ✅ 验证结果
+
+- [x] 语法检查通过
+- [x] ConfigManager 单元测试通过
+- [x] 配置保存/重载测试通过
+- [x] 向后兼容测试通过（模拟导入失败）
+- [x] 应用启动测试通过
+
+### 📦 文件变更
+
+```
+privacyguard/utils/config.py          [新增] 配置管理器核心模块
+privacyguard/utils/__init__.py        [修改] 导出配置类
+config.json.template                  [新增] 配置模板
+config.json                           [生成] 用户配置文件
+main.py                               [修改] 集成配置系统
+version.txt                           [修改] 37.0
+```
+
+### 📋 备份
+
+```
+backups/v37.0_config_system_20260217_233617/
+```
 
 ---
 

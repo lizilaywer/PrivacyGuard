@@ -1,8 +1,8 @@
 # PrivacyGuard Windows 版本信息
 
 应用名称: PrivacyGuard 脱敏卫士
-版本号: 36.4
-内部版本: 36.4.0.0
+版本号: 37.0
+内部版本: 37.0.0.0
 公司名称: PrivacyGuard Team
 版权信息: Copyright (C) 2026 PrivacyGuard Team
 产品名称: PrivacyGuard 脱敏卫士
