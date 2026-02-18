@@ -8,6 +8,48 @@
 
 ---
 
+## v37.0.3 - 图标生成器修复 (2026-02-18)
+
+### 🎨 修复 Canvas 绘制与网页显示不一致
+
+**问题描述**:
+图标生成器网页显示与下载的图标不一致：
+- **网页显示**: Font Awesome 半填充盾牌 (左半边实心，右半边轮廓)
+- **下载图标**: 实心大盾牌 (完全填充)
+
+**根本原因**:
+Canvas 绘制代码使用 `ctx.fill(shieldPath)` 填充整个盾牌，而 Font Awesome 的 `fa-shield-alt` 是半填充设计。
+
+**修复措施**:
+修改 `createIconCanvas()` 函数中的盾牌绘制逻辑：
+1. 使用 `ctx.clip()` 限制填充区域在左半边
+2. 绘制整个盾牌的白色轮廓
+3. 添加中间垂直分隔线
+
+```javascript
+// Step 1: 填充左半边
+ctx.save();
+ctx.rect(0, 0, 256, 512);
+ctx.clip();
+ctx.fill(shieldPath);
+ctx.restore();
+
+// Step 2: 绘制轮廓
+ctx.stroke(shieldPath);
+
+// Step 3: 中间分隔线
+ctx.moveTo(256, 16);
+ctx.lineTo(256, 496);
+ctx.stroke();
+```
+
+**文件变更**:
+```
+M  图标生成器.html
+```
+
+---
+
 ## v37.0.1 - Windows DLL 修复 (2026-02-18)
 
 ### 🛠️ 解决 `onnxruntime` DLL 加载失败问题
