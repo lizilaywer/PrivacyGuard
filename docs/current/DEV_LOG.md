@@ -8,6 +8,98 @@
 
 ---
 
+## v37.0.1 - Windows DLL 修复 (2026-02-18)
+
+### 🛠️ 解决 `onnxruntime` DLL 加载失败问题
+
+**问题描述**:
+Windows 打包后运行时出现:
+```
+ImportError: DLL load failed while importing onnxruntime_pybind11_state:
+动态链接库(DLL)初始化例程失败
+```
+
+**根本原因**:
+- `vcruntime140_1.dll` 缺失（这是较新的 VC++ 运行时 DLL）
+- PyInstaller 未正确收集系统 VC++ DLL
+
+**修复措施**:
+
+1. **更新 PyInstaller Spec** (`packaging/windows/config/PrivacyGuard_windows.spec`)
+   - 增加从系统目录收集 VC++ DLL
+   - 增加从 Python 安装目录收集 VC++ DLL
+   - 新增 DLL: `vcruntime140_1.dll`, `msvcp140_1.dll`, `msvcp140_2.dll`
+
+2. **创建启动器包装器** (`packaging/windows/scripts/launcher_wrapper.bat`)
+   - 启动前检查必需的 DLL 文件
+   - 如果缺失，显示友好的中文错误提示和下载链接
+   - 安装程序使用 wrapper 创建快捷方式
+
+3. **更新 VC++ 检查脚本** (`check_vcredist.bat`)
+   - 将 `vcruntime140_1.dll` 标记为必需（而非可选）
+   - 增加 `msvcp140_1.dll` 和 `msvcp140_2.dll` 检查
+
+4. **更新 Inno Setup 脚本** (`PrivacyGuard_Setup.iss`)
+   - 安装前检查 `vcruntime140_1.dll`
+   - 显示具体的缺失 DLL 列表
+   - 使用启动器包装器创建快捷方式
+
+5. **更新构建脚本** (`2_build_exe.bat`, `4_create_installer_only.bat`)
+   - 打包时复制 launcher_wrapper.bat
+   - 增强 VC++ 缺失警告
+
+6. **新增故障排除文档** (`packaging/windows/TROUBLESHOOTING.md`)
+   - 详细解释 DLL 错误原因
+   - 提供下载链接和解决方案
+
+**文件变更**:
+```
+M  packaging/windows/config/PrivacyGuard_windows.spec
+M  packaging/windows/config/PrivacyGuard_Setup.iss
+M  packaging/windows/scripts/2_build_exe.bat
+M  packaging/windows/scripts/4_create_installer_only.bat
+M  packaging/windows/scripts/check_vcredist.bat
+A  packaging/windows/scripts/launcher_wrapper.bat
+A  packaging/windows/TROUBLESHOOTING.md
+```
+
+---
+
+## v37.0.2 - Windows DLL 问题持续 (2026-02-18)
+
+### 🐛 未解决问题: onnxruntime DLL 加载失败
+
+**状态**: ❌ 仍未解决
+
+**已尝试的修复**:
+1. ✅ 更新 PyInstaller Spec - 从多个来源收集 VC++ DLL
+2. ✅ 创建启动器包装器 - 启动前检查 DLL
+3. ✅ 修复 batch 文件换行符 (LF → CRLF)
+
+**仍然存在错误**:
+```
+ImportError: DLL load failed while importing onnxruntime_pybind11_state:
+动态链接库(DLL)初始化例程失败
+```
+
+**可能原因**:
+1. PyInstaller 收集的 DLL 与目标系统不兼容
+2. 需要特定的 VC++ Redistributable 版本 (2015-2022)
+3. onnxruntime 的 DLL 依赖链未完全打包
+
+**下次尝试方案**:
+1. 使用 `dumpbin /dependents` 分析 DLL 依赖
+2. 尝试安装 VC++ Redistributable 到打包环境中
+3. 考虑使用 `--hidden-import` 强制包含所有 onnxruntime 子模块
+4. 测试在纯净 Windows 虚拟机中运行
+
+**参考资源**:
+- https://github.com/microsoft/onnxruntime/issues/16113
+- https://github.com/pyinstaller/pyinstaller/issues/6925
+- https://learn.microsoft.com/en-us/cpp/windows/latest-supported-vc-redist
+
+---
+
 ## v37.0 - 配置系统 (2026-02-17)
 
 ### ⚙️ 配置系统实现
