@@ -2,16 +2,64 @@
 
 > 一款基于 Python + PyQt6 的 PDF/Word 文档智能脱敏工具
 
-**版本**: v37.0
-**更新**: 2026-02-17
+**版本**: v37.0.10
+**更新**: 2026-02-21
 **状态**: 正式发布
-**主平台**: macOS
+**主平台**: macOS + Windows
 
 ---
 
-## ⚙️ 配置系统 (v37.0 新增)
+## 📱 最新更新 (v37.0.10)
 
-PrivacyGuard 现在支持 JSON 配置文件，可在不修改代码的情况下调整应用行为。
+### 稳定性修复
+- 修复打开新文档时程序卡顿/未响应的问题
+- 修复文件选择窗口内容不显示的问题
+- 添加完整的资源清理机制（线程、QWebEngineView、PDF 文档）
+- 使用原生文件对话框提高稳定性
+- 禁用控制台窗口（不再显示黑框）
+
+---
+
+## v37.0.6 - Freeze Fix (2026-02-20)
+
+### 冻结修复
+- 修复点击"智能脱敏"后程序未响应的死锁问题
+- 修复 numpy 2.x ABI 兼容性问题（降级到 numpy 1.26.4）
+- 添加 SimpleConfig.set() 方法支持配置保存
+
+### 改进
+- OCR 错误对话框改为非阻塞显示
+- 优化 OCRWorker 信号发送顺序
+- 添加线程清理等待机制
+
+---
+
+## v37.0.5 - OCR 稳定性修复 (2026-02-20)
+
+### 问题修复
+- 修复智能脱敏功能点击后程序闪退
+- 增强异常处理和全局异常钩子
+- onnxruntime 降级到更稳定的版本
+
+---
+
+## v37.0.4 - 微信二维码功能 (2026-02-19)
+
+### 微信二维码功能
+- 新增微信公众号二维码展示
+- "吐槽"对话框 redesigned，更清晰的社交媒体展示
+- 一键扫码关注公众号
+
+### 打包方案
+- 一键打包脚本 (Windows/macOS)
+- Windows DLL 问题已解决
+- 完整打包指南: [PACKAGING_GUIDE.md](./PACKAGING_GUIDE.md)
+
+---
+
+## ⚙️ 配置系统 (v37.0)
+
+PrivacyGuard 支持 JSON 配置文件，可在不修改代码的情况下调整应用行为。
 
 ### 配置文件位置
 ```
@@ -36,7 +84,7 @@ config.json  (应用目录)
   },
   "redaction": {
     "scan": {
-      "default_level": 2.0
+      "default_level": 3.0
     }
   }
 }
@@ -65,8 +113,13 @@ PrivacyGuard 是一个隐私保护工具，能够自动识别和脱敏 PDF 和 W
 
 ### 激活虚拟环境
 ```bash
-cd /Users/a49144/Desktop/临时coding/PrivacyApp
+cd <项目根目录>
+
+# macOS/Linux
 source venv/bin/activate
+
+# Windows
+venv\Scripts\activate
 ```
 
 ### 启动应用
@@ -275,7 +328,11 @@ pip install PyMuPDF python-docx mammoth rapidocr_onnxruntime PyQt6-WebEngine ope
 
 **快速启动**:
 ```bash
+# macOS/Linux
 source venv/bin/activate && python main.py
+
+# Windows
+venv\Scripts\activate && python main.py
 ```
 
 **详细文档**:
@@ -292,11 +349,11 @@ source venv/bin/activate && python main.py
 
 ## 📞 开发者
 
-- **开发者**: Claude
-- **项目路径**: `/Users/a49144/Desktop/临时coding/PrivacyApp`
-- **虚拟环境**: `venv/bin/python`
+- **开发者**: wangli
+- **项目路径**: `<项目根目录>`
+- **虚拟环境**: `venv/`
 
 ---
 
-**最后更新**: 2026-02-14
+**最后更新**: 2026-02-21
 **享受安全的文档脱敏体验！**

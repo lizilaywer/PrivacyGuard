@@ -1,32 +1,140 @@
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                  PrivacyGuard 脱敏卫士 - 项目保存状态                         ║
 ║                                                                              ║
-║  日期: 2026-02-18                                                            ║
-║  版本: v37.0 (配置系统版)                                                     ║
-║  状态: ⚠️ macOS 已发布 / Windows DLL 问题待解决                               ║
+║  日期: 2026-02-21                                                            ║
+║  版本: v37.0.10 (Windows Path Fix)                                           ║
+║  状态: ✅ 功能完整 / 稳定性增强                                                ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ ⚠️ 已知问题 - Windows onnxruntime DLL 加载失败                            ┃
+┃ 🔧 v37.0.10 - Windows Path Fix (2026-02-21)                               ┃
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-错误信息:
-  ❌ ImportError: DLL load failed while importing onnxruntime_pybind11_state
-  ❌ 动态链接库(DLL)初始化例程失败
+修复内容:
+  ✅ LibreOffice 路径检测修复 - 打包后可正常打开 .doc 文件
+  ✅ 扫描模式配置调整 - 新增普通模式 (1.0x)，默认改为 1.0x
 
-已尝试修复 (未成功):
-  - ✅ PyInstaller Spec 更新 - 收集系统 VC++ DLL
-  - ✅ 启动器包装器 - 启动前检查 DLL
-  - ✅ Batch 文件换行符修复 (LF → CRLF)
+配置变更:
+  - 扫描默认级别: 2.0x → 1.0x
+  - 可用级别: [1.5, 2.0] → [1.0, 1.5, 2.0]
+  - 新增: "普通 (1.0x)" 模式
 
-待尝试方案:
-  - ⏳ 使用 dumpbin 分析 DLL 依赖
-  - ⏳ 在打包环境安装 VC++ Redistributable
-  - ⏳ 检查 onnxruntime 完整依赖链
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔧 v37.0.9 - Canvas Lifecycle Fix (2026-02-20)                            ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
-参考文档:
-  📄 packaging/windows/TROUBLESHOOTING.md
-  📄 packaging/windows/ERROR_LOG_20260218.md
+问题: 打开PDF/图片时出现错误弹窗
+  ❌ 错误信息: RuntimeError: wrapped C/C++ object of type SinglePageCanvas has been deleted
+  ❌ 原因1: _cleanup_before_open() 中使用了错误的属性名 (manual_rects → 应为 rects_manual)
+  ❌ 原因2: 访问canvas时没有检查C++对象是否仍然有效
+
+修复方案:
+  ✅ 修复 _cleanup_before_open() 中的属性名错误
+  ✅ 新增 _is_canvas_valid() 安全检查函数
+  ✅ 新增 _safe_canvas_update() 安全更新函数
+  ✅ 新增 _safe_canvas_set_mask_color() 安全设置颜色函数
+  ✅ 在 render_view() 和 _render_single_page() 中添加安全检查
+  ✅ 添加 try-except 包装防止崩溃
+
+验证结果:
+  ✅ Windows打包测试通过
+  ✅ 打开PDF文件测试通过
+  ✅ 打开图片文件测试通过
+  ✅ 连续打开多个文件测试通过
+
+备份:
+  📄 backups/v37.0.9_canvas_fix_20260220_164331/main.py.backup
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔧 v37.0.7 - Stability Fix (2026-02-20)                                   ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+问题: 打开新文档时程序卡顿、文件选择窗口内容不显示
+  ❌ 原因: 资源未正确清理、非原生文件对话框渲染问题
+
+修复方案:
+  ✅ 添加 _cleanup_before_open() 完整资源清理
+  ✅ 停止并等待活跃的 worker 线程
+  ✅ 清理 QWebEngineView (word_preview)
+  ✅ 关闭并释放 PDF 文档资源
+  ✅ 使用原生文件对话框 (移除 DontUseNativeDialog)
+  ✅ 禁用控制台窗口 (console=False)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔧 v37.0.6 - Freeze Fix (2026-02-20)                                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+问题: 点击"智能脱敏"后程序未响应
+  ❌ 原因: OCR 线程死锁、numpy ABI 不兼容、配置保存报错
+
+修复方案:
+  ✅ numpy 降级: 2.x → 1.26.4 (解决 ABI 兼容性)
+  ✅ SimpleConfig 添加 set() 方法
+  ✅ OCR 错误对话框改为非阻塞
+  ✅ OCRWorker 信号发送顺序优化
+  ✅ 线程清理等待机制
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🔧 v37.0.5 - OCR 稳定性修复 (2026-02-20)                                  ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+问题: 智能脱敏功能点击后 4-5 秒程序闪退
+  ❌ 原因: OCR 线程异常未捕获，导致程序崩溃
+  ❌ 无错误提示，用户无法了解问题
+
+修复方案:
+  ✅ 全局异常钩子 (sys.excepthook + threading.excepthook)
+  ✅ OCR 安全初始化 (init_ocr_engine)
+  ✅ OCRWorker 增强异常处理 (捕获所有异常类型)
+  ✅ 错误信号 (error_signal) 通知主线程
+  ✅ 用户友好错误对话框 (_on_ocr_error)
+  ✅ onnxruntime 降级: 1.24.1 → 1.16.3 (更稳定)
+  ✅ 依赖验证脚本 (verify_dependencies.py)
+  ✅ Windows 虚拟环境分离 (venv_win)
+
+跨平台兼容:
+  ✅ macOS: 继续使用 venv，无影响
+  ✅ Windows: 使用 venv_win，依赖验证通过
+
+调试支持:
+  ✅ console=True (临时启用，用于调试)
+  ✅ PRIVACYGUARD_PRELOAD_OCR=true (预加载 OCR)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📦 打包配置更新                                                           ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Windows:
+  ✅ venv_win/ - Windows 专用虚拟环境
+  ✅ verify_dependencies.py - 打包前依赖验证
+  ✅ build_complete.bat - 添加依赖验证步骤
+  ✅ 1_init_environment.bat - 支持 venv_win
+
+macOS:
+  ✅ venv/ - 保留原有虚拟环境
+  ✅ 无影响，代码变更仅增强异常处理
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📱 v37.0.4 - 微信二维码功能更新 (2026-02-19)                              ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+界面更新:
+  ✅ "吐槽"对话框 - 关注开发者部分重新设计
+  ✅ 分两行显示社交媒体账号:
+     - 第一行: "微信公众号: 池州汪律的Ai进化论" + "扫码关注"按钮
+     - 第二行: "抖音/小红书/B站（同号）: 池州有个汪律师" + "复制"按钮
+  ✅ 新增微信公众号二维码对话框 (_show_wx_qrcode)
+  ✅ 二维码图片路径: assets/wx_qrcode.png
+
+资源文件更新:
+  ✅ 新增 assets/wx_qrcode.png (微信公众号二维码)
+  ✅ 所有 PyInstaller spec 文件已更新包含新资源
+
+打包方案更新:
+  ✅ Windows: build_complete.bat (一键打包脚本)
+  ✅ macOS: build_complete.sh (一键打包脚本)
+  ✅ 清理脚本: clean_project.bat/clean_project.sh (保留备份)
+  ✅ 完整打包指南: PACKAGING_GUIDE.md
 
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ ⚙️ v37.0 配置系统发布 (2026-02-17)                                        ┃
@@ -127,16 +235,26 @@ v36.2 (2026-02-16) - 安全加固版
   python tests/scripts/test_stability.py
   ```
 
+打包脚本:
+  📦 packaging/windows/scripts/build_complete.bat    - Windows 一键打包
+  📦 packaging/macos/scripts/build_complete.sh       - macOS 一键打包
+  📦 clean_project.bat / clean_project.sh            - 项目清理脚本
+
+新增资源:
+  🖼️ assets/donate_qrcode.png                        - 打赏二维码
+  🖼️ assets/wx_qrcode.png                            - 微信公众号二维码
+
 备份文件:
-  📄 backups/v36.5_security_fix_20260217_205211/       - v36.5 安全修复 (Critical/High)
-  📄 backups/v36.4_macos_build_20260217_203303/       - v36.4 macOS 打包 + .doc 修复
-  📄 backups/v36.4_refactor_inject_20260217_000000/    - v36.4 函数拆分
-  📄 backups/v36.4_pdf_resource_20260216_235654/      - v36.4 PDF资源管理
-  📄 backups/v36.3_word_fix_20260216_233356/          - v36.3 Word修复
+  📄 backups/v37.0.9_canvas_fix_20260220_164331/    - v37.0.9 Canvas生命周期修复
+  📄 backups/v37.0_config_system_20260217_233617/    - v37.0 配置系统备份
+  📄 backups/v36.5_security_fix_20260217_205211/    - v36.5 安全修复
+  📄 backups/v36.4_macos_build_20260217_203303/     - v36.4 macOS 打包
 
 文档更新:
   📄 CHANGELOG.md (版本变更记录)
   📄 docs/current/STATUS.md (本文件)
+  📄 docs/current/DEV_LOG.md (开发日志)
+  📄 PACKAGING_GUIDE.md (完整打包指南)
   📄 CLAUDE.md (开发指南)
 
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -191,8 +309,13 @@ v36.2 (2026-02-16) - 安全加固版
 ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
 
 1. 环境检查:
-   cd /Users/a49144/Desktop/临时coding/PrivacyApp
+   cd <项目根目录>
+
+   # macOS/Linux
    source venv/bin/activate
+
+   # Windows
+   venv\Scripts\activate
 
 2. 语法验证:
    python -c "import ast; ast.parse(open('main.py').read()); print('✓ OK')"
@@ -231,13 +354,13 @@ v36.2 (2026-02-16) - 安全加固版
 总行数:    ~2600 行
 文件大小:  ~140 KB
 备份数量:  32+ 个
-版本号:    v36.4
+版本号:    v37.0.10
 安全加固:  18 处
 代码重构:  2 处 (函数拆分、资源管理)
 
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║                       项目已安全保存，可以关闭                               ║
 ║                                                                              ║
-║  最后更新: 2026-02-17 00:00 (代码重构完成)                                   ║
-║  开发者: Claude                                                             ║
+║  最后更新: 2026-02-21 (Windows Path Fix)                                     ║
+║  开发者: wangli                                                             ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
