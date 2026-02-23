@@ -8,10 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **PrivacyGuard 脱敏卫士** is a Python + PyQt6 desktop application for intelligent data redaction in PDF and Word documents.
 
-**Current Version**: v37.0
+**Current Version**: v37.4.0 (Single OCR Engine)
 **Primary Language**: Python 3.11
 **Main File**: `main.py` (~2600 lines, monolithic architecture)
 **Config System**: JSON-based configuration with `ConfigManager` class
+**Packaging**: One-click build scripts for Windows & macOS
 
 **Key Capabilities**:
 - PDF redaction (image-based and text-based) using OCR (RapidOCR) and text extraction (PyMuPDF)
@@ -62,10 +63,30 @@ python tests/scripts/verify_word_format.py
 bash tests/scripts/quick_test.sh
 ```
 
-### Build macOS App
+### Build macOS App (Legacy)
 ```bash
 bash build/build_macos_app.sh
 ```
+
+### Complete Packaging (Recommended)
+
+**Windows:**
+```bash
+# One-click build with DLL fix
+packaging/windows/scripts/build_complete.bat
+```
+
+**macOS:**
+```bash
+# One-click build with DMG creation
+./packaging/macos/scripts/build_complete.sh
+```
+
+**Output:**
+- Windows: `releases/windows/PrivacyGuard-v37.0.10-Windows-Portable.zip`
+- macOS: `releases/macos/PrivacyGuard-v37.0.10-macOS.dmg`
+
+See [PACKAGING_GUIDE.md](./PACKAGING_GUIDE.md) for detailed instructions.
 
 ### Version Verification
 ```bash

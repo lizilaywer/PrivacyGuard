@@ -9,10 +9,41 @@ import shutil
 import threading  # v36.5: 线程锁支持
 import atexit  # v36.2: 用于确保临时文件清理
 import tempfile  # v36.2: 临时文件管理
+import traceback  # v37.0.5: 异常追踪
 from io import BytesIO
-from rapidocr_onnxruntime import RapidOCR
 from PIL import Image
 from bs4 import BeautifulSoup
+
+# v37.0.5: 延迟导入 OCR 模块，便于错误处理
+RapidOCR = None
+OCR_INIT_ERROR = None
+
+def init_ocr_engine():
+    """v37.0.5: 安全初始化 OCR 引擎，捕获所有可能的错误"""
+    global RapidOCR, OCR_INIT_ERROR
+    if RapidOCR is not None:
+        return True
+
+    try:
+        from rapidocr_onnxruntime import RapidOCR as _RapidOCR
+        RapidOCR = _RapidOCR
+        # 预热：创建一个测试实例验证 DLL 加载
+        _ = _RapidOCR()
+        print("[OCR] 引擎初始化成功")
+        return True
+    except ImportError as e:
+        OCR_INIT_ERROR = f"OCR 模块未安装: {e}\n请运行: pip install rapidocr-onnxruntime"
+        print(f"[OCR ERROR] {OCR_INIT_ERROR}")
+        return False
+    except OSError as e:
+        OCR_INIT_ERROR = f"OCR DLL 加载失败: {e}\n可能缺少 Visual C++ 运行库"
+        print(f"[OCR ERROR] {OCR_INIT_ERROR}")
+        return False
+    except Exception as e:
+        OCR_INIT_ERROR = f"OCR 初始化失败: {type(e).__name__}: {e}"
+        print(f"[OCR ERROR] {OCR_INIT_ERROR}")
+        traceback.print_exc()
+        return False
 
 from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QHBoxLayout, QPushButton, QLabel, QFileDialog,
@@ -20,48 +51,82 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QDialog, QCheckBox, QGroupBox, QTextEdit, QSpinBox,
                              QRadioButton, QButtonGroup, QComboBox, QSizePolicy,
                              QTextBrowser, QLineEdit, QListWidget, QListWidgetItem,
-                             QAbstractItemView)
+                             QAbstractItemView, QSlider)
 from PyQt6.QtGui import QPixmap, QImage, QPainter, QPen, QColor, QWheelEvent, QCursor, QIcon
-from PyQt6.QtCore import Qt, QThread, pyqtSignal, QRectF, QPointF, QSettings, QMutex, QMutexLocker, QObject, pyqtSlot, QSize
+from PyQt6.QtCore import Qt, QThread, pyqtSignal, QRectF, QPointF, QSettings, QMutex, QMutexLocker, QObject, pyqtSlot, QSize, QTimer
 from PyQt6.QtWebEngineWidgets import QWebEngineView
 from PyQt6.QtWebChannel import QWebChannel
 
 # 导入主题系统
 from theme import Theme
 
-# v36.5: 模块化重构 - 导入新的工具模块
-# v37.0: 添加配置系统支持
-try:
-    from privacyguard.utils import (
-        PrivacyAppError as PGError,
-        ConversionError as PGConversionError,
-        FileFormatError as PGFileFormatError,
-        TempFileManager as PGTempFileManager,
-        validate_safe_path as pg_validate_safe_path,
-        ConfigManager,
-        DEFAULT_CONFIG,
-    )
-    from privacyguard.workers import (
-        ImageMergeWorker as PGImageMergeWorker,
-        OCRWorker as PGOCRWorker,
-        WordWorker as PGWordWorker,
-    )
-    MODULAR_IMPORTS_AVAILABLE = True
-    CONFIG_AVAILABLE = True
-except ImportError:
-    MODULAR_IMPORTS_AVAILABLE = False
-    CONFIG_AVAILABLE = False
-    print("[警告] 无法导入模块化包，使用内置定义")
+# v37.0.4: 简化配置系统 - 直接从 JSON 文件加载
+import json
 
-# v37.0: 初始化配置管理器（向后兼容：失败时使用硬编码）
-config = None
-if CONFIG_AVAILABLE:
-    try:
-        config = ConfigManager()
-        print(f"[配置系统] 配置文件路径: {config.get_config_path()}")
-    except Exception as e:
-        print(f"[配置系统] 初始化失败: {e}")
-        config = None
+class SimpleConfig:
+    """简化配置管理器 - 直接从 config.json 读取"""
+
+    def __init__(self, config_path=None):
+        self._config = {}
+        if config_path is None:
+            config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.json')
+        self._config_path = config_path
+        self._load_config()
+
+    def _load_config(self):
+        """加载配置文件"""
+        try:
+            if os.path.exists(self._config_path):
+                with open(self._config_path, 'r', encoding='utf-8') as f:
+                    self._config = json.load(f)
+        except (OSError, IOError, json.JSONDecodeError) as e:
+            print(f"[配置系统] 加载配置失败: {e}")
+
+    def get(self, key, default=None):
+        """获取配置值（支持点分隔路径）"""
+        keys = key.split('.')
+        value = self._config
+        for k in keys:
+            if isinstance(value, dict) and k in value:
+                value = value[k]
+            else:
+                return default
+        return value
+
+    def set(self, key, value, persist=True):
+        """设置配置值（支持点分隔路径）
+
+        Args:
+            key: 配置键，支持点分隔路径
+            value: 配置值
+            persist: 是否立即保存到文件
+        """
+        keys = key.split('.')
+        config = self._config
+        # 遍历到倒数第二层，创建缺失的字典
+        for k in keys[:-1]:
+            if k not in config:
+                config[k] = {}
+            elif not isinstance(config[k], dict):
+                config[k] = {}
+            config = config[k]
+        # 设置最终值
+        config[keys[-1]] = value
+
+        # 保存到文件
+        if persist:
+            try:
+                with open(self._config_path, 'w', encoding='utf-8') as f:
+                    json.dump(self._config, f, indent=2, ensure_ascii=False)
+            except (OSError, IOError) as e:
+                print(f"[配置系统] 保存配置失败: {e}")
+
+    def get_redaction_rules(self):
+        """获取脱敏规则"""
+        return self.get('redaction.default_rules', {})
+
+# 初始化配置
+config = SimpleConfig()
 
 # === 核心防崩溃设置 ===
 cv2.setNumThreads(0)
@@ -70,7 +135,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 # === 软件配置 ===
 # v37.0: 从配置读取，失败时使用硬编码后备
 APP_NAME = config.get("app.name", "PrivacyGuard 脱敏卫士") if config else "PrivacyGuard 脱敏卫士"
-VERSION = "37.0 - Config System"
+VERSION = "37.4.0 - Single OCR Engine (RapidOCR)"
 
 # === 常量定义 ===
 # v37.0: 从配置读取，失败时使用硬编码后备
@@ -251,12 +316,18 @@ class TempFileManager:
 
 
 def validate_safe_path(path, allowed_extensions=None):
-    """验证文件路径安全（v36.2: 防止命令注入和路径遍历）
+    """验证文件路径安全（v37.1: 跨平台兼容修复）
 
     安全特性:
-    - 命令注入防护: 过滤危险字符 (; | & $ ` $( > < \n \r)
+    - 命令注入防护: 过滤 shell 元字符 (; | & $ ` $( > < \n \r)
     - 路径遍历防护: 规范化路径并限制允许范围
     - 扩展名验证: 支持白名单机制
+    - 跨平台兼容: Windows 使用反斜杠作为路径分隔符
+
+    v37.1 变更:
+    - 修复 Windows 路径验证失败问题（反斜杠不再被视为危险字符）
+    - 移除硬编码的 Unix 临时目录，改为动态检测
+    - 添加平台检测逻辑
 
     Args:
         path: 要验证的路径
@@ -277,11 +348,32 @@ def validate_safe_path(path, allowed_extensions=None):
     if len(path) > 4096:
         return False, "路径过长"
 
-    # 检查危险字符 (v36.5: 添加反斜杠和空字节检查)
-    dangerous_chars = [';', '|', '&', '$', '`', '$(', '>', '<', '\n', '\r', '\\', '%00', '%0a', '%0d']
-    for char in dangerous_chars:
+    # 检测当前平台
+    import platform
+    is_windows = platform.system() == 'Windows'
+
+    # 检查危险字符 (v37.1: 跨平台兼容修复)
+    # Shell 元字符（用于命令注入攻击）
+    # 注意：反斜杠在 Windows 上是合法路径分隔符
+    shell_metacharacters = [';', '|', '&', '$', '`', '$(', '>', '<', '\n', '\r']
+    # URL 编码的危险序列
+    url_encoded_dangerous = ['%00', '%0a', '%0d']
+
+    # 检查 shell 元字符
+    for char in shell_metacharacters:
         if char in path:
             return False, f"路径包含危险字符: {repr(char)}"
+
+    # 在非 Windows 系统上，反斜杠是可疑的（可能是逃逸字符）
+    # 在 Windows 上，反斜杠是合法的路径分隔符
+    backslash_char = '\\'
+    if not is_windows and backslash_char in path:
+        return False, f"路径包含危险字符: {repr(backslash_char)}"
+
+    # 检查 URL 编码的危险序列
+    for seq in url_encoded_dangerous:
+        if seq.lower() in path.lower():
+            return False, f"路径包含危险序列: {seq}"
 
     # 检查空字节注入 (v36.5: 防止空字节绕过)
     if '\x00' in path:
@@ -293,13 +385,26 @@ def validate_safe_path(path, allowed_extensions=None):
     except (TypeError, ValueError, OSError) as e:
         return False, f"路径格式错误: {e}"
 
-    # 检查路径遍历攻击
-    # 获取系统临时目录和用户主目录作为允许范围
-    temp_dir = os.path.normpath(os.path.abspath(os.path.expanduser("~")))
-    if not normalized.startswith(temp_dir) and not any(
-        normalized.startswith(os.path.normpath(os.path.abspath(p)))
-        for p in [os.path.expanduser("~"), '/tmp', '/var/tmp', tempfile.gettempdir()]
-    ):
+    # 检查路径遍历攻击 (v37.1: 跨平台允许目录)
+    # 构建跨平台的允许目录列表
+    allowed_base_dirs = [
+        os.path.normpath(os.path.abspath(os.path.expanduser("~"))),  # 用户主目录
+        os.path.normpath(os.path.abspath(tempfile.gettempdir())),    # 系统临时目录
+    ]
+
+    # 在 Unix 系统上添加传统临时目录
+    if not is_windows:
+        for unix_tmp in ['/tmp', '/var/tmp']:
+            if os.path.isdir(unix_tmp):
+                allowed_base_dirs.append(os.path.normpath(os.path.abspath(unix_tmp)))
+
+    # 检查路径是否在允许范围内
+    path_in_allowed_dir = any(
+        normalized.startswith(allowed_dir)
+        for allowed_dir in allowed_base_dirs
+    )
+
+    if not path_in_allowed_dir:
         # 允许当前工作目录下的文件
         cwd = os.path.normpath(os.path.abspath('.'))
         if not normalized.startswith(cwd):
@@ -447,9 +552,54 @@ class SettingsDialog(QDialog):
         box_enhance.setLayout(v_enhance)
         layout.addWidget(box_enhance)
 
+        # v37.4.0: 4. OCR 检测框调节（移除引擎选择，只保留 RapidOCR）
+        box_ocr = QGroupBox("4. OCR 检测框调节")
+        v_ocr = QVBoxLayout()
+
+        # v37.3.5: 检测框大小调节（支持负值扩大、正值收缩）
+        h_adjust = QHBoxLayout()
+        h_adjust.addWidget(QLabel("检测框调节:"))
+
+        # 读取当前配置值（新配置名）
+        adjust_ratio = config.get("ocr.box_adjust_ratio", 0.0) if config else 0.0
+
+        self.slider_adjust = QSlider(Qt.Orientation.Horizontal)
+        self.slider_adjust.setRange(-30, 50)  # -30% 到 +50%
+        self.slider_adjust.setValue(int(adjust_ratio * 100))
+        self.slider_adjust.valueChanged.connect(self._on_adjust_changed)
+        h_adjust.addWidget(self.slider_adjust)
+
+        self.label_adjust_value = QLabel(f"{int(adjust_ratio * 100)}%")
+        self.label_adjust_value.setMinimumWidth(40)
+        h_adjust.addWidget(self.label_adjust_value)
+
+        v_ocr.addLayout(h_adjust)
+
+        adjust_info = QLabel("提示：负值扩大，正值收缩，0保持原样（默认0%）")
+        adjust_info.setStyleSheet("color: gray; font-size: 11px;")
+        v_ocr.addWidget(adjust_info)
+
+        # 说明标签
+        info_text = (
+            "\n引擎说明：\n"
+            "• RapidOCR：默认 OCR 引擎，速度快，适合大文档批量处理\n"
+        )
+
+        info = QLabel(info_text)
+        info.setStyleSheet("color: gray; font-size: 11px;")
+        info.setWordWrap(True)
+        v_ocr.addWidget(info)
+
+        box_ocr.setLayout(v_ocr)
+        layout.addWidget(box_ocr)
+
         btn_ok = QPushButton("保存设置")
         btn_ok.clicked.connect(self.save_settings)
         layout.addWidget(btn_ok)
+
+    def _on_adjust_changed(self, value):
+        """v37.3.5: 检测框调节滑块值变化回调"""
+        self.label_adjust_value.setText(f"{value}%")
 
     def save_settings(self):
         self.selected_rules = [DEFAULT_RULES[name] for name, cb in self.checks.items() if cb.isChecked()]
@@ -459,12 +609,18 @@ class SettingsDialog(QDialog):
         self.offset_x = self.spin_offset_x.value()
         self.offset_w = self.spin_offset_w.value()
 
+        # v37.4.0: 保存检测框调节比例
+        self.box_adjust_ratio = self.slider_adjust.value() / 100.0
+
         # v37.0: 保存到配置文件
         if self.config:
             try:
                 self.config.set("redaction.scan.default_level", self.scan_level, persist=False)
                 self.config.set("redaction.offset.default_x", self.offset_x, persist=False)
-                self.config.set("redaction.offset.default_w", self.offset_w, persist=True)
+                self.config.set("redaction.offset.default_w", self.offset_w, persist=False)
+                # v37.4.0: 移除 OCR 引擎选择，只保留 RapidOCR
+                # v37.3.5: 保存检测框调节比例（新配置名）
+                self.config.set("ocr.box_adjust_ratio", self.box_adjust_ratio, persist=True)
             except Exception as e:
                 print(f"[设置] 保存配置失败: {e}")
 
@@ -506,8 +662,9 @@ class ImageListDialog(QDialog):
             try:
                 pixmap = QPixmap(path).scaled(100, 100, Qt.AspectRatioMode.KeepAspectRatio)
                 item.setIcon(QIcon(pixmap))
-            except Exception:
+            except (OSError, IOError, ValueError) as e:
                 # 如果缩略图生成失败，使用默认图标
+                print(f"[ImageMergeDialog] 缩略图生成失败: {path}: {e}")
                 pass
             self.list_widget.addItem(item)
 
@@ -609,18 +766,49 @@ class FeedbackDialog(QDialog):
         """)
         social_layout = QVBoxLayout(social_group)
 
-        # 统一账号行
-        account_name = "池州汪律的Ai 进化论"
-        row = QHBoxLayout()
-        platforms_label = QLabel("微信公众号/抖音/小红书/B站（同号）:")
-        platforms_label.setStyleSheet(f"color: {self.theme['text_secondary']};")
-        row.addWidget(platforms_label)
+        # 微信公众号行
+        wx_account = "池州汪律的Ai进化论"
+        row1 = QHBoxLayout()
+        wx_label = QLabel("微信公众号:")
+        wx_label.setStyleSheet(f"color: {self.theme['text_secondary']};")
+        row1.addWidget(wx_label)
 
-        account_label = QLabel(account_name)
-        account_label.setStyleSheet(f"color: {self.theme['text']}; font-weight: 500;")
-        account_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        row.addWidget(account_label)
-        row.addStretch()
+        wx_account_label = QLabel(wx_account)
+        wx_account_label.setStyleSheet(f"color: {self.theme['text']}; font-weight: 500;")
+        wx_account_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        row1.addWidget(wx_account_label)
+        row1.addStretch()
+
+        wx_qr_btn = QPushButton("扫码关注")
+        wx_qr_btn.setFixedSize(70, 24)
+        wx_qr_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {self.theme['primary']};
+                border: none;
+                border-radius: 4px;
+                font-size: 11px;
+                color: white;
+            }}
+            QPushButton:hover {{
+                background: #0056CC;
+            }}
+        """)
+        wx_qr_btn.clicked.connect(self._show_wx_qrcode)
+        row1.addWidget(wx_qr_btn)
+        social_layout.addLayout(row1)
+
+        # 其他平台行
+        row2 = QHBoxLayout()
+        platforms_label = QLabel("抖音/小红书/B站（同号）:")
+        platforms_label.setStyleSheet(f"color: {self.theme['text_secondary']};")
+        row2.addWidget(platforms_label)
+
+        other_account = "池州有个汪律师"
+        other_label = QLabel(other_account)
+        other_label.setStyleSheet(f"color: {self.theme['text']}; font-weight: 500;")
+        other_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        row2.addWidget(other_label)
+        row2.addStretch()
 
         copy_btn = QPushButton("复制")
         copy_btn.setFixedSize(50, 24)
@@ -636,9 +824,9 @@ class FeedbackDialog(QDialog):
                 background: {self.theme['pressed']};
             }}
         """)
-        copy_btn.clicked.connect(lambda checked, a=account_name: self._copy_to_clipboard(a))
-        row.addWidget(copy_btn)
-        social_layout.addLayout(row)
+        copy_btn.clicked.connect(lambda checked, a=other_account: self._copy_to_clipboard(a))
+        row2.addWidget(copy_btn)
+        social_layout.addLayout(row2)
 
         layout.addWidget(social_group)
 
@@ -795,6 +983,93 @@ class FeedbackDialog(QDialog):
         # 显示复制成功提示
         if self.parent():
             QMessageBox.information(self.parent(), "复制成功", f"已复制: {text}")
+
+    def _show_wx_qrcode(self):
+        """显示微信公众号二维码对话框"""
+        dialog = QDialog(self)
+        dialog.setWindowTitle("关注微信公众号")
+        dialog.setFixedSize(400, 480)
+        dialog.setStyleSheet(f"""
+            QDialog {{
+                background: {self.theme['background']}
+            }}
+        """)
+
+        layout = QVBoxLayout(dialog)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # 标题
+        title = QLabel("扫码关注微信公众号")
+        title.setStyleSheet(f"""
+            color: {self.theme['text']};
+            font-size: 16px;
+            font-weight: bold;
+            padding: 10px;
+        """)
+        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(title)
+
+        # 公众号名称
+        name_label = QLabel("池州汪律的Ai进化论")
+        name_label.setStyleSheet(f"""
+            color: {self.theme['primary']};
+            font-size: 18px;
+            font-weight: bold;
+            padding: 5px;
+        """)
+        name_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(name_label)
+
+        # 二维码图片
+        qr_path = resource_path(os.path.join("assets", "wx_qrcode.png"))
+        if os.path.exists(qr_path):
+            qr_label = QLabel()
+            pixmap = QPixmap(qr_path)
+            if not pixmap.isNull():
+                scaled_pixmap = pixmap.scaled(280, 280, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+                qr_label.setPixmap(scaled_pixmap)
+                qr_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                layout.addWidget(qr_label)
+            else:
+                qr_label.setText("二维码加载失败")
+                qr_label.setStyleSheet(f"color: {self.theme['text']};")
+                layout.addWidget(qr_label)
+        else:
+            qr_label = QLabel("请添加微信公众号二维码图片至\nassets/wx_qrcode.png")
+            qr_label.setStyleSheet(f"color: {self.theme['text']};")
+            qr_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout.addWidget(qr_label)
+
+        # 提示文字
+        hint = QLabel("微信扫一扫，关注公众号获取更多AI工具")
+        hint.setStyleSheet(f"""
+            color: {self.theme['text_secondary']};
+            font-size: 12px;
+            padding: 10px;
+        """)
+        hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        hint.setWordWrap(True)
+        layout.addWidget(hint)
+
+        # 关闭按钮
+        close_btn = QPushButton("关闭")
+        close_btn.setFixedSize(100, 32)
+        close_btn.setStyleSheet(f"""
+            QPushButton {{
+                background: {self.theme['primary']};
+                color: white;
+                border: none;
+                border-radius: 6px;
+                font-size: 13px;
+            }}
+            QPushButton:hover {{
+                background: #0056CC;
+            }}
+        """)
+        close_btn.clicked.connect(dialog.close)
+        layout.addWidget(close_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        dialog.exec()
 
     def _open_feedback(self):
         """打开反馈问卷链接"""
@@ -1094,9 +1369,18 @@ class SinglePageCanvas(QLabel):
             self.update()
 
     # v35.1: 增强滚轮事件 - 支持缩放和翻页
+    # v37.3.6: 添加滚动阈值，防止 macOS 双指轻触误触发翻页
+    SCROLL_THRESHOLD = 10  # 滚动阈值（像素），忽略小于此值的小幅滚动
+
     def wheelEvent(self, event: QWheelEvent):
         modifiers = QApplication.keyboardModifiers()
         delta = event.angleDelta().y()
+
+        # v37.3.6: 忽略非常小的滚动量（macOS 双指轻触产生的噪声）
+        if abs(delta) < self.SCROLL_THRESHOLD:
+            # 小幅滚动只传递给父类处理正常滚动，不触发翻页
+            super().wheelEvent(event)
+            return
 
         # Ctrl/Cmd + 滚轮：缩放（保持原有功能）
         if modifiers == Qt.KeyboardModifier.ControlModifier or modifiers == Qt.KeyboardModifier.MetaModifier:
@@ -1128,8 +1412,10 @@ class OCRWorker(QThread):
     finished_signal = pyqtSignal(dict)
     progress_signal = pyqtSignal(int)
     page_result_signal = pyqtSignal(int, list)  # v36.4: 线程安全 - 逐页发送结果 (页码, 矩形列表)
+    error_signal = pyqtSignal(str)  # v37.0.5: 错误信号
 
-    def __init__(self, pdf_path, rules, use_enhance, custom_keywords, scan_scale, off_x, off_w):
+    def __init__(self, pdf_path, rules, use_enhance, custom_keywords, scan_scale, off_x, off_w,
+                 use_char_level_ocr: bool = False):  # v37.4.0: 参数保留但不再使用
         super().__init__()
         # 不再加载整个文件到内存，只保存路径（v24 内存优化）
         self.pdf_path = pdf_path
@@ -1140,6 +1426,12 @@ class OCRWorker(QThread):
         self.scan_scale = scan_scale
         self.off_x = off_x
         self.off_w = off_w
+
+        # v37.4.0: 只使用 RapidOCR，移除 PaddleOCR 支持
+        self.use_char_level_ocr = False  # 不再使用字符级 OCR
+
+        # v37.3.5: 读取检测框调节比例配置（支持负值扩大、正值收缩）
+        self.box_adjust_ratio = config.get("ocr.box_adjust_ratio", 0.0) if config else 0.0
         
     def preprocess_image(self, img_np):
         try:
@@ -1152,36 +1444,232 @@ class OCRWorker(QThread):
             print(f"图像处理错误: {e}")
             return img_np
 
-    def calculate_sub_rect(self, box, text, match_span):
+    def _shrink_box(self, box, x_ratio=0.15, y_ratio=0.1):
+        """
+        v37.3.3: 收缩检测框边距，解决 OCR 检测框过大的问题
+
+        Args:
+            box: OCR 检测框 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+            x_ratio: 水平方向收缩比例（默认 15%，即每边收缩 7.5%）
+            y_ratio: 垂直方向收缩比例（默认 10%，即每边收缩 5%）
+
+        Returns:
+            收缩后的检测框
+        """
+        x_coords = [p[0] for p in box]
+        y_coords = [p[1] for p in box]
+        x_min, x_max = min(x_coords), max(x_coords)
+        y_min, y_max = min(y_coords), max(y_coords)
+
+        width = x_max - x_min
+        height = y_max - y_min
+
+        # 向内收缩（每边收缩一半比例）
+        x_shrink = width * x_ratio / 2
+        y_shrink = height * y_ratio / 2
+
+        new_x_min = x_min + x_shrink
+        new_x_max = x_max - x_shrink
+        new_y_min = y_min + y_shrink
+        new_y_max = y_max - y_shrink
+
+        # 确保不会收缩到负数
+        if new_x_min >= new_x_max:
+            new_x_min = x_min
+            new_x_max = x_max
+        if new_y_min >= new_y_max:
+            new_y_min = y_min
+            new_y_max = y_max
+
+        return [[new_x_min, new_y_min], [new_x_max, new_y_min],
+                [new_x_max, new_y_max], [new_x_min, new_y_max]]
+
+    def _detect_text_boundaries(self, img_region, box):
+        """
+        v37.3.7: 分析检测框区域内的像素分布，找到实际文字的精确边界
+
+        通过水平投影分析，找到检测框内实际文字像素的左右边界，
+        解决OCR检测框包含额外空白导致的定位偏移问题。
+
+        Args:
+            img_region: 扫描图像（BGR格式）
+            box: OCR 检测框 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+
+        Returns:
+            (actual_left, actual_right): 实际文字的左右边界（在扫描图像坐标系下）
+        """
         try:
-            line_x_min = min([p[0] for p in box])
-            line_x_max = max([p[0] for p in box])
+            # 1. 获取检测框的边界
+            x_coords = [p[0] for p in box]
+            y_coords = [p[1] for p in box]
+            x_min = int(max(0, min(x_coords)))
+            x_max = int(min(img_region.shape[1], max(x_coords)))
+            y_min = int(max(0, min(y_coords)))
+            y_max = int(min(img_region.shape[0], max(y_coords)))
+
+            # 确保区域有效
+            if x_max <= x_min or y_max <= y_min:
+                return int(min(x_coords)), int(max(x_coords))
+
+            # 2. 裁剪检测框区域
+            roi = img_region[y_min:y_max, x_min:x_max]
+            if roi.size == 0:
+                return int(min(x_coords)), int(max(x_coords))
+
+            # 3. 转灰度 + 二值化（使用OTSU自适应阈值）
+            gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+            _, binary = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+
+            # 4. 水平投影（计算每列的黑色像素数量）
+            h_projection = np.sum(binary, axis=0)
+
+            # 5. 找到非零区域的边界
+            # 使用一个小阈值来过滤噪声
+            threshold = max(1, binary.shape[0] * 0.05)  # 至少5%的行有黑色像素
+            text_cols = np.where(h_projection > threshold)[0]
+
+            if len(text_cols) == 0:
+                # 没有检测到文字，返回原始边界
+                return int(min(x_coords)), int(max(x_coords))
+
+            # 6. 找到文字的左右边界
+            actual_left = x_min + text_cols[0]
+            actual_right = x_min + text_cols[-1]
+
+            return actual_left, actual_right
+
+        except Exception as e:
+            # 出错时返回原始边界
+            print(f"[DEBUG] _detect_text_boundaries 错误: {e}")
+            x_coords = [p[0] for p in box]
+            return int(min(x_coords)), int(max(x_coords))
+
+    def calculate_sub_rect(self, box, text, match_span, img_region=None):
+        """
+        计算子字符串的矩形区域 (v37.4.0: 简化，只保留行级计算)
+
+        Args:
+            box: 整行文本的检测框 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
+            text: 整行文本
+            match_span: 匹配位置 (start_idx, end_idx)
+            img_region: v37.3.7 扫描图像区域，用于像素边界检测
+
+        Returns:
+            QRectF: 子字符串的矩形区域
+        """
+        try:
+            start_idx, end_idx = match_span
+
+            # v37.4.0: 只使用行级估算（RapidOCR）
+            return self._calculate_from_line(box, text, start_idx, end_idx, img_region=img_region)
+        except (ValueError, ZeroDivisionError, TypeError) as e:
+            print(f"[WARN] calculate_sub_rect 错误: {e}")
+            return None
+
+    def _calculate_from_line(self, box, text, start_idx, end_idx, img_region=None):
+        """
+        使用行级坐标估算子字符串位置（RapidOCR）
+        v37.3.7: 基于像素边界检测的精准定位 + 智能字符宽度权重
+
+        Args:
+            box: 检测框
+            text: 文本
+            start_idx: 起始字符索引
+            end_idx: 结束字符索引
+            img_region: v37.3.7 扫描图像区域，用于像素边界检测
+
+        Returns:
+            QRectF: 估算的子字符串区域（PDF坐标系）
+        """
+        try:
+            # v37.3.7: 优先使用像素边界检测，找到实际文字的精确边界
+            if img_region is not None:
+                line_x_min, line_x_max = self._detect_text_boundaries(img_region, box)
+            else:
+                # 回退到收缩检测框方法
+                shrunk_box = self._shrink_box(box, x_ratio=self.box_adjust_ratio, y_ratio=self.box_adjust_ratio * 0.6)
+                line_x_min = min([p[0] for p in shrunk_box])
+                line_x_max = max([p[0] for p in shrunk_box])
+
+            # Y坐标始终使用原始检测框
             line_y_min = min([p[1] for p in box])
             line_y_max = max([p[1] for p in box])
-            
+
             if len(text) == 0 or line_x_max <= line_x_min:
                 return None
-            avg_char_width = (line_x_max - line_x_min) / len(text)
-            start_idx, end_idx = match_span
-            
-            sub_x = line_x_min + (start_idx * avg_char_width)
-            sub_w = (end_idx - start_idx) * avg_char_width
-            
-            final_x = sub_x - self.off_x * self.scan_scale
-            final_w = sub_w - self.off_w * self.scan_scale
-            
-            return QRectF(final_x, line_y_min, final_w, (line_y_max - line_y_min))
-        except (ValueError, ZeroDivisionError, TypeError):
+
+            # v37.3.7: 智能字符宽度估算（区分中文/数字/英文）
+            # 中文字符通常比数字宽约 1.8 倍
+            def get_char_weight(char):
+                """根据字符类型返回宽度权重"""
+                if '\u4e00' <= char <= '\u9fff':  # CJK统一汉字
+                    return 1.0
+                elif '\u3400' <= char <= '\u4dbf':  # CJK扩展A
+                    return 1.0
+                elif '\uF900' <= char <= '\uFAFF':  # CJK兼容汉字
+                    return 1.0
+                else:
+                    return 0.55  # 数字、英文、符号等（约为中文的55%宽度）
+
+            # 计算权重
+            total_weight = sum(get_char_weight(c) for c in text)
+            prefix_weight = sum(get_char_weight(c) for c in text[:start_idx])
+            match_weight = sum(get_char_weight(c) for c in text[start_idx:end_idx])
+
+            # 防止除零
+            if total_weight <= 0:
+                total_weight = len(text)
+                prefix_weight = start_idx
+                match_weight = end_idx - start_idx
+
+            # 按权重比例计算位置和宽度
+            line_width = line_x_max - line_x_min
+            sub_x = line_x_min + (prefix_weight / total_weight) * line_width
+            sub_w = (match_weight / total_weight) * line_width
+
+            # v37.3.7: 添加小边距，防止覆盖到相邻字符（1像素，在扫描坐标系下）
+            margin = 1.0
+            sub_x += margin
+            sub_w = max(5, sub_w - margin * 2)
+
+            # v37.3.2: 修复坐标转换逻辑 - 先转PDF坐标，再应用偏移
+            # 扫描图像坐标 -> PDF坐标
+            pdf_x = sub_x / self.scan_scale
+            pdf_y = line_y_min / self.scan_scale
+            pdf_w = sub_w / self.scan_scale
+            pdf_h = (line_y_max - line_y_min) / self.scan_scale
+
+            # 在PDF坐标系下应用偏移（像素值）
+            final_x = pdf_x - self.off_x
+            final_w = max(5, pdf_w - self.off_w)  # 最小宽度 5
+
+            return QRectF(final_x, pdf_y, final_w, pdf_h)
+        except (ValueError, ZeroDivisionError, TypeError) as e:
+            print(f"[WARN] _calculate_from_line 错误: {e}")
             return None
 
     def run(self):
+        # v37.2.0: 双 OCR 引擎支持（RapidOCR + PaddleOCR）
+        # v37.0.6: 重构信号发送顺序，确保资源清理后再发送信号
+        # v37.0.5: 增强异常处理，捕获所有可能的错误
         # v36.4: 使用信号槽机制替代共享字典，解决线程安全问题
         # 直接打开文件，不加载到内存（v24 内存优化）
         # 支持取消并保存部分结果（v36.3）
+        error_msg = None
         doc = None
         try:
+            # v37.4.0: 直接使用 RapidOCR，移除引擎管理器
+            from privacyguard.ocr.rapidocr import RapidOCREngine
+            ocr_engine = RapidOCREngine()
+
+            if not ocr_engine.is_available():
+                error_msg = "RapidOCR 引擎不可用，请检查依赖安装"
+                print(f"[OCR ERROR] {error_msg}")
+                return
+
+            print(f"[OCR] 使用引擎: {ocr_engine.name}")
+
             doc = fitz.open(self.pdf_path)
-            ocr_engine = None
             total = len(doc)
             SCAN_SCALE = self.scan_scale
             last_emit_time = 0
@@ -1220,30 +1708,39 @@ class OCRWorker(QThread):
                                     print(f"搜索文本错误: {e}")
                                     pass
                     else:
-                        if ocr_engine is None:
-                            ocr_engine = RapidOCR()
-
+                        # v37.2.0: 使用统一的 OCR 引擎接口
                         pix = page.get_pixmap(matrix=fitz.Matrix(SCAN_SCALE, SCAN_SCALE))
                         img_data = np.frombuffer(pix.tobytes("png"), dtype=np.uint8)
                         img_np = cv2.imdecode(img_data, cv2.IMREAD_COLOR)
 
                         scan_img = self.preprocess_image(img_np) if self.use_enhance else img_np
-                        ocr_result, _ = ocr_engine(scan_img)
 
-                        if ocr_result:
-                            for line in ocr_result:
-                                box, text = line[0], line[1]
-                                all_patterns = self.rules + self.custom_keywords
-                                for pat in all_patterns:
-                                    for match in re.finditer(pat, text, re.IGNORECASE):
-                                        sub_rect = self.calculate_sub_rect(box, text, match.span())
-                                        if sub_rect:
-                                            rects.append(QRectF(
-                                                sub_rect.x()/SCAN_SCALE,
-                                                sub_rect.y()/SCAN_SCALE,
-                                                sub_rect.width()/SCAN_SCALE,
-                                                sub_rect.height()/SCAN_SCALE
-                                            ))
+                        # v37.4.0: 使用 RapidOCR 引擎
+                        try:
+                            ocr_results = ocr_engine.recognize(scan_img)
+                        except Exception as e:
+                            print(f"[OCR WARN] 页面 {i} OCR 失败: {type(e).__name__}: {e}")
+                            ocr_results = []
+
+                        # v37.4.0: 处理 OCR 结果（只使用 RapidOCR，移除字符级坐标）
+                        for result in ocr_results:
+                            all_patterns = self.rules + self.custom_keywords
+                            for pat in all_patterns:
+                                for match in re.finditer(pat, result.text, re.IGNORECASE):
+                                    # v37.3.7: 传递图像区域用于像素边界检测
+                                    sub_rect = self.calculate_sub_rect(
+                                        result.box, result.text, match.span(),
+                                        img_region=scan_img
+                                    )
+                                    if sub_rect:
+                                        # v37.3.2: calculate_sub_rect 现在直接返回 PDF 坐标
+                                        # 不需要再除以 SCAN_SCALE
+                                        rects.append(QRectF(
+                                            sub_rect.x(),
+                                            sub_rect.y(),
+                                            sub_rect.width(),
+                                            sub_rect.height()
+                                        ))
 
                     # v36.4: 通过信号发送单页结果（线程安全）
                     self.page_result_signal.emit(i, rects)
@@ -1259,22 +1756,26 @@ class OCRWorker(QThread):
                 if self.isInterruptionRequested():
                     break  # 退出循环，但保留已扫描结果
 
-                # 批次间清理：释放 OCR 引擎资源（v24 内存优化）
-                if ocr_engine and batch_end < total:
-                    del ocr_engine
-                    ocr_engine = None
+                # v37.2.0: 移除 OCR 引擎释放（引擎管理器管理生命周期）
+                # 仅执行垃圾回收
+                if batch_end < total:
                     import gc
                     gc.collect()
 
-            # v36.4: 发射空字典作为完成信号，实际结果已通过 page_result_signal 发送
-            self.finished_signal.emit({})
-
-        except (IOError, OSError, RuntimeError, ValueError) as e:
-            print(f"OCR处理错误: {e}")
-            self.finished_signal.emit({})
+        except Exception as e:
+            # v37.0.6: 只记录错误，不在此处发送信号
+            error_msg = f"OCR 处理错误: {type(e).__name__}: {e}"
+            print(f"[OCR ERROR] {error_msg}")
+            traceback.print_exc()
         finally:
+            # v37.0.6: 先清理资源
             if doc:
                 doc.close()
+
+        # v37.0.6: 在资源清理完成后发送信号，避免死锁
+        if error_msg:
+            self.error_signal.emit(error_msg)
+        self.finished_signal.emit({})
 
 # === WebView Bridge：Python 与 JavaScript 通信 ===
 class WebViewBridge(QObject):
@@ -2053,6 +2554,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle(f"{APP_NAME} v{VERSION} - Powered by li (汪立律师)")
 
         # v37.0: 从配置读取窗口尺寸，失败时使用硬编码后备
+        # v37.2.0: 读取 OCR 引擎配置
         if config:
             min_width = config.get("app.window.min_width", 900)
             min_height = config.get("app.window.min_height", 600)
@@ -2062,6 +2564,7 @@ class MainWindow(QMainWindow):
             self.scan_level = config.get("redaction.scan.default_level", 2.0)
             self.offset_x = config.get("redaction.offset.default_x", 0)
             self.offset_w = config.get("redaction.offset.default_w", 0)
+            # v37.4.0: 移除 OCR 引擎配置，只使用 RapidOCR
         else:
             min_width, min_height = 900, 600
             default_width, default_height = 1300, 900
@@ -2145,8 +2648,9 @@ class MainWindow(QMainWindow):
                     return 'dark'
                 return 'light'
 
-        except Exception:
-            # 检测失败，默认浅色
+        except (OSError, IOError, KeyError, ValueError, ImportError) as e:
+            # 检测失败（注册表读取错误、环境变量异常等），默认浅色
+            print(f"[MainWindow] 主题检测失败: {e}")
             return 'light'
 
     def _restore_window_state(self):
@@ -2171,6 +2675,114 @@ class MainWindow(QMainWindow):
 
         # 自动重新适应（保持页面完整显示）
         self.fit_page()
+
+    def _cleanup_before_open(self):
+        """v37.0.6: 打开新文档前的完整资源清理
+
+        解决问题：
+        - 打开新文档时卡顿/未响应
+        - 文件选择窗口内容不显示
+        """
+        # 1. 停止并等待活跃的 worker 线程
+        if self.active_worker and self.active_worker.isRunning():
+            self.active_worker.requestInterruption()
+            # 等待线程结束（最多 2 秒）
+            self.active_worker.wait(2000)
+            self.active_worker = None
+
+        # 2. 清理 QWebEngineView（Word 预览）
+        # QWebEngineView 占用大量资源，需要正确清理
+        if hasattr(self, 'word_preview') and self.word_preview:
+            try:
+                # 停止加载
+                self.word_preview.stop()
+                # 清空内容
+                self.word_preview.setHtml('')
+                # 隐藏
+                self.word_preview.hide()
+            except Exception as e:
+                print(f"[清理] 清理 word_preview 时出错: {e}")
+
+        # 3. 关闭 PDF 文档
+        if self.doc:
+            try:
+                self.doc.close()
+            except Exception as e:
+                print(f"[清理] 关闭 PDF 文档时出错: {e}")
+            self.doc = None
+
+        # 4. 重置状态变量
+        self.word_doc = None
+        self.word_data = {}
+        self.page_data = {}
+        self.current_page = None
+        self.doc_type = None
+        self.file_path = None
+
+        # 5. v37.0.8: 重置 canvas 显示状态（不删除固定实例）
+        # canvas_left 和 canvas_right 是固定实例，在 setup_ui() 中创建
+        # 只需清除显示内容，不需要删除
+        # v37.0.9: 修复属性名错误 - 使用正确的 rects_manual 和 rects_ocr
+        if hasattr(self, 'canvas_left') and self.canvas_left:
+            try:
+                # 检查 C++ 对象是否仍然有效
+                _ = self.canvas_left.size()  # 如果对象已删除，这里会抛出异常
+                self.canvas_left.clear()  # 清除显示
+                self.canvas_left.page_index = 0  # 重置页面索引
+                self.canvas_left.rects_manual = []  # 清除手动脱敏区域（正确的属性名）
+                self.canvas_left.rects_ocr = []  # 清除 OCR 区域（正确的属性名）
+            except RuntimeError:
+                print("[清理] canvas_left 的 C++ 对象已被删除，跳过清理")
+
+        if hasattr(self, 'canvas_right') and self.canvas_right:
+            try:
+                _ = self.canvas_right.size()
+                self.canvas_right.clear()
+                self.canvas_right.page_index = 1
+                self.canvas_right.rects_manual = []
+                self.canvas_right.rects_ocr = []
+            except RuntimeError:
+                print("[清理] canvas_right 的 C++ 对象已被删除，跳过清理")
+
+        # 6. 处理待处理的 Qt 事件，确保 UI 响应
+        QApplication.processEvents()
+
+        print("[清理] 打开新文档前的资源清理完成")
+
+    def _is_canvas_valid(self, canvas):
+        """v37.0.9: 检查 canvas 的 C++ 对象是否仍然有效"""
+        if canvas is None:
+            return False
+        try:
+            # 尝试访问一个简单的属性来验证对象是否有效
+            _ = canvas.size()
+            return True
+        except RuntimeError:
+            # C++ 对象已被删除
+            return False
+
+    def _safe_canvas_update(self, canvas, pixmap, scale, ocr_rects, manual_rects):
+        """v37.0.9: 安全地更新 canvas 内容"""
+        if not self._is_canvas_valid(canvas):
+            print(f"[警告] canvas 无效，跳过更新")
+            return False
+        try:
+            canvas.update_content(pixmap, scale, ocr_rects, manual_rects)
+            return True
+        except RuntimeError as e:
+            print(f"[错误] 更新 canvas 时出错: {e}")
+            return False
+
+    def _safe_canvas_set_mask_color(self, canvas, color):
+        """v37.0.9: 安全地设置 canvas 遮罩颜色"""
+        if not self._is_canvas_valid(canvas):
+            return False
+        try:
+            canvas.set_mask_color(color)
+            return True
+        except RuntimeError as e:
+            print(f"[错误] 设置 canvas 颜色时出错: {e}")
+            return False
 
     def _app_exit_cleanup(self):
         """应用退出时的清理（v24 稳定性优化）"""
@@ -2582,6 +3194,8 @@ class MainWindow(QMainWindow):
 
     def open_settings(self):
         # v37.0: 传递配置管理器以支持配置持久化
+        # v37.4.0: 移除 OCR 引擎选择，只保留 RapidOCR
+
         dlg = SettingsDialog(self, self.active_rules, self.use_enhance, self.custom_keywords,
                             self.scan_level, self.offset_x, self.offset_w, config_manager=config)
         if dlg.exec():
@@ -2654,22 +3268,18 @@ class MainWindow(QMainWindow):
     def open_pdf(self):
         """打开文件（支持图片多选）"""
         try:
+            # v37.0.6: 在打开新文档前完整清理所有资源
+            self._cleanup_before_open()
+
             # 先清理临时文件
             self._cleanup_temp_file()
 
-            # v36: 应用文件对话框样式
-            app = QApplication.instance()
-            original_style = app.styleSheet()
-            app.setStyleSheet(self._get_file_dialog_style())
-
-            try:
-                fnames, _ = QFileDialog.getOpenFileNames(
-                    self, "选择文件", "",
-                    "支持的文件 (*.pdf *.doc *.docx *.jpg *.jpeg *.png *.bmp *.tiff)",
-                    options=QFileDialog.Option.DontUseNativeDialog
-                )
-            finally:
-                app.setStyleSheet(original_style)
+            # v37.0.6: 使用原生文件对话框，更稳定
+            # 不使用 DontUseNativeDialog，让系统处理渲染
+            fnames, _ = QFileDialog.getOpenFileNames(
+                self, "选择文件", "",
+                "支持的文件 (*.pdf *.doc *.docx *.jpg *.jpeg *.png *.bmp *.tiff)"
+            )
 
             if not fnames:
                 return
@@ -3019,6 +3629,7 @@ sudo dnf install antiword
             raise ConversionError("临时目录不安全", error_msg)
 
         # v36.4: 在 macOS 上使用 LibreOffice 完整路径（打包 App 中 PATH 可能不完整）
+        # v37.0.8: 添加 Windows 系统的 LibreOffice 路径检测
         import platform
         soffice_cmd = 'soffice'
         if platform.system() == 'Darwin':
@@ -3026,6 +3637,19 @@ sudo dnf install antiword
             if os.path.exists(libreoffice_path):
                 soffice_cmd = libreoffice_path
                 print(f"[DOC转换] 使用 LibreOffice 完整路径: {soffice_cmd}")
+        elif platform.system() == 'Windows':
+            # Windows: 检测 Program Files 路径
+            program_files = os.environ.get('ProgramFiles', 'C:\\Program Files')
+            program_files_x86 = os.environ.get('ProgramFiles(x86)', 'C:\\Program Files (x86)')
+            libreoffice_paths = [
+                os.path.join(program_files, 'LibreOffice', 'program', 'soffice.exe'),
+                os.path.join(program_files_x86, 'LibreOffice', 'program', 'soffice.exe'),
+            ]
+            for path in libreoffice_paths:
+                if os.path.exists(path):
+                    soffice_cmd = path
+                    print(f"[DOC转换] 使用 LibreOffice 完整路径: {soffice_cmd}")
+                    break
 
         for attempt in range(max_retries + 1):
             try:
@@ -3298,14 +3922,20 @@ sudo dnf install antiword
 
     def render_view(self):
         if not self.doc: return
+        # v37.0.9: 添加 canvas 有效性检查
+        if not self._is_canvas_valid(self.canvas_left):
+            print("[警告] canvas_left 无效，跳过渲染")
+            return
         self._render_single_page(self.canvas_left, self.current_page)
         if self.dual_view:
             if self.current_page + 1 < len(self.doc):
-                self._render_single_page(self.canvas_right, self.current_page + 1)
-                self.canvas_right.show()
+                if self._is_canvas_valid(self.canvas_right):
+                    self._render_single_page(self.canvas_right, self.current_page + 1)
+                    self.canvas_right.show()
             else:
-                self.canvas_right.hide()
-        
+                if self._is_canvas_valid(self.canvas_right):
+                    self.canvas_right.hide()
+
         total = len(self.doc)
         display = f"{self.current_page + 1}"
         if self.dual_view and self.current_page + 1 < total:
@@ -3314,14 +3944,26 @@ sudo dnf install antiword
         self.lbl_zoom.setText(f"{int(self.zoom_level * 100)}%")
 
     def _render_single_page(self, canvas, page_idx):
-        """v7.0 风格渲染 - 直接传递列表引用"""
-        page = self.doc[page_idx]
-        pix = page.get_pixmap(matrix=fitz.Matrix(self.zoom_level, self.zoom_level))
-        img_fmt = QImage.Format.Format_RGB888
-        qimg = QImage(pix.samples, pix.width, pix.height, pix.stride, img_fmt).copy()
-        data = self.page_data[page_idx]
-        canvas.update_content(QPixmap.fromImage(qimg), self.zoom_level, data['ocr'], data['manual'])
-        canvas.set_mask_color(self.current_color)
+        """v7.0 风格渲染 - 直接传递列表引用
+        v37.0.9: 添加异常处理防止 canvas 被删除后崩溃
+        """
+        # 检查 canvas 有效性
+        if not self._is_canvas_valid(canvas):
+            return
+
+        try:
+            page = self.doc[page_idx]
+            pix = page.get_pixmap(matrix=fitz.Matrix(self.zoom_level, self.zoom_level))
+            img_fmt = QImage.Format.Format_RGB888
+            qimg = QImage(pix.samples, pix.width, pix.height, pix.stride, img_fmt).copy()
+            data = self.page_data[page_idx]
+            # 使用安全的更新方法
+            self._safe_canvas_update(canvas, QPixmap.fromImage(qimg), self.zoom_level, data['ocr'], data['manual'])
+            self._safe_canvas_set_mask_color(canvas, self.current_color)
+        except RuntimeError as e:
+            print(f"[错误] 渲染页面 {page_idx} 时出错: {e}")
+        except Exception as e:
+            print(f"[错误] 渲染页面 {page_idx} 时发生意外错误: {e}")
 
     def on_rect_added(self, page_idx, rect):
         """由于使用共享列表引用，canvas 已直接修改列表，这里只需刷新视图"""
@@ -3458,7 +4100,7 @@ sudo dnf install antiword
         self.handle_zoom_request(-0.25)
 
     def start_ocr(self):
-        """智能扫描 - 支持 PDF 和 Word（v24 线程安全改进）"""
+        """智能扫描 - 支持 PDF 和 Word（v37.0.5: 增强错误处理）"""
         # 线程安全检查：防止重复启动
         if self.active_worker is not None:
             if self.active_worker.isRunning():
@@ -3472,12 +4114,15 @@ sudo dnf install antiword
 
         # PDF 处理
         if self.doc:
+            # v37.4.0: 只使用 RapidOCR，移除 use_char_level_ocr 参数
             self.worker = OCRWorker(self.file_path, self.active_rules, self.use_enhance, self.custom_keywords,
                                     self.scan_level, self.offset_x, self.offset_w)
             self.active_worker = self.worker  # 追踪线程
             self.worker.progress_signal.connect(self.progress.setValue)
             # v36.4: 使用线程安全的逐页结果信号
             self.worker.page_result_signal.connect(self._on_ocr_page_result)
+            # v37.0.5: 连接错误信号
+            self.worker.error_signal.connect(self._on_ocr_error)
             # 先连接原有的完成处理，再连接清理
             self.worker.finished_signal.connect(self._on_ocr_finished_safe)
             self.worker.finished_signal.connect(self._on_worker_finished)
@@ -3511,7 +4156,11 @@ sudo dnf install antiword
                 # Worker会在完成后通过finished_signal通知主线程
 
     def _on_worker_finished(self):
-        """工作线程完成后的清理（v36.3: 支持取消）"""
+        """v37.0.6: 工作线程完成后的清理 + 延迟错误显示"""
+        # v37.0.6: 等待线程完全终止，防止死锁
+        if self.active_worker and self.active_worker.isRunning():
+            self.active_worker.wait(3000)  # 最多等待 3 秒
+
         was_cancelled = self.active_worker and self.active_worker.isInterruptionRequested()
         self.active_worker = None
         self.btn_scan.setEnabled(True)
@@ -3522,6 +4171,24 @@ sudo dnf install antiword
             self.info_bar.setText("⏹️ 扫描已取消，已保留部分结果")
         else:
             self.info_bar.setText("✅ 扫描完成！")
+
+        # v37.0.6: 线程清理完成后，延迟显示错误对话框（非阻塞）
+        if hasattr(self, '_pending_error_msg') and self._pending_error_msg:
+            error_msg = self._pending_error_msg
+            self._pending_error_msg = None
+            QTimer.singleShot(100, lambda: self._show_deferred_error(error_msg))
+
+    def _show_deferred_error(self, error_msg: str):
+        """v37.0.6: 安全显示错误对话框（在线程清理完成后调用）"""
+        QMessageBox.critical(
+            self,
+            "OCR 错误",
+            f"智能脱敏遇到问题：\n\n{error_msg}\n\n"
+            "可能的解决方案：\n"
+            "1. 重新安装 OCR 依赖: pip install rapidocr-onnxruntime\n"
+            "2. 安装 Visual C++ 运行库（Windows）\n"
+            "3. 如果是扫描版 PDF，请尝试使用文本版 PDF"
+        )
 
     def ocr_finished(self, results):
         """v23.1: 添加去重逻辑，解决重复矩形导致的点击2次问题；v36.3: 支持部分结果"""
@@ -3547,6 +4214,15 @@ sudo dnf install antiword
             )
         else:
             QMessageBox.information(self, "完成", "智能扫描已完成！")
+
+    # v37.0.6: 非阻塞 OCR 错误处理
+    def _on_ocr_error(self, error_msg: str):
+        """v37.0.6: 非阻塞处理 OCR 错误（存储错误，延迟到线程清理后显示）"""
+        print(f"[OCR ERROR] {error_msg}")
+        self.info_bar.setText(f"❌ OCR 错误: {error_msg[:50]}...")
+        # v37.0.6: 存储错误消息，延迟到线程清理完成后显示
+        # 避免在模态对话框阻塞主线程时形成死锁
+        self._pending_error_msg = error_msg
 
     # v36.4: 线程安全的 OCR 结果处理方法
     def _on_ocr_page_result(self, page_num: int, rects: list):
@@ -4148,8 +4824,9 @@ sudo dnf install antiword
 </html>'''
 
     def save_pdf(self):
-        """保存脱敏后的文档 - 支持 PDF 和 Word"""
+        """保存脱敏后的文档 - 支持 PDF 和 Word - v37.3: 安全加固，脱敏区域永久化"""
         # v36: 应用文件对话框样式
+        # v37.3: PDF 脱敏安全加固 - 脱敏区域永久嵌入，不可编辑
         app = QApplication.instance()
         original_style = app.styleSheet()
 
@@ -4167,19 +4844,42 @@ sudo dnf install antiword
                     QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
                     doc_save = fitz.open(self.file_path)
                     fill_col = (0, 0, 0) if self.current_color.name() == "#000000" else (1, 1, 1)
+
                     for i in range(len(doc_save)):
                         page = doc_save[i]
-                        data = self.page_data[i]
-                        for r in data['ocr'] + data['manual']:
-                            rect = fitz.Rect(r.x(), r.y(), r.x()+r.width(), r.y()+r.height())
+
+                        # v37.3.1: 修复内部编辑功能 - 使用副本避免修改原始数据
+                        # 从 page_data 中获取脱敏区域列表
+                        ocr_list = self.page_data[i].get('ocr', [])
+                        manual_list = self.page_data[i].get('manual', [])
+
+                        # 1. 添加脱敏注释
+                        # v37.3.1: 重建 QRectF 确保不修改原始对象
+                        for r in ocr_list + manual_list:
+                            # 从 QRectF 提取坐标并重建，避免引用问题
+                            x, y, w, h = r.x(), r.y(), r.width(), r.height()
+                            rect = fitz.Rect(x, y, x + w, y + h)
                             annot = page.add_redact_annot(rect)
                             annot.set_colors(stroke=fill_col, fill=fill_col)
                             annot.update()
-                        # 使用保守方式：只涂抹，不删除图像
-                        page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_NONE)
-                    doc_save.save(fname)
+
+                        # v37.3: 安全加固 - 修改图像像素，彻底销毁原始内容
+                        page.apply_redactions(images=fitz.PDF_REDACT_IMAGE_PIXELS)
+
+                        # v37.3: 安全加固 - 删除所有注释对象，防止被 PDF 编辑器修改
+                        for annot in page.annots():
+                            page.delete_annot(annot)
+
+                    # v37.3: 安全加固 - 使用垃圾回收和压缩彻底删除未引用对象
+                    doc_save.save(
+                        fname,
+                        garbage=4,        # 最大垃圾回收级别
+                        deflate=True,     # 压缩内容流
+                        clean=True        # 清理未引用对象
+                    )
+
                     QApplication.restoreOverrideCursor()
-                    QMessageBox.information(self, "成功", f"文件已保存至：\n{fname}")
+                    QMessageBox.information(self, "成功", f"文件已安全保存至：\n{fname}")
                 except (IOError, OSError, ValueError, RuntimeError) as e:
                     QApplication.restoreOverrideCursor()
                     QMessageBox.critical(self, "失败", str(e))
@@ -4343,6 +5043,42 @@ sudo dnf install antiword
             target_run.font.superscript = True
 
 if __name__ == "__main__":
+    # v37.0.5: 全局异常钩子，防止未捕获异常导致崩溃
+    def exception_hook(exc_type, exc_value, exc_traceback):
+        """全局异常处理器"""
+        error_msg = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
+        print(f"[FATAL ERROR] 未捕获的异常:\n{error_msg}")
+
+        # 尝试显示错误对话框
+        try:
+            if QApplication.instance():
+                QMessageBox.critical(
+                    None,
+                    "程序错误",
+                    f"程序遇到未预期的错误：\n\n{exc_type.__name__}: {exc_value}\n\n"
+                    "请将此错误信息反馈给开发者。"
+                )
+        except Exception:
+            pass
+
+        # 调用默认异常处理器
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+
+    sys.excepthook = exception_hook
+
+    # v37.0.5: 线程异常钩子
+    def thread_exception_hook(args):
+        """线程异常处理器"""
+        error_msg = ''.join(traceback.format_exception(args.exc_type, args.exc_value, args.exc_traceback))
+        print(f"[THREAD ERROR] 线程异常:\n{error_msg}")
+
+    threading.excepthook = thread_exception_hook
+
+    # v37.0.5: 启动时预加载 OCR 引擎（可选，用于早期检测问题）
+    if os.getenv('PRIVACYGUARD_PRELOAD_OCR', '').lower() == 'true':
+        print("[INFO] 预加载 OCR 引擎...")
+        init_ocr_engine()
+
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()

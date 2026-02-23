@@ -47,12 +47,12 @@
     },
     "replacement_text": "[已脱敏]",
     "scan": {
-      "default_level": 2.0,
-      "available_levels": [1.5, 2.0, 3.0],
+      "default_level": 1.0,
+      "available_levels": [1.0, 1.5, 2.0],
       "level_labels": {
-        "1.5": "标准 (1.5x)",
-        "2.0": "高精 (2.0x 推荐)",
-        "3.0": "超精 (3.0x 最慢)"
+        "1.0": "普通 (1.0x)",
+        "1.5": "标准 (1.5x 推荐)",
+        "2.0": "高精 (2.0x)"
       }
     },
     "offset": {
@@ -60,13 +60,20 @@
       "w_range": [-20, 20],
       "default_x": 0,
       "default_w": 0
+    },
+    "precise_locator": {
+      "enabled": false,
+      "description": "启用像素级精准定位，通过垂直像素投影分析精确计算字符位置，可解决子字符串涂抹偏移问题，但会增加约20%处理时间。适合需要高精度涂抹的场景，如仅涂抹身份证号中的部分数字。"
     }
   },
   "ocr": {
     "min_rect_width": 5,
     "progress_update_interval": 0.05,
     "zoom_min": 0.5,
-    "zoom_max": 4.0
+    "zoom_max": 4.0,
+    "box_adjust_ratio": 0.0,
+    "box_adjust_range": [-0.30, 0.50],
+    "_comment_box_adjust": "检测框大小调节(-30%到+50%)，负值扩大，正值收缩，0保持原样"
   },
   "security": {
     "validate_paths": true,

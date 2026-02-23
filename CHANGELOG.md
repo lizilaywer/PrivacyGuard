@@ -4,6 +4,126 @@
 
 ---
 
+## [37.4.0] - 2026-02-23
+
+### 🗑️ PaddleOCR 完全移除
+
+#### 决策背景
+经过多次尝试修复 PaddleOCR 的 Y 轴偏移问题（v37.3.14 - v37.3.21），发现 PaddleOCR 3.4 的字符级坐标系统与项目架构存在根本性的兼容问题：
+- 字符级 box 格式与行级 box 格式不一致
+- 坐标转换复杂且容易出错
+- 维护成本高，稳定性无法保证
+
+**决策**: 完全移除 PaddleOCR，以 RapidOCR 单引擎为准，确保性能快速、稳定、安全。
+
+#### 移除内容
+
+**代码文件修改**:
+- `main.py`: 移除 OCR 引擎选择逻辑，只保留 RapidOCR
+- `privacyguard/ocr/paddleocr.py`: 删除整个文件
+- `privacyguard/ocr/manager.py`: 简化为只管理 RapidOCR
+- `privacyguard/ocr/__init__.py`: 移除 PaddleOCR 导出
+
+**UI 修改**:
+- `SettingsDialog`: 移除"OCR 引擎设置"分组中的引擎选择部分
+- 保留检测框调节、偏移设置等功能
+
+**模型文件删除**:
+- `privacyguard/ocr/models/paddleocr/`: 删除整个目录
+
+**依赖移除**:
+- `requirements.txt`: 移除 `paddleocr` 和 `paddlepaddle` 依赖
+
+**配置更新**:
+- `config.json` / `config.json.template`: 移除 `ocr.engine` 配置项
+
+#### 预期收益
+- 代码量减少约 500+ 行
+- 依赖减少（移除 paddleocr/paddlepaddle）
+- 启动速度提升
+- 维护复杂度降低
+- 稳定性提升
+
+---
+
+## [37.0.10] - 2026-02-21
+
+### 🔧 修复
+
+#### LibreOffice 路径检测修复
+- 修复打包后无法找到 LibreOffice 导致 .doc 文件无法打开的问题
+- 在 macOS 上使用完整路径检测 `/Applications/LibreOffice.app/Contents/MacOS/soffice`
+
+### ⚙️ 配置调整
+
+#### 扫描模式配置
+- **新增普通模式 (1.0x)**：更快速的扫描选项
+- **默认模式调整**：从高精 (2.0x) 改为普通 (1.0x)
+
+**配置变更** (`config.json`, `config.json.template`):
+```json
+"scan": {
+  "default_level": 1.0,
+  "available_levels": [1.0, 1.5, 2.0],
+  "level_labels": {
+    "1.0": "普通 (1.0x)",
+    "1.5": "标准 (1.5x 推荐)",
+    "2.0": "高精 (2.0x)"
+  }
+}
+```
+
+| 项目 | 修改前 | 修改后 |
+|------|--------|--------|
+| 默认模式 | 高精 (2.0x) | **普通 (1.0x)** |
+| 可选模式 | [1.5, 2.0] | **[1.0, 1.5, 2.0]** |
+| 新增模式 | - | **普通 (1.0x)** |
+
+---
+
+## [37.0.4] - 2026-02-19
+
+### 📱 微信二维码功能更新
+
+#### 界面改进
+- **"吐槽"对话框 - 关注开发者部分重新设计**
+  - 原单行显示改为两行清晰展示
+  - 第一行: "微信公众号: 池州汪律的Ai进化论" + "扫码关注"按钮
+  - 第二行: "抖音/小红书/B站（同号）: 池州有个汪律师" + "复制"按钮
+
+- **新增微信公众号二维码对话框**
+  - 点击"扫码关注"按钮弹出
+  - 显示微信公众号二维码 (assets/wx_qrcode.png)
+  - 提示文字: "微信扫一扫，关注公众号获取更多AI工具"
+
+#### 资源文件
+- 新增 `assets/wx_qrcode.png` (微信公众号二维码)
+- 所有 PyInstaller spec 文件已更新包含新资源
+
+### 📦 打包方案全面更新
+
+#### 新增打包脚本
+- `packaging/windows/scripts/build_complete.bat` - Windows 一键打包（含DLL自动复制）
+- `packaging/macos/scripts/build_complete.sh` - macOS 一键打包（含DMG创建）
+- `clean_project.bat` / `clean_project.sh` - 项目清理脚本（保留备份）
+
+#### Windows DLL 问题最终解决方案
+- 在打包后自动复制 VC++ DLL (`vcruntime140_1.dll` 等)
+- 创建 `PACKAGING_GUIDE.md` 完整打包指南
+
+#### 更新所有 PyInstaller Spec
+- Windows: `PrivacyGuard_windows.spec`, `PrivacyGuard_windows_v2.spec`
+- macOS: `PrivacyGuard.spec`
+- 全部包含 `assets` 目录打包
+
+#### 验证结果
+- ✅ 语法检查通过
+- ✅ 界面显示正常（两行布局）
+- ✅ "扫码关注"按钮功能正常
+- ✅ 资源文件正确打包
+
+---
+
 ## [37.0] - 2026-02-17
 
 ### ⚙️ 配置系统
