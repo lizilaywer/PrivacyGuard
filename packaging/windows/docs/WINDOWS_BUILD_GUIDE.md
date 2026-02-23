@@ -6,31 +6,32 @@
 
 1. **初始化环境**（只需执行一次）
    ```batch
-   packaging\windows\scripts\1_初始化环境.bat
+   packaging\windows\scripts\1_init_environment.bat
    ```
 
-2. **完整打包**（exe + 安装程序）
+2. **完整打包**（推荐方式）
    ```batch
-   packaging\windows\scripts\3_完整打包带安装程序.bat
+   packaging\windows\scripts\build_complete.bat
    ```
 
-3. **获取安装程序**
-   - 位置：`releases/windows/PrivacyGuard-36.4-Setup.exe`
+3. **获取输出文件**
+   - 便携版：`releases/windows/PrivacyGuard-v37.0.10-Windows-Portable.zip`
 
 ### 日常打包
 
 ```batch
-packaging\windows\scripts\3_完整打包带安装程序.bat
+packaging\windows\scripts\build_complete.bat
 ```
 
 ## 打包选项
 
 | 脚本 | 用途 | 输出 |
 |------|------|------|
-| `1_初始化环境.bat` | 首次设置，安装依赖 | 虚拟环境 venv/ |
-| `2_一键打包.bat` | 仅生成便携版 exe | `dist/PrivacyGuard.exe` |
-| `3_完整打包带安装程序.bat` | 生成 exe + 安装程序（推荐） | exe + Setup.exe |
-| `4_仅创建安装程序.bat` | 从已有 exe 创建安装程序 | Setup.exe |
+| `1_init_environment.bat` | 首次设置，安装依赖 | 虚拟环境 venv/ |
+| `2_build_exe.bat` | 仅生成便携版 exe | `dist/PrivacyGuard/` |
+| `3_build_with_setup.bat` | 生成 exe + 安装程序（需要 Inno Setup） | exe + Setup.exe |
+| `4_create_installer_only.bat` | 从已有 exe 创建安装程序 | Setup.exe |
+| `build_complete.bat` | **推荐：完整打包（清理+构建+验证+ZIP）** | Portable.zip |
 
 ## 目录结构
 

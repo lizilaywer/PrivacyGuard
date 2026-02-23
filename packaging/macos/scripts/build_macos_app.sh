@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # PrivacyGuard macOS 应用打包脚本
-# 版本: 37.0
+# 版本: 37.0.4
 # 说明: 自动化打包 macOS .app 和 DMG 安装包
 #
 

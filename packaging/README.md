@@ -108,4 +108,5 @@ bash packaging/macos/scripts/notarize_macos_app.sh
 
 ## 更新记录
 
+- **2026-02-23**: v37.4.1 - 单 OCR 引擎架构，修复 Windows 深色模式问题
 - **2026-02-17**: 重构打包系统，分离 Windows 和 macOS 配置

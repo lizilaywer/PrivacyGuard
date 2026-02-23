@@ -1,9 +1,10 @@
 ; PrivacyGuard Windows 安装程序配置
 ; Inno Setup 脚本
+; 版本: v37.4.1
 
 #define MyAppName "PrivacyGuard"
 #define MyAppNameFull "PrivacyGuard 脱敏卫士"
-#define MyAppVersion "37.0"
+#define MyAppVersion "37.4.1"
 #define MyAppPublisher "PrivacyGuard Team"
 #define MyAppURL "https://github.com/privacyguard/privacyguard"
 #define MyAppExeName "PrivacyGuard.exe"

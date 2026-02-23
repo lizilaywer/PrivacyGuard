@@ -34,22 +34,31 @@ for /f "tokens=2" %%a in ('python --version') do set PYTHON_VERSION=%%a
 echo [OK] Python version: %PYTHON_VERSION%
 echo.
 
-echo [2/5] Creating virtual environment...
-if exist "venv\Scripts\activate.bat" (
-    echo [INFO] Virtual environment already exists
+echo [2/5] Creating virtual environment (Windows: venv_win)...
+if exist "venv_win\Scripts\activate.bat" (
+    echo [INFO] Windows virtual environment (venv_win) already exists
+) else if exist "venv\Scripts\activate.bat" (
+    echo [WARN] Found venv (may be macOS-created), creating venv_win for Windows
+    python -m venv venv_win
+    if errorlevel 1 (
+        echo [ERROR] Failed to create venv_win
+        pause
+        exit /b 1
+    )
+    echo [OK] Windows virtual environment (venv_win) created
 ) else (
-    python -m venv venv
+    python -m venv venv_win
     if errorlevel 1 (
         echo [ERROR] Failed to create virtual environment
         pause
         exit /b 1
     )
-    echo [OK] Virtual environment created
+    echo [OK] Virtual environment (venv_win) created
 )
 echo.
 
 echo [3/5] Installing dependencies...
-call venv\Scripts\activate.bat
+call venv_win\Scripts\activate.bat
 python -m pip install --upgrade pip -q
 echo    Installing packages (may take a few minutes)...
 pip install -r requirements.txt -q
