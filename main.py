@@ -135,7 +135,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 # === 软件配置 ===
 # v37.0: 从配置读取，失败时使用硬编码后备
 APP_NAME = config.get("app.name", "PrivacyGuard 脱敏卫士") if config else "PrivacyGuard 脱敏卫士"
-VERSION = "37.4.0 - Single OCR Engine (RapidOCR)"
+VERSION = "37.4.1 - Windows Dark Mode Fix"
 
 # === 常量定义 ===
 # v37.0: 从配置读取，失败时使用硬编码后备
@@ -439,6 +439,14 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.config = config_manager
 
+        # v37.4.1: 修复 Windows 深色模式下对话框显示问题
+        # 设置窗口标志，确保对话框在深色系统主题下使用浅色样式
+        self.setWindowFlags(
+            Qt.WindowType.Dialog |
+            Qt.WindowType.WindowTitleHint |
+            Qt.WindowType.WindowCloseButtonHint
+        )
+
         # v37.0: 从配置读取窗口尺寸
         if self.config:
             dialog_width = self.config.get("app.window.dialog_settings_width", 550)
@@ -449,6 +457,9 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("高级设置")
         self.resize(dialog_width, dialog_height)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
+
+        # v37.4.1: 应用对话框主题样式
+        self._apply_dialog_theme()
 
         self.selected_rules = []
         self.use_enhance = use_enhance
@@ -626,11 +637,128 @@ class SettingsDialog(QDialog):
 
         self.accept()
 
+    def _apply_dialog_theme(self):
+        """应用对话框浅色主题样式（v37.4.1: 修复 Windows 深色模式显示问题）"""
+        from theme import Theme
+        theme = Theme.LIGHT
+
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {theme["background"]};
+            }}
+            QWidget {{
+                background-color: {theme["background"]};
+                color: {theme["text"]};
+            }}
+            QGroupBox {{
+                background-color: {theme["surface"]};
+                color: {theme["text"]};
+                border: 1px solid {theme["border"]};
+                border-radius: 8px;
+                margin-top: 12px;
+                padding-top: 12px;
+                padding-bottom: 12px;
+                padding-left: 12px;
+                padding-right: 12px;
+                font-weight: 600;
+            }}
+            QGroupBox::title {{
+                subcontrol-origin: margin;
+                left: 10px;
+                padding: 0 5px;
+                color: {theme["text"]};
+                background-color: {theme["surface"]};
+            }}
+            QLabel {{
+                color: {theme["text"]};
+                background-color: transparent;
+            }}
+            QCheckBox {{
+                color: {theme["text"]};
+                background-color: transparent;
+            }}
+            QCheckBox::indicator {{
+                width: 16px;
+                height: 16px;
+            }}
+            QTextEdit {{
+                background-color: {theme["surface"]};
+                color: {theme["text"]};
+                border: 1px solid {theme["border"]};
+                border-radius: 6px;
+                padding: 8px;
+            }}
+            QComboBox {{
+                background-color: {theme["surface"]};
+                color: {theme["text"]};
+                border: 1px solid {theme["border"]};
+                border-radius: 6px;
+                padding: 6px;
+                min-width: 100px;
+            }}
+            QComboBox::drop-down {{
+                border: none;
+                width: 24px;
+            }}
+            QComboBox QAbstractItemView {{
+                background-color: {theme["surface"]};
+                color: {theme["text"]};
+                selection-background-color: {theme["primary"]};
+            }}
+            QSpinBox {{
+                background-color: {theme["surface"]};
+                color: {theme["text"]};
+                border: 1px solid {theme["border"]};
+                border-radius: 6px;
+                padding: 6px;
+            }}
+            QSlider {{
+                background-color: transparent;
+            }}
+            QSlider::groove:horizontal {{
+                border: none;
+                height: 4px;
+                background-color: {theme["border"]};
+                border-radius: 2px;
+            }}
+            QSlider::handle:horizontal {{
+                background-color: {theme["primary"]};
+                border: none;
+                width: 16px;
+                height: 16px;
+                margin: -6px 0;
+                border-radius: 8px;
+            }}
+            QPushButton {{
+                background-color: {theme["primary"]};
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 20px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {theme["primary"]};
+                opacity: 0.9;
+            }}
+            QPushButton:pressed {{
+                background-color: {theme["pressed"]};
+            }}
+        """)
+
 # === 图片排序对话框 ===
 class ImageListDialog(QDialog):
     """图片排序对话框 - 支持拖拽调整图片顺序"""
     def __init__(self, image_paths, parent=None):
         super().__init__(parent)
+
+        # v37.4.1: 修复 Windows 深色模式下对话框显示问题
+        self.setWindowFlags(
+            Qt.WindowType.Dialog |
+            Qt.WindowType.WindowTitleHint |
+            Qt.WindowType.WindowCloseButtonHint
+        )
+
         self.setWindowTitle("调整图片顺序")
         # v37.0: 从配置读取窗口尺寸
         if config:
@@ -680,6 +808,57 @@ class ImageListDialog(QDialog):
         btn_layout.addWidget(btn_cancel)
         layout.addLayout(btn_layout)
 
+        # v37.4.1: 应用对话框主题样式
+        self._apply_dialog_theme()
+
+    def _apply_dialog_theme(self):
+        """应用对话框浅色主题样式（v37.4.1: 修复 Windows 深色模式显示问题）"""
+        from theme import Theme
+        theme = Theme.LIGHT
+
+        self.setStyleSheet(f"""
+            QDialog {{
+                background-color: {theme["background"]};
+            }}
+            QWidget {{
+                background-color: {theme["background"]};
+                color: {theme["text"]};
+            }}
+            QLabel {{
+                color: {theme["text"]};
+                background-color: transparent;
+            }}
+            QListWidget {{
+                background-color: {theme["surface"]};
+                color: {theme["text"]};
+                border: 1px solid {theme["border"]};
+                border-radius: 6px;
+                padding: 8px;
+            }}
+            QListWidget::item {{
+                background-color: {theme["surface"]};
+                color: {theme["text"]};
+                padding: 8px;
+                border-radius: 4px;
+            }}
+            QListWidget::item:selected {{
+                background-color: {theme["primary"]};
+                color: white;
+            }}
+            QPushButton {{
+                background-color: {theme["primary"]};
+                color: white;
+                border: none;
+                border-radius: 8px;
+                padding: 10px 20px;
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                background-color: {theme["primary"]};
+                opacity: 0.9;
+            }}
+        """)
+
     def get_ordered_paths(self):
         """获取排序后的图片路径"""
         paths = []
@@ -697,6 +876,14 @@ class FeedbackDialog(QDialog):
     """开发者信息与反馈对话框"""
     def __init__(self, parent=None):
         super().__init__(parent)
+
+        # v37.4.1: 修复 Windows 深色模式下对话框显示问题
+        self.setWindowFlags(
+            Qt.WindowType.Dialog |
+            Qt.WindowType.WindowTitleHint |
+            Qt.WindowType.WindowCloseButtonHint
+        )
+
         self.setWindowTitle("关于与反馈")
         # v37.0: 从配置读取窗口尺寸
         if config:
@@ -3205,12 +3392,70 @@ class MainWindow(QMainWindow):
             self.scan_level = dlg.scan_level
             self.offset_x = dlg.offset_x
             self.offset_w = dlg.offset_w
-            QMessageBox.information(self, "成功", "设置已保存")
+            msg = self.create_message_box(self, QMessageBox.Icon.Information, "成功", "设置已保存")
+            msg.exec()
 
     def show_feedback(self):
         """显示反馈与开发者信息对话框"""
         dlg = FeedbackDialog(self)
         dlg.exec()
+
+    @staticmethod
+    def create_message_box(parent, icon, title, text, buttons=QMessageBox.StandardButton.Ok, default_button=QMessageBox.StandardButton.Ok):
+        """创建带有浅色主题样式的消息框（v37.4.1: 修复 Windows 深色模式显示问题）
+
+        Args:
+            parent: 父窗口
+            icon: QMessageBox.Icon 类型
+            title: 标题
+            text: 内容文本
+            buttons: 按钮类型
+            default_button: 默认按钮
+
+        Returns:
+            QMessageBox: 配置好的消息框实例
+        """
+        msg = QMessageBox(parent)
+        msg.setIcon(icon)
+        msg.setWindowTitle(title)
+        msg.setText(text)
+        msg.setStandardButtons(buttons)
+        msg.setDefaultButton(default_button)
+
+        # 设置窗口标志，防止 Windows 强制应用深色模式
+        msg.setWindowFlags(
+            Qt.WindowType.Dialog |
+            Qt.WindowType.WindowTitleHint |
+            Qt.WindowType.WindowCloseButtonHint
+        )
+
+        # 应用浅色主题样式
+        from theme import Theme
+        theme = Theme.LIGHT
+        msg.setStyleSheet(f"""
+            QMessageBox {{
+                background-color: {theme["background"]};
+            }}
+            QMessageBox QLabel {{
+                color: {theme["text"]};
+                background-color: transparent;
+            }}
+            QPushButton {{
+                background-color: {theme["primary"]};
+                color: white;
+                border: none;
+                border-radius: 6px;
+                padding: 8px 16px;
+                font-weight: 600;
+                min-width: 80px;
+            }}
+            QPushButton:hover {{
+                background-color: {theme["primary"]};
+                opacity: 0.9;
+            }}
+        """)
+
+        return msg
 
     def _on_replacement_changed(self, text):
         """替换文本变化时的处理"""
