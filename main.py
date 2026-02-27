@@ -135,7 +135,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 # === 软件配置 ===
 # v37.0: 从配置读取，失败时使用硬编码后备
 APP_NAME = config.get("app.name", "PrivacyGuard 脱敏卫士") if config else "PrivacyGuard 脱敏卫士"
-VERSION = "37.4.1 - Windows Dark Mode Fix"
+VERSION = "37.5.0 - Seal Detection (OpenCV)"
 
 # === 常量定义 ===
 # v37.0: 从配置读取，失败时使用硬编码后备
@@ -161,7 +161,8 @@ else:
         "手机号码": r"(?<!\d)(1[3-9]\d{9})(?!\d)",
         "日期时间": r"\d{4}[年\-\.]\d{1,2}[月\-\.]\d{1,2}[日]?",
         "电子邮箱": r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
-        "银行卡号": r"(?<!\d)([1-9]\d{12,18})(?!\d)"
+        "银行卡号": r"(?<!\d)([1-9]\d{12,18})(?!\d)",
+        "印章": "__SEAL_DETECTION__"  # v37.5.0: 印章检测特殊标记
     }
 
 # === 自定义异常类 ===
@@ -614,6 +615,9 @@ class SettingsDialog(QDialog):
 
     def save_settings(self):
         self.selected_rules = [DEFAULT_RULES[name] for name, cb in self.checks.items() if cb.isChecked()]
+        # v37.5.0: 添加调试输出
+        print(f"[Settings] 保存的规则: {self.selected_rules}")
+        print(f"[Settings] 勾选的规则名称: {[name for name, cb in self.checks.items() if cb.isChecked()]}")
         self.use_enhance = self.cb_enhance.isChecked()
         self.custom_keywords = self.txt_custom.toPlainText().strip()
         self.scan_level = self.combo_precision.currentData()
@@ -667,7 +671,7 @@ class SettingsDialog(QDialog):
                 left: 10px;
                 padding: 0 5px;
                 color: {theme["text"]};
-                background-color: {theme["surface"]};
+                background-color: transparent;
             }}
             QLabel {{
                 color: {theme["text"]};
@@ -1602,7 +1606,7 @@ class OCRWorker(QThread):
     error_signal = pyqtSignal(str)  # v37.0.5: 错误信号
 
     def __init__(self, pdf_path, rules, use_enhance, custom_keywords, scan_scale, off_x, off_w,
-                 use_char_level_ocr: bool = False):  # v37.4.0: 参数保留但不再使用
+                 use_char_level_ocr: bool = False, seal_detection_enabled: bool = False):  # v37.5.0: 新增印章检测参数
         super().__init__()
         # 不再加载整个文件到内存，只保存路径（v24 内存优化）
         self.pdf_path = pdf_path
@@ -1619,7 +1623,11 @@ class OCRWorker(QThread):
 
         # v37.3.5: 读取检测框调节比例配置（支持负值扩大、正值收缩）
         self.box_adjust_ratio = config.get("ocr.box_adjust_ratio", 0.0) if config else 0.0
-        
+
+        # v37.5.0: 印章检测功能
+        self.seal_detection_enabled = seal_detection_enabled
+        self._seal_detector = None  # 延迟加载的印章检测器
+        print(f"[OCRWorker] 初始化, seal_detection_enabled={seal_detection_enabled}")
     def preprocess_image(self, img_np):
         try:
             gray = cv2.cvtColor(img_np, cv2.COLOR_BGR2GRAY)
@@ -1630,6 +1638,130 @@ class OCRWorker(QThread):
         except cv2.error as e:
             print(f"图像处理错误: {e}")
             return img_np
+
+    def _get_seal_detector(self):
+        """
+        v37.5.0: 印章检测器（使用 OpenCV，无需额外依赖）
+
+        Returns:
+            True（OpenCV 已可用）
+        """
+        if self._seal_detector is not None:
+            return self._seal_detector
+
+        # OpenCV 已经是项目依赖，无需额外检查
+        self._seal_detector = True
+        return self._seal_detector
+
+    def _detect_seals(self, img_np, scan_scale):
+        """
+        v37.5.0: 使用 OpenCV 检测印章区域（纯图像处理方法）
+
+        检测策略：
+        1. 颜色过滤：检测红色区域（印章通常是红色）
+        2. 形状分析：筛选圆形/椭圆形区域
+        3. 尺寸过滤：排除过大或过小的区域
+
+        Args:
+            img_np: 扫描图像（BGR 格式，已缩放）
+            scan_scale: 扫描缩放比例
+
+        Returns:
+            list[QRectF]: 印章区域列表（PDF 坐标系）
+        """
+        seal_rects = []
+
+        if not self._get_seal_detector():
+            return seal_rects
+
+        try:
+            h, w = img_np.shape[:2]
+            print(f"[Seal Detection] 开始检测，图像尺寸: {w}x{h}")
+
+            # 转换到 HSV 色彩空间
+            hsv = cv2.cvtColor(img_np, cv2.COLOR_BGR2HSV)
+
+            # 红色范围（两个区间，扩大范围以提高检测率）
+            red_lower1 = np.array([0, 30, 30])    # 放宽：饱和度 50→30, 亮度 50→30
+            red_upper1 = np.array([20, 255, 255])  # 放宽：上限 10→20
+            red_lower2 = np.array([160, 30, 30])   # 放宽：下限 170→160, 饱和度 50→30, 亮度 50→30
+            red_upper2 = np.array([180, 255, 255])
+
+            # 创建红色掩码
+            mask1 = cv2.inRange(hsv, red_lower1, red_upper1)
+            mask2 = cv2.inRange(hsv, red_lower2, red_upper2)
+            red_mask = cv2.bitwise_or(mask1, mask2)
+
+            # 形态学操作：去噪和连接相近区域
+            kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+            red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
+            red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
+
+            # 查找轮廓
+            contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            print(f"[Seal Detection] 红色轮廓数: {len(contours)}")
+
+            for contour in contours:
+                # 计算轮廓面积
+                area = cv2.contourArea(contour)
+
+                # 过滤：面积太小或太大
+                min_area = 100 * 100  # 最小 100x100 像素
+                max_area = (h * w) * 0.5  # 最大不超过图像面积的一半
+                if area < min_area or area > max_area:
+                    continue
+
+                # 获取外接矩形
+                x, y, w_rect, h_rect = cv2.boundingRect(contour)
+
+                # 计算红色像素占比
+                roi = red_mask[y:y+h_rect, x:x+w_rect]
+                if roi.size == 0:
+                    continue
+                red_ratio = np.sum(roi > 0) / roi.size
+
+                # 过滤：红色像素占比要足够高
+                if red_ratio < 0.3:  # 至少 30% 是红色
+                    continue
+
+                # 形状分析：检查是否接近圆形或椭圆形
+                # 计算轮廓的凸包
+                hull = cv2.convexHull(contour)
+                hull_area = cv2.contourArea(hull)
+                solidity = float(area) / hull_area if hull_area > 0 else 0
+
+                # 圆形的 solidity 接近 1
+                if solidity < 0.7:  # 形状不够圆润
+                    continue
+
+                # 计算宽高比
+                aspect_ratio = float(w_rect) / h_rect if h_rect > 0 else 1
+                # 印章通常是圆形或椭圆形，宽高比在 0.5-2.0 之间
+                if aspect_ratio < 0.5 or aspect_ratio > 2.0:
+                    continue
+
+                # 计算圆形度（使用轮廓周长和面积）
+                perimeter = cv2.arcLength(contour, True)
+                if perimeter > 0:
+                    circularity = 4 * np.pi * area / (perimeter * perimeter)
+                    # 完美圆的 circularity 接近 1
+                    if circularity < 0.5:  # 不够圆
+                        continue
+
+                # 所有条件满足，认为是印章
+                # 转换为 PDF 坐标系（除以缩放比例）
+                pdf_x = x / scan_scale
+                pdf_y = y / scan_scale
+                pdf_w = w_rect / scan_scale
+                pdf_h = h_rect / scan_scale
+
+                seal_rects.append(QRectF(pdf_x, pdf_y, pdf_w, pdf_h))
+                print(f"[Seal Detection] 检测到印章: red_ratio={red_ratio:.2f}, aspect={aspect_ratio:.2f}, circularity={circularity:.2f}")
+
+        except Exception as e:
+            print(f"[Seal Detection] 检测失败: {type(e).__name__}: {e}")
+
+        return seal_rects
 
     def _shrink_box(self, box, x_ratio=0.15, y_ratio=0.1):
         """
@@ -1883,6 +2015,9 @@ class OCRWorker(QThread):
                     if is_text_pdf:
                         all_patterns = self.rules + self.custom_keywords
                         for pat in all_patterns:
+                            # v37.5.0: 跳过印章检测标记（不用于文本 PDF）
+                            if pat == "__SEAL_DETECTION__":
+                                continue
                             for match in re.finditer(pat, page_text, re.IGNORECASE):
                                 found_str = match.group()
                                 try:
@@ -1894,6 +2029,20 @@ class OCRWorker(QThread):
                                 except RuntimeError as e:
                                     print(f"搜索文本错误: {e}")
                                     pass
+
+                        # v37.5.0: 文本 PDF 也要检测印章（印章检测基于图像，与文本类型无关）
+                        if self.seal_detection_enabled and "__SEAL_DETECTION__" in self.rules:
+                            try:
+                                pix = page.get_pixmap(matrix=fitz.Matrix(SCAN_SCALE, SCAN_SCALE))
+                                img_data = np.frombuffer(pix.tobytes("png"), dtype=np.uint8)
+                                img_np = cv2.imdecode(img_data, cv2.IMREAD_COLOR)
+                                seal_rects = self._detect_seals(img_np, SCAN_SCALE)
+                                rects.extend(seal_rects)
+                                if seal_rects:
+                                    print(f"[Seal Detection] 页面 {i} 检测到 {len(seal_rects)} 个印章")
+                            except Exception as e:
+                                print(f"[Seal Detection] 页面 {i} 检测失败: {type(e).__name__}: {e}")
+
                     else:
                         # v37.2.0: 使用统一的 OCR 引擎接口
                         pix = page.get_pixmap(matrix=fitz.Matrix(SCAN_SCALE, SCAN_SCALE))
@@ -1913,6 +2062,9 @@ class OCRWorker(QThread):
                         for result in ocr_results:
                             all_patterns = self.rules + self.custom_keywords
                             for pat in all_patterns:
+                                # v37.5.0: 跳过印章检测标记（使用单独的印章检测）
+                                if pat == "__SEAL_DETECTION__":
+                                    continue
                                 for match in re.finditer(pat, result.text, re.IGNORECASE):
                                     # v37.3.7: 传递图像区域用于像素边界检测
                                     sub_rect = self.calculate_sub_rect(
@@ -1928,6 +2080,16 @@ class OCRWorker(QThread):
                                             sub_rect.width(),
                                             sub_rect.height()
                                         ))
+
+                        # v37.5.0: 印章检测（如果启用）
+                        if self.seal_detection_enabled and "__SEAL_DETECTION__" in self.rules:
+                            try:
+                                seal_rects = self._detect_seals(scan_img, SCAN_SCALE)
+                                rects.extend(seal_rects)
+                                if seal_rects:
+                                    print(f"[Seal Detection] 页面 {i} 检测到 {len(seal_rects)} 个印章")
+                            except Exception as e:
+                                print(f"[Seal Detection] 页面 {i} 检测失败: {type(e).__name__}: {e}")
 
                     # v36.4: 通过信号发送单页结果（线程安全）
                     self.page_result_signal.emit(i, rects)
@@ -4359,9 +4521,14 @@ sudo dnf install antiword
 
         # PDF 处理
         if self.doc:
+            # v37.5.0: 检测是否启用印章检测
+            seal_detection_enabled = "__SEAL_DETECTION__" in self.active_rules
+            print(f"[OCR] active_rules: {self.active_rules}")
+            print(f"[OCR] 印章检测启用: {seal_detection_enabled}")
             # v37.4.0: 只使用 RapidOCR，移除 use_char_level_ocr 参数
             self.worker = OCRWorker(self.file_path, self.active_rules, self.use_enhance, self.custom_keywords,
-                                    self.scan_level, self.offset_x, self.offset_w)
+                                    self.scan_level, self.offset_x, self.offset_w,
+                                    seal_detection_enabled=seal_detection_enabled)
             self.active_worker = self.worker  # 追踪线程
             self.worker.progress_signal.connect(self.progress.setValue)
             # v36.4: 使用线程安全的逐页结果信号
