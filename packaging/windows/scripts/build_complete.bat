@@ -8,7 +8,7 @@ title PrivacyGuard Build
 echo.
 echo ========================================
 echo   PrivacyGuard Windows Build Script
-echo   Version: v37.4.1
+echo   Version: v37.5.0 (Seal Detection)
 echo ========================================
 echo.
 

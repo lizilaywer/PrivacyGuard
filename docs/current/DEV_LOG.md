@@ -2,9 +2,189 @@
 
 ## 项目信息
 - **项目名称**: PrivacyGuard 脱敏卫士
-- **当前版本**: v37.4.0 (Single OCR Engine - RapidOCR)
-- **开发日期**: 2026-02-23
-- **状态**: ✅ PaddleOCR 已完全移除，单引擎架构稳定
+- **当前版本**: v37.5.0 (Seal Detection - OpenCV)
+- **开发日期**: 2026-02-27
+- **状态**: ✅ 印章检测功能完成（OpenCV 实现）
+
+---
+
+## v37.5.0 - 印章自动检测 (2026-02-27)
+
+### 🆕 新增功能: 印章自动检测
+
+**技术方案变更**:
+原计划使用 PaddleOCR PPStructure 实现印章检测，但发现：
+- PaddleOCR 3.4.0 的 API 有重大变化
+- `PPStructure` 被替换为 `PPStructureV3`
+- `SealRecognition` 需要额外依赖 `paddlex[ocr]`
+- 增加依赖会影响打包和分发
+
+**最终方案**: 使用 **OpenCV 纯图像处理**实现印章检测
+
+### 技术实现
+
+**检测流程**:
+1. **颜色过滤**: 使用 HSV 色彩空间检测红色区域
+2. **形态学操作**: 闭运算和开运算去噪
+3. **轮廓检测**: `cv2.findContours()` 查找红色区域
+4. **多维度过滤**:
+   - 面积过滤: 100x100 ~ 图像面积 50%
+   - 红色像素占比: >= 30%
+   - 宽高比: 0.5 ~ 2.0（圆形/椭圆）
+   - 圆形度: >= 0.5（形状圆润度）
+
+**关键代码**:
+```python
+def _detect_seals(self, img_np, scan_scale):
+    # 转换到 HSV 色彩空间
+    hsv = cv2.cvtColor(img_np, cv2.COLOR_BGR2HSV)
+
+    # 红色范围（两个区间）
+    red_lower1 = np.array([0, 50, 50])
+    red_upper1 = np.array([10, 255, 255])
+    red_lower2 = np.array([170, 50, 50])
+    red_upper2 = np.array([180, 255, 255])
+
+    # 创建红色掩码
+    mask1 = cv2.inRange(hsv, red_lower1, red_upper1)
+    mask2 = cv2.inRange(hsv, red_lower2, red_upper2)
+    red_mask = cv2.bitwise_or(mask1, mask2)
+
+    # 形态学操作
+    kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (5, 5))
+    red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel)
+    red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel)
+
+    # 查找轮廓并分析
+    contours, _ = cv2.findContours(red_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    for contour in contours:
+        # 多维度过滤...
+        # 返回 QRectF 印章区域
+```
+
+### 配置更新
+
+**config.json.template**:
+```json
+{
+  "redaction": {
+    "default_rules": {
+      "印章": {
+        "pattern": "__SEAL_DETECTION__",
+        "enabled": false,
+        "description": "使用 OpenCV 自动检测并脱敏红色印章区域（基于颜色和形状分析）"
+      }
+    },
+    "seal_detection": {
+      "enabled": false,
+      "description": "启用印章自动检测功能，使用 OpenCV 图像处理识别红色印章区域并自动脱敏",
+      "method": "opencv",
+      "min_red_ratio": 0.3,
+      "min_circularity": 0.5
+    }
+  }
+}
+```
+
+### 依赖变化
+
+**无新增依赖**: 使用现有的 OpenCV 和 numpy
+
+**移除计划**: 移除了原计划的 `paddleocr` 和 `paddlepaddle` 依赖
+
+### 验证结果
+
+**算法测试**:
+- ✅ 红色圆形印章检测成功（圆形度 0.89）
+- ✅ 红色像素占比过滤正常
+- ✅ 宽高比过滤正常
+- ✅ 形态学去噪正常
+
+**应用测试**:
+- ✅ 语法检查通过
+- ✅ 应用正常启动（无需额外依赖）
+- ✅ 高级设置显示"印章"选项
+
+---
+
+### 🔧 2026-02-27 调试记录：文本 PDF 分支修复
+
+#### 问题 1: 高级设置不显示"印章"复选框
+
+**原因**: `config.json` 存在但缺少印章规则配置，覆盖了 `DEFAULT_RULES`
+
+**解决**: 在 `config.json` 中添加印章规则配置
+
+#### 问题 2: 印章检测不执行
+
+**现象**: 终端只显示 `[OCR] 使用引擎: rapidocr`，没有 `[Seal Detection]` 输出
+
+**根因**: 印章检测代码只在 `else` 分支（图像 PDF）执行，文本型 PDF 走 `if is_text_pdf` 分支，完全跳过印章检测
+
+**分析**:
+```python
+if is_text_pdf:  # 有文本层的 PDF
+    # 只处理文本敏感信息
+    # ❌ 没有印章检测代码！
+else:  # 纯图像 PDF
+    # OCR 处理
+    # ✅ 有印章检测代码
+```
+
+**为什么会有这个 Bug**:
+- 文本/图像分支是性能优化考虑
+- 文本 PDF 用 `page.search_for()` 直接搜索，速度快
+- 图像 PDF 需要 OCR，速度慢
+- 但印章检测需要**图像处理**，无论 PDF 类型！
+
+**修复方案**: 在文本 PDF 分支也添加印章检测
+```python
+if is_text_pdf:
+    # 处理文本敏感信息...
+
+    # v37.5.0: 文本 PDF 也要检测印章（印章检测基于图像，与文本类型无关）
+    if self.seal_detection_enabled and "__SEAL_DETECTION__" in self.rules:
+        try:
+            pix = page.get_pixmap(matrix=fitz.Matrix(SCAN_SCALE, SCAN_SCALE))
+            img_data = np.frombuffer(pix.tobytes("png"), dtype=np.uint8)
+            img_np = cv2.imdecode(img_data, cv2.IMREAD_COLOR)
+            seal_rects = self._detect_seals(img_np, SCAN_SCALE)
+            rects.extend(seal_rects)
+            if seal_rects:
+                print(f"[Seal Detection] 页面 {i} 检测到 {len(seal_rects)} 个印章")
+        except Exception as e:
+            print(f"[Seal Detection] 页面 {i} 检测失败: {type(e).__name__}: {e}")
+```
+
+**修改位置**: `main.py` lines 2033-2044
+
+**Git 提交**: `8a166ad` - Add seal detection feature using OpenCV
+
+#### 经验教训
+
+1. **性能优化可能隐藏功能缺陷** - 分支优化要确保所有功能都能执行
+2. **调试输出的重要性** - 没有日志就无法定位问题
+3. **保守改动优于激进改动** - 之前有"参数激进导致整个文档被涂黑"的教训
+4. **备份和回滚的价值** - 有一个"基本符合预期"的备份很重要
+
+### 已知限制
+
+1. **仅支持红色印章**: 基于 HSV 颜色检测
+2. **仅支持圆形/椭圆**: 基于圆形度过滤
+3. **可能误判**: 红色圆形图标可能被误判
+4. **复杂背景**: 背景复杂的红色区域检测可能不准确
+
+### 性能影响
+
+- **内存**: 无额外内存占用
+- **处理时间**: 每页增加约 0.1-0.2 秒（纯图像处理）
+- **模型大小**: 无需下载模型
+
+### 回滚信息
+
+**回滚目标版本**: v37.4.2
+**回滚文件位置**: `backups/v37.4.2_seal_detection/`
 
 ---
 

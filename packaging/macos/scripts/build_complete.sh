@@ -6,7 +6,7 @@ set -e
 
 echo "======================================"
 echo "  PrivacyGuard 完整打包脚本 (macOS)"
-echo "  版本: v37.4.1"
+echo "  版本: v37.5.0 (Seal Detection)"
 echo "======================================"
 echo ""
 
