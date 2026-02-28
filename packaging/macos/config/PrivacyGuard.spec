@@ -113,8 +113,8 @@ app = BUNDLE(
     info_plist={
         'CFBundleName': 'PrivacyGuard',
         'CFBundleDisplayName': 'PrivacyGuard 脱敏卫士',
-        'CFBundleVersion': '37.4.1',
-        'CFBundleShortVersionString': '37.4.1',
+        'CFBundleVersion': '37.6.1',
+        'CFBundleShortVersionString': '37.6.1',
         'CFBundlePackageType': 'APPL',
         'CFBundleSignature': '????',
         'CFBundleExecutable': 'PrivacyGuard',

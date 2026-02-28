@@ -135,7 +135,7 @@ os.environ["OMP_NUM_THREADS"] = "1"
 # === 软件配置 ===
 # v37.0: 从配置读取，失败时使用硬编码后备
 APP_NAME = config.get("app.name", "PrivacyGuard 脱敏卫士") if config else "PrivacyGuard 脱敏卫士"
-VERSION = "37.5.0 - Seal Detection (OpenCV)"
+VERSION = "37.6.1 - Drag & Drop Fix"
 
 # === 常量定义 ===
 # v37.0: 从配置读取，失败时使用硬编码后备
@@ -2959,6 +2959,11 @@ class MainWindow(QMainWindow):
 
         self.setup_ui()
 
+        # v37.6.0: 启用拖拽支持
+        self.setAcceptDrops(True)
+        self._drag_active = False  # 拖拽状态标记
+        self._drag_valid = False   # 拖拽文件是否有效
+
     def _detect_system_theme(self):
         """检测系统主题（v35.1 新增）
 
@@ -3024,6 +3029,200 @@ class MainWindow(QMainWindow):
 
         # 自动重新适应（保持页面完整显示）
         self.fit_page()
+
+    # ============== v37.6.0: 拖拽打开文件功能 ==============
+
+    def dragEnterEvent(self, event):
+        """拖拽进入事件 - 验证文件类型并提供视觉反馈"""
+        self._drag_active = True
+        self._drag_valid = False
+
+        if event.mimeData().hasUrls():
+            urls = event.mimeData().urls()
+
+            # 验证所有文件
+            valid_exts = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.tif']
+            all_valid = True
+            file_count = 0
+
+            for url in urls:
+                if url.isLocalFile():
+                    file_count += 1
+                    path = url.toLocalFile().lower()
+                    if not any(path.endswith(ext) for ext in valid_exts):
+                        all_valid = False
+                        break
+
+            # 必须有文件且都有效
+            if file_count > 0 and all_valid:
+                self._drag_valid = True
+                event.acceptProposedAction()
+                self._update_drag_visual_feedback(True)
+            else:
+                # 有文件但格式不支持
+                if file_count > 0:
+                    event.ignore()
+                    self._update_drag_visual_feedback(False)
+                else:
+                    event.ignore()
+        else:
+            event.ignore()
+
+    def dragMoveEvent(self, event):
+        """拖拽移动事件 - 持续反馈"""
+        if self._drag_active and event.mimeData().hasUrls():
+            # 检查鼠标位置是否在预览区域
+            pos = event.position().toPoint() if hasattr(event, 'position') else event.pos()
+            if self._is_in_preview_area(pos):
+                event.acceptProposedAction()
+            else:
+                event.ignore()
+        else:
+            event.ignore()
+
+    def dragLeaveEvent(self, event):
+        """拖拽离开事件 - 清除视觉反馈"""
+        self._drag_active = False
+        self._drag_valid = False
+        self._update_drag_visual_feedback(None)
+
+    def dropEvent(self, event):
+        """拖放事件 - 处理文件"""
+        self._drag_active = False
+        self._update_drag_visual_feedback(None)
+
+        if not event.mimeData().hasUrls():
+            event.ignore()
+            return
+
+        urls = event.mimeData().urls()
+        file_paths = [url.toLocalFile() for url in urls if url.isLocalFile()]
+
+        if not file_paths:
+            QMessageBox.warning(self, "无效文件", "只支持本地文件拖拽")
+            event.ignore()
+            return
+
+        # 调用处理逻辑
+        self._handle_dropped_files(file_paths)
+        event.acceptProposedAction()
+
+    def _is_in_preview_area(self, pos):
+        """检查坐标是否在预览区域内"""
+        # 检查是否在 scroll 区域内
+        scroll_geo = self.scroll.geometry()
+        map_pos = self.scroll.mapFromGlobal(self.mapToGlobal(pos))
+        return scroll_geo.contains(map_pos)
+
+    def _update_drag_visual_feedback(self, valid):
+        """更新拖拽视觉反馈
+
+        Args:
+            valid: True(有效), False(无效), None(清除)
+        """
+        if valid is True:
+            # 有效文件 - 绿色边框提示
+            self.scroll.setStyleSheet(f"""
+                QScrollArea {{
+                    background-color: {Theme.LIGHT["scroll_area"]};
+                    border-radius: {Theme.BORDER_RADIUS}px;
+                    border: 3px solid #34C759;
+                }}
+            """)
+        elif valid is False:
+            # 无效文件 - 红色边框提示
+            self.scroll.setStyleSheet(f"""
+                QScrollArea {{
+                    background-color: {Theme.LIGHT["scroll_area"]};
+                    border-radius: {Theme.BORDER_RADIUS}px;
+                    border: 3px solid #FF3B30;
+                }}
+            """)
+        else:
+            # 清除 - 恢复默认
+            self.scroll.setStyleSheet(self.scroll_style.format(Theme.LIGHT["scroll_area"]))
+
+    def _handle_dropped_files(self, file_paths):
+        """处理拖拽的文件
+
+        Args:
+            file_paths: 文件路径列表
+        """
+        # 清理之前的状态
+        self._cleanup_before_open()
+        self._cleanup_temp_file()
+
+        if len(file_paths) == 1:
+            # 单个文件
+            fname = file_paths[0]
+            doc_type = self.detect_file_type(fname)
+
+            try:
+                if doc_type == 'pdf':
+                    self._open_pdf_file(fname)
+                elif doc_type == 'docx':
+                    self._open_word_docx(fname)
+                elif doc_type == 'doc':
+                    self._open_word_doc(fname)
+                elif doc_type == 'image':
+                    self._open_images_merge([fname])
+                else:
+                    QMessageBox.warning(
+                        self, "不支持的格式",
+                        f"文件: {os.path.basename(fname)}\n\n"
+                        f"请选择 PDF、Word 文档或图片文件"
+                    )
+            except (IOError, OSError, ValueError, ConversionError) as e:
+                QMessageBox.critical(self, "错误", f"打开文件失败: {str(e)}")
+        else:
+            # 多个文件 - 只支持图片合并
+            are_all_images = all(self.detect_file_type(f) == 'image' for f in file_paths)
+            if are_all_images:
+                try:
+                    self._open_images_merge(file_paths)
+                except (IOError, OSError, ValueError, ConversionError) as e:
+                    QMessageBox.critical(self, "错误", f"合并图片失败: {str(e)}")
+            else:
+                QMessageBox.warning(
+                    self, "不支持的混合拖拽",
+                    "同时拖拽多个文件时，只支持图片合并为PDF。\n\n"
+                    "如需处理PDF/Word，请一次只拖拽一个文件。"
+                )
+
+    def _show_drag_tooltip(self, file_paths, valid):
+        """显示拖拽文件提示信息（可选增强）
+
+        Args:
+            file_paths: 文件路径列表
+            valid: 是否有效
+        """
+        if not file_paths:
+            return
+
+        if len(file_paths) == 1:
+            fname = os.path.basename(file_paths[0])
+            doc_type = self.detect_file_type(file_paths[0])
+            type_names = {
+                'pdf': 'PDF 文档',
+                'docx': 'Word 文档',
+                'doc': 'Word 文档(旧版)',
+                'image': '图片文件',
+                'unknown': '未知格式'
+            }
+            tooltip = f"{fname}\n类型: {type_names.get(doc_type, '未知')}"
+        else:
+            tooltip = f"共 {len(file_paths)} 个文件"
+            if valid:
+                tooltip += "\n将合并为 PDF"
+            else:
+                tooltip += "\n格式不支持"
+
+        # 使用 QToolTip 显示
+        from PyQt6.QtWidgets import QToolTip
+        from PyQt6.QtGui import QCursor
+        QToolTip.showText(QCursor.pos(), tooltip)
+
+    # ============== 拖拽功能结束 ==============
 
     def _cleanup_before_open(self):
         """v37.0.6: 打开新文档前的完整资源清理
@@ -4858,6 +5057,10 @@ sudo dnf install antiword
             # 切换显示：隐藏 canvas，显示 Word 预览
             self.canvas_container.hide()
             self.word_preview.show()
+
+            # v37.6.1: 禁用 Word 预览的拖拽接受，让事件传递到 MainWindow
+            # 解决 Word 打开后无法拖拽打开新文件的问题
+            self.word_preview.setAcceptDrops(False)
 
             # 设置 WebChannel（仅首次）
             if not hasattr(self, 'bridge') or self.bridge is None:
