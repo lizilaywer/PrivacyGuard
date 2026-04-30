@@ -1,7 +1,13 @@
 # PrivacyGuard 脱敏卫士
 我这个比较懒，不会搞github，多多理解，哪天有空了 再好好研究，先传上去
 可以关注公众号联系：池州汪律的AI进化论 ，或者抖音搜索：池州有个汪律师
+
+软件预览图如下：
 <img width="2422" height="1510" alt="软件截图预览_主页" src="https://github.com/user-attachments/assets/c93df112-8e24-4fb2-b236-3584a82d2e1f" />
+
+
+b站可以看操作快闪视频了解：【跟上节奏，2分钟快闪带你看完零基础用AI开发出来的软件是什么样】
+https://www.bilibili.com/video/BV1NPDYB4EP1?vd_source=53f4c6f7c7329987c843aa17df6c923b
 
 > 基于 Python + PyQt6 的 PDF / Word 文档智能脱敏工具
 
