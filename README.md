@@ -150,6 +150,10 @@ python3 -m unittest \
 - `ROLLBACK_GUIDE.md`
 - `restore_checkpoint.sh`
 
+## releases-打包好的便携包，下载可用
+https://github.com/lizilaywer/PrivacyGuard/releases/tag/v37.7.4
+
+
 关注与我这边比较不懂又懒的小律师交流吧！
 ![关注公众号](./assets/wx_qrcode.png)  
 
