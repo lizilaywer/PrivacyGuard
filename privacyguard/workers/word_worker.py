@@ -33,13 +33,14 @@ class WordWorker(QThread):
 
     def run(self):
         """主处理流程 - 支持取消并保存进度（v36.3）"""
+        processed = 0
+        total = 0
         try:
             # 统计总数（段落 + 表格单元格）
             total_paragraphs = len(self.word_doc.paragraphs)
             total_tables = len(self.word_doc.tables)
             total_cells = sum(len(table.rows) * len(table.columns) for table in self.word_doc.tables)
             total = total_paragraphs + total_cells
-            processed = 0
             last_emit_time = 0
 
             # 处理段落
@@ -77,13 +78,25 @@ class WordWorker(QThread):
 
             # 发射已扫描的结果（无论完成与否）
             # v36.5: 发送深拷贝避免数据竞争
-            self.finished_signal.emit(copy.deepcopy(self.word_data))
+            output = copy.deepcopy(self.word_data)
+            output['__scan_meta__'] = {
+                'processed_items': processed,
+                'total_items': total,
+                'cancelled': self.isInterruptionRequested()
+            }
+            self.finished_signal.emit(output)
 
         except (IOError, OSError, RuntimeError, ValueError,
                 AttributeError, KeyError, IndexError) as e:
             print(f"Word扫描错误: {e}")
             # 出错时也返回已处理结果
-            self.finished_signal.emit(copy.deepcopy(self.word_data))
+            output = copy.deepcopy(self.word_data)
+            output['__scan_meta__'] = {
+                'processed_items': processed,
+                'total_items': total,
+                'cancelled': self.isInterruptionRequested()
+            }
+            self.finished_signal.emit(output)
 
     def _emit_progress(self, processed, total, last_emit_time):
         """背压控制的进度更新"""

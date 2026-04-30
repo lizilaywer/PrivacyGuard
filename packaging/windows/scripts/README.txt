@@ -1,139 +1,85 @@
 ================================================================================
-                    PrivacyGuard Windows 打包指南
+                    PrivacyGuard Windows 打包脚本说明
 ================================================================================
 
-📖 本目录包含以下一键打包脚本：
+当前发布基线：v37.7.4
+版本来源：`version.txt`
+输出目录：
+- `dist/`
+- `releases/windows/`
+
+构建 EXE 前会自动执行：
+- `generate_version_info.py`
+- 同步生成 `packaging/windows/config/version_info.txt`
+- 固定使用当前虚拟环境中的 `python -m PyInstaller`
+- 固定使用项目内缓存：`build\.pyinstaller-cache`
 
 --------------------------------------------------------------------------------
- 1_初始化环境.bat
+ 1_init_environment.bat
 --------------------------------------------------------------------------------
-   作用：安装所有需要的依赖和工具
-
-   什么时候运行：
-   - 第一次在新电脑上打包
-   - 克隆项目后首次使用
-   - 依赖出问题想重新安装
-
-   会做什么：
-   - 检查 Python 是否安装
-   - 创建虚拟环境（venv）
-   - 安装所有 Python 依赖包
-   - 安装 PyInstaller 打包工具
+作用：初始化 Windows 打包环境（推荐首次执行）
+- 检查 Python
+- 创建 `venv_win`（若仅有 `venv` 也会兼容提示）
+- 安装 requirements 和 PyInstaller
 
 --------------------------------------------------------------------------------
- 2_一键打包.bat
+ 2_build_exe.bat
 --------------------------------------------------------------------------------
-   作用：将 Python 代码打包成单个 exe 文件
-
-   什么时候运行：
-   - 快速测试打包结果
-   - 只需要便携版 exe
-   - 开发过程中频繁打包调试
-
-   输出：
-   - dist\PrivacyGuard.exe          （可运行的程序）
-   - releases\windows\PrivacyGuard-37.0.exe.sha256 （校验文件）
+作用：构建便携版（不生成安装器）
+输出：
+- `dist/PrivacyGuard/PrivacyGuard.exe`
+- `dist/PrivacyGuard/launcher_wrapper.bat`
+- `releases/windows/PrivacyGuard-<version>.exe.sha256`
 
 --------------------------------------------------------------------------------
- 3_完整打包带安装程序.bat 【推荐】
+3_build_with_setup.bat
 --------------------------------------------------------------------------------
-   作用：打包 exe + 创建安装程序（Setup.exe）
+作用：构建 EXE + 安装程序（需 Inno Setup）
+输出：
+- `dist/PrivacyGuard/PrivacyGuard.exe`
+- `releases/windows/PrivacyGuard-<version>-Setup.exe`
+- 对应 `.sha256`
 
-   什么时候运行：
-   - 正式发布版本
-   - 要分发给其他用户使用
-   - 需要创建安装向导
+说明：脚本会将 `version.txt` 版本通过 `/DMyAppVersion=<version>` 注入
+`packaging/windows/config/PrivacyGuard_Setup.iss`，避免版本号漂移。
 
-   输出：
-   - dist\PrivacyGuard.exe                     （便携版）
-   - releases\windows\PrivacyGuard-37.0-Setup.exe      （安装程序）
-   - 对应的 .sha256 校验文件
-
-   ⚠️ 需要预先安装 Inno Setup：
-      下载地址：https://jrsoftware.org/isdl.php
+正式发布时：
+- 便携版执行 `build_complete.bat`
+- 安装版执行 `3_build_with_setup.bat`
 
 --------------------------------------------------------------------------------
- 4_仅创建安装程序.bat
+ 4_create_installer_only.bat
 --------------------------------------------------------------------------------
-   作用：如果已经打包好 exe，只生成安装程序
+作用：基于已有 dist 结果，仅生成安装程序
 
-   什么时候运行：
-   - 已经运行过 2_一键打包.bat
-   - 只需要补创建安装程序
-   - 修改了安装配置后重新生成
+--------------------------------------------------------------------------------
+ build_complete.bat
+--------------------------------------------------------------------------------
+作用：完整构建（环境校验 + 构建 + 清理 + ZIP + SHA256）
+输出：
+- `releases/windows/PrivacyGuard-v<version>-Windows-Portable.zip`
+- `releases/windows/PrivacyGuard-v<version>-Windows-Portable.zip.sha256`
 
-================================================================================
-                            使用步骤
-================================================================================
-
-第一次打包（按顺序执行）：
-
-    1. 双击运行 "1_初始化环境.bat"
-       ↓ 等待几分钟，安装依赖
-    2. 双击运行 "3_完整打包带安装程序.bat"
-       ↓ 等待 5-10 分钟
-    3. 在 releases\windows 文件夹中找到安装程序
-       PrivacyGuard-37.0-Setup.exe
-
-日常打包（已初始化过）：
-
-    直接运行 "3_完整打包带安装程序.bat"
+--------------------------------------------------------------------------------
+ 其他脚本
+--------------------------------------------------------------------------------
+- `generate_version_info.py`：从 `version.txt` 生成 Windows EXE 版本资源
+- `check_vcredist.bat`：VC++ 运行库检查
+- `diagnose_onnxruntime.py`：onnxruntime 诊断
+- `verify_dependencies.py`：构建前依赖校验
+- `launcher_wrapper.bat`：发布目录默认启动入口
 
 ================================================================================
-                            常见问题
+本轮同步说明
 ================================================================================
 
-Q: 打包时出现 "找不到模块" 错误？
-A: 检查 1_初始化环境.bat 是否成功完成，然后重试
+- 安装器构建时通过 `/DMyAppVersion=<version>` 从 `version.txt` 注入版本号
+- 当前 EXE 版本资源：`37.7.4.0`
+- PyInstaller 打包模块导入失败修复已纳入当前 Windows 打包链路说明
+- 当前 Windows 打包脚本已统一改为使用当前环境中的 PyInstaller 和项目内缓存
+- `scripts/` 目录已清理历史兼容与解除阻止脚本，仅保留当前正式主链与必要诊断工具
+- 当前正式发布入口已收口为：
+  - 便携版：`build_complete.bat`
+  - 安装版：`3_build_with_setup.bat`
 
-Q: 打包后的 exe 很大（几百MB）？
-A: 这是正常的！Python + PyQt6 + OCR 引擎本身就有这么大
-   可以使用 UPX 压缩（已默认启用）
-
-Q: Windows Defender 报毒？
-A: PyInstaller 打包的程序有时会被误报，这是已知问题
-   - 可以提交到微软申诉：https://www.microsoft.com/en-us/wdsi/filesubmission
-   - 或者购买代码签名证书签名
-
-Q: 打包时间太长？
-A: 正常现象，需要分析所有依赖并打包
-   - 机械硬盘：可能 10-15 分钟
-   - SSD：5-8 分钟
-
-Q: 可以给打包好的 exe 换图标吗？
-A: 替换 packaging\windows\assets\icon.ico 文件，然后重新打包
-
-================================================================================
-                            文件说明
-================================================================================
-
-packaging/windows/
-├── scripts/
-│   ├── 1_初始化环境.bat              ← 首次运行
-│   ├── 2_一键打包.bat                ← 仅打包 exe
-│   ├── 3_完整打包带安装程序.bat      ← 【推荐】打包+安装程序
-│   ├── 4_仅创建安装程序.bat          ← 补创建安装程序
-│   └── README.txt                    ← 本文件
-├── config/
-│   ├── PrivacyGuard_windows.spec     ← PyInstaller 配置
-│   ├── PrivacyGuard_Setup.iss        ← Inno Setup 安装脚本配置
-│   └── version_info.txt              ← 版本信息
-└── assets/
-    └── icon.ico                      ← 应用图标
-
-dist/                                 ← 打包输出目录（自动创建）
-└── PrivacyGuard.exe                  ← 打包好的程序
-
-releases/windows/                     ← Windows 发布目录（自动创建）
-├── PrivacyGuard-37.0-Setup.exe       ← 安装程序
-└── *.sha256                          ← 校验文件
-
-================================================================================
-                            联系支持
-================================================================================
-
-遇到问题？
-- 查看 packaging/windows/docs/WINDOWS_BUILD_GUIDE.md 详细文档
-- 在 GitHub 提交 Issue
-
-================================================================================
+最后更新：2026-03-18

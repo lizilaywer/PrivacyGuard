@@ -40,14 +40,14 @@ reportlab             4.4.9
 
 **启动方式 1 - 源码运行:**
 ```bash
-cd "/Users/a49144/Desktop/临时coding/PrivacyApp"
+cd "/Users/a49144/Desktop/codexhub/PrivacyGuardApp"
 source venv/bin/activate
 python main.py
 ```
 
 **启动方式 2 - 打包应用:**
 ```bash
-open "/Users/a49144/Desktop/临时coding/PrivacyApp/dist/PrivacyGuard.app"
+open "/Users/a49144/Desktop/codexhub/PrivacyGuardApp/dist/PrivacyGuard.app"
 ```
 
 **验证项:**
@@ -315,24 +315,24 @@ time python main.py
 
 ### 一键运行所有自动化测试
 ```bash
-cd "/Users/a49144/Desktop/临时coding/PrivacyApp"
+cd "/Users/a49144/Desktop/codexhub/PrivacyGuardApp"
 bash test.sh
 ```
 
 ### 启动应用
 ```bash
 # 方式 1: 源码
-cd "/Users/a49144/Desktop/临时coding/PrivacyApp"
+cd "/Users/a49144/Desktop/codexhub/PrivacyGuardApp"
 source venv/bin/activate
 python main.py
 
 # 方式 2: 打包应用
-open "/Users/a49144/Desktop/临时coding/PrivacyApp/dist/PrivacyGuard.app"
+open "/Users/a49144/Desktop/codexhub/PrivacyGuardApp/dist/PrivacyGuard.app"
 ```
 
 ### 生成测试 PDF
 ```bash
-cd "/Users/a49144/Desktop/临时coding/PrivacyApp"
+cd "/Users/a49144/Desktop/codexhub/PrivacyGuardApp"
 source venv/bin/activate
 python create_test_pdf.py
 ```

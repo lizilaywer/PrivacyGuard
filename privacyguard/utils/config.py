@@ -74,6 +74,7 @@ DEFAULT_CONFIG = {
             }
         },
         "replacement_text": "[已脱敏]",
+        "custom_keywords": "",
         "scan": {
             "default_level": 2.0,
             "available_levels": [1.5, 2.0, 3.0],

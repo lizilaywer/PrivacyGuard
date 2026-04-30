@@ -2,9 +2,2830 @@
 
 ## 项目信息
 - **项目名称**: PrivacyGuard 脱敏卫士
-- **当前版本**: v37.6.1 (Drag & Drop Fix)
-- **开发日期**: 2026-02-28
-- **状态**: ✅ 文件拖拽打开功能完成 + Word拖拽修复
+- **当前版本**: v37.7.4 (Release Audit and Final Polish)
+- **开发日期**: 2026-03-18
+- **状态**: ✅ `v37.7.4` 发布准备完成，当前进入正式发布前真机截图驱动抛光阶段
+
+---
+
+## 2026-03-18 - 发布审查、版本升级与最终同步
+
+### 本轮收口
+
+1. **已完成版本升级**
+   - `version.txt` 已更新到 `37.7.4`
+   - `main.py` 版本回退与版本标识已同步为 `Release Audit and Final Polish`
+   - `packaging/windows/config/PrivacyGuard_Setup.iss` 默认回退版本已同步
+
+2. **active 文档已统一到当前发布准备口径**
+   - `README.md`、`AGENTS.md`、`CLAUDE.md`、`PROJECT_INDEX.md`
+   - `docs/current/STATUS.md`、`docs/current/DEV_LOG.md`
+   - `docs/current/PROJECT_SUMMARY.md`、`docs/current/PROJECT_STRUCTURE.md`
+   - `docs/current/V38_UI_REFACTOR_PLAN.md`、`docs/current/RECOVERY_GUIDE.md`
+   - `CHANGELOG.md`
+   - `packaging/README.md`
+   - `docs/packaging/README.md`
+   - `docs/packaging/windows-packaging-guide.md`
+   - `docs/packaging/macos-packaging-guide.md`
+
+3. **发布前版本资源已同步**
+   - Windows `version_info.txt` 已重新生成到 `37.7.4.0`
+   - Windows 打包说明中的版本资源与安装器回退版本口径已同步
+
+4. **运行时与性能链路已再收口**
+   - 首次从空首页打开文件时不再先做清理，避免首页跳动
+   - 带嵌入图片的 Word 文档预览已改为临时资源目录加载，避免空白或超慢首开
+   - 批量 Word 摘要已加入“规则 -> 文档 -> 成功替换条数”的结果明细
+
+5. **当前验证基线已更新**
+   - 主回归已更新到 `52/52`
+   - 当前发布准备以 `52/52` 为默认质量基线
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests packaging` ✅
+- `python3 packaging/windows/scripts/generate_version_info.py` ✅
+- 主回归 `52/52` ✅
+
+---
+
+## 2026-03-17 - Windows 打包 NumPy 2.x 启动崩溃热修
+
+### 本轮收口
+
+1. **已修复 Windows active spec 的 numpy 收集不完整问题**
+   - `packaging/windows/config/PrivacyGuard_windows.spec`
+   - 已补充 `collect_all('numpy')`
+   - 已补充 `collect_submodules('numpy')`
+   - 已显式加入 `numpy.core / numpy._core` 兼容层目录
+   - 已显式加入 `numpy.core._exceptions / numpy._core._exceptions` 等关键 hiddenimports
+
+2. **已确认当前 Windows 两个主打包入口都指向 active spec**
+   - `packaging/windows/scripts/build_complete.bat`
+   - `packaging/windows/scripts/3_build_with_setup.bat`
+   - 当前无需切换到历史 `_v2.spec`
+
+3. **当前错误根因已明确**
+   - Windows 打包产物运行时 `cv2 -> numpy` 导入链触发
+   - 报错为 `No module named 'numpy.core._exceptions'`
+   - 属于打包收集不完整，不是业务代码逻辑错误
+
+### 验证结果
+
+- `python3 -m compileall -q packaging` ✅
+- `python3 - <<'PY' ... py_compile.compile('packaging/windows/config/PrivacyGuard_windows.spec', doraise=True) ... PY` ✅
+- 当前机器为 macOS，未实际执行 Windows `.bat` 打包
+- 需要在 Windows 真机重新执行一次：
+  - `packaging\\windows\\scripts\\build_complete.bat`
+  - 如需安装包，再执行 `packaging\\windows\\scripts\\3_build_with_setup.bat`
+
+---
+
+## 2026-03-16 - 主文档与当前文档同步完成
+
+### 本轮收口
+
+1. **主入口文档已统一到当前真实状态**
+   - `README.md`、`AGENTS.md`、`CLAUDE.md`、`PROJECT_INDEX.md`
+   - 已统一到 `v37.7.3` 运行基线稳定、`v38 UI 改造代码层已完成` 的口径
+
+2. **当前文档已统一到当前执行结论**
+   - `PROJECT_SUMMARY.md`、`PROJECT_STRUCTURE.md`、`V38_UI_REFACTOR_PLAN.md`
+   - 已明确“代码层主线完成，默认进入真机截图驱动抛光”
+
+3. **验证基线文案已同步**
+   - 主回归基线已统一更新为 `48/48`
+   - 当前默认工作重点已统一写成“真机截图驱动细节抛光”
+
+### 当前验证
+
+- 文档同步以 `STATUS.md`、`DEV_LOG.md`、主回归 `48/48` 为当前基线
+
+---
+
+## 2026-03-16 - packaging 链路复核与脚本修复
+
+### 本轮收口
+
+1. **Windows 安装器版本回退已修正**
+   - `packaging/windows/config/PrivacyGuard_Setup.iss`
+   - 默认回退版本已从 `37.7.2` 同步到 `37.7.3`
+
+2. **Windows / macOS 打包脚本已统一绑定当前环境**
+   - Windows 批处理脚本统一切换到 `python -m PyInstaller`
+   - macOS shell 脚本统一切换到 `python3 -m PyInstaller`
+   - 避免误用系统里其它 Python / PyInstaller
+
+3. **PyInstaller 缓存目录已统一改为项目内**
+   - Windows：`build\.pyinstaller-cache`
+   - macOS：`build/.pyinstaller-cache`
+   - 已消除对用户目录全局 PyInstaller 缓存的依赖
+
+4. **macOS 完整打包脚本容错已加强**
+   - `build_complete.sh` 现在会在当前环境缺少 PyInstaller 时自动安装
+   - `create-dmg` 缺失时会明确回退到 `hdiutil`
+   - 若 DMG 仍失败，脚本会保底复制 `.app` 到 `releases/macos/`
+
+5. **packaging 相关文档已统一同步**
+   - `packaging/README.md`
+   - `docs/packaging/README.md`
+   - `docs/packaging/windows-packaging-guide.md`
+   - `docs/packaging/macos-packaging-guide.md`
+   - `packaging/windows/docs/WINDOWS_BUILD_GUIDE.md`
+   - `packaging/macos/docs/MACOS_BUILD_GUIDE.md`
+   - `packaging/windows/scripts/README.txt`
+  - `packaging/windows/scripts/README_FIXED.txt`
+  - `packaging/macos/scripts/README.txt`
+  - `packaging/DUAL_OCR_PACKAGING.md`
+
+6. **Windows scripts 目录已做主链清理**
+   - 已移除历史兼容与解除阻止脚本
+   - 当前仅保留正式打包主链与必要诊断工具
+
+### 验证结果
+
+- `python3 packaging/windows/scripts/generate_version_info.py` ✅
+- `python3 -m compileall -q packaging` ✅
+- `bash -n packaging/macos/scripts/build_complete.sh packaging/macos/scripts/build_macos_app.sh packaging/macos/scripts/sign_macos_app.sh packaging/macos/scripts/notarize_macos_app.sh` ✅
+- `bash packaging/macos/scripts/build_complete.sh` ✅
+  - 已使用项目内 PyInstaller 缓存完成 `.app` 构建
+  - 当前环境缺少 `create-dmg`
+  - `hdiutil` 当前环境下未成功创建 DMG，脚本已按预期复制 `releases/macos/PrivacyGuard.app`
+- Windows 链路说明：
+  - 已完成脚本、spec、版本资源、安装器配置和文档一致性复核
+  - 当前在 macOS 机器上未实际运行 `.bat` / Inno Setup
+  - 仍需在 Windows 真机执行一次便携包和安装包链路完成最终闭环
+
+---
+
+## 2026-03-16 - Windows 专项收尾代码层完成
+
+### 本轮收口
+
+1. **超宽窗口 / 全屏额外一档策略已补齐**
+   - 主工作区已新增 `cinema wide` 级别的布局收口
+   - `PDF / Word` 预览壳层会继续放开最大宽度与中心 stretch
+   - `批量 / 图片 / 首页` 主卡会继续缩边并提高内容区利用率
+
+2. **批量工作台主辅区比例已完成最终收口**
+   - 左侧 `本轮摘要 / 处理动态` 继续收窄为辅助轨
+   - 右侧 `结果清单` 主区已进一步抬高最小宽度
+   - 超宽窗口下批量页不再像两列同权重卡片，而是更像正式桌面工作台
+
+3. **高级设置超宽窗口利用率已继续提高**
+   - `导航 / 顶部概览 / 右侧内容 / 底部操作区` 已接入同一套超宽窗口放开策略
+   - 顶部概览文本宽度、字段卡宽度、子卡高度与整体 spacing 已在超宽窗口下继续收口
+
+4. **v38 UI 改造代码层大步骤已收完**
+   - 当前代码层主线已从结构与密度收口阶段，转入真机截图驱动的小毛刺微调阶段
+   - 后续默认重点为：Windows 真机观感、个别对齐问题、局部按钮/边框/留白收边
+
+5. **视觉语言统一收边已再完成一轮**
+   - 主工作区壳层、批量 / 图片主卡、批量子卡、Word 预览内壳、设置页 section 卡已进一步统一边界语言
+   - 卡片圆角、边框强度、头部标签背景和内容面层级已继续收敛
+   - 当前界面已从“结构改造完成”进入“真机观感抛光”阶段
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（48/48）
+
+---
+
+## 2026-03-16 - Windows 密度刷新启动回归热修复
+
+### 本轮修复
+
+1. **主窗口启动回归已修复**
+   - `MainWindow._refresh_windows_density_metrics()` 中的 `current_mode`
+   - 已在首次使用前完成初始化，不再触发 `UnboundLocalError`
+   - 主窗口现在可在主题刷新阶段正常完成工具栏密度计算
+
+2. **回归原因已明确记录**
+   - 这是宽窗口 / 全屏收口阶段引入的初始化顺序问题
+   - 崩溃点出现在 `_refresh_toolbar_responsiveness()` 调用链进入 Windows 密度刷新时
+   - 与 `Skia Graphite backend ... falling back to Ganesh` 日志无关
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（48/48）
+
+---
+
+## 2026-03-16 - 图片合并工作台已升级为桌面工作区壳层
+
+### 本轮改进
+
+1. **Windows 专项收尾已继续推进**
+   - 主窗口工具栏密度判断已抽成纯规则函数，开始同时考虑 `宽度 / 高度 / DPI`
+   - Windows `125% / 150%` 缩放下，PDF / Word / 批量工具栏会更早切到合适档位
+   - 高窗口与矮窗口下，工具栏高度、命中区、工作台边距已进一步联动
+
+2. **高级设置已补上跨屏 / DPI 刷新**
+   - 设置窗口现在会绑定 `screenChanged`，换屏或缩放变化后自动重算布局密度
+   - 高级设置顶部概览、左侧导航、右侧内容、底部操作区已开始按 `宽度 + 高度 + DPI` 联动
+   - 快捷入口按钮、保存按钮、字段卡最低高度已随 DPI 一起收口
+
+3. **Windows 密度规则已进入可测试状态**
+   - 新增工作区密度解析函数与设置页密度解析函数
+   - 已补纯逻辑回归测试，锁住 Windows 高缩放和不同窗口高度下的档位选择
+
+4. **高级设置已完成高 DPI 字级收口**
+   - `高级设置中心` 标题、副标题、顶部标签、概览标题、导航提示、底部说明已按密度统一字号
+   - `模块标题 / 说明 / 摘要 / 字段标题 / 字段说明 / 操作提示` 已进入同一套高 DPI 字级规则
+   - 左侧导航项 padding 与字号已按窗口密度和缩放联动，Windows 下阅读与点击都更稳
+
+5. **主工具栏命中区已再收口一轮**
+   - 文字按钮宽度下限已按 DPI 追加一档
+   - 高缩放场景下 `高级设置 / 使用反馈 / 导出 / 脱敏 / 替换` 等按钮不会过窄
+   - 这轮完成后，v38 UI 改造的代码级主线已基本收口，剩余主要是 Windows 真机目测细调
+
+6. **宽窗口 / 全屏下的桌面工作区利用率已继续放开**
+   - `首页 / PDF / Word / 批量 / 图片` 五类工作区已进一步缩小左右舞台留白
+   - 预览壳层、批量主卡、图片合并主卡在超宽窗口下会继续放开宽度，不再保守悬在中间
+   - PDF / Word 预览区与批量 / 图片工作台的中心 stretch 已继续统一，更接近成熟桌面产品的空间利用
+
+7. **超宽窗口 / 全屏下的成品化收口已补齐**
+   - 主工作区与高级设置都已加入超宽窗口额外一档收口策略
+   - 预览壳层、首页主卡、批量主卡、图片合并主卡、设置右侧内容区在超宽窗口下会进一步放宽
+   - 中心内容区与左右留白不再只沿用普通宽屏档，桌面端空间利用率已继续提高
+
+4. **图片合并模式不再是简化中置小卡**
+   - 已改成和批量页同级的桌面工作区壳层
+   - 头部、状态、阶段卡、指标卡已进入同一张主工作卡
+
+5. **图片合并已接入阶段轨与指标卡**
+   - 新增 `整理顺序 / 合并 PDF / 进入工作台` 三段阶段卡
+   - 新增 `待合并图片 / 当前状态 / 后续动作` 三张指标卡
+   - 合并中与等待开始会自动刷新 badge、指标和阶段状态
+
+6. **图片合并已接入响应式断点重排**
+   - 阶段卡支持桌面端横排、中窗口两列、窄窗口单列
+   - 指标卡支持三列 / 两列 / 单列重排
+   - 合并工作台已经正式接入主密度刷新链
+
+7. **真实工作区统一性继续推进**
+   - 图片合并现在已与 PDF / Word / 批量工作台走同一套桌面级容器语言
+   - 工作区卡片 padding、section gap、宽度策略与响应式节奏已继续统一
+
+8. **真实工作区最后一轮统一收口已完成**
+   - `PDF / Word / 批量 / 图片` 四类工作区已统一进同一套桌面级壳层语言
+   - 批量与图片合并工作台的主卡宽度利用率已继续放开，不再偏保守
+   - 批量 / 图片工作台头部、阶段卡、指标卡、正文区已进入同一套 spacing 规则
+   - 预览工作区与批量/图片工作台在背景、内容面、卡片节奏上的差异已继续缩小
+   - 真实工作区“大步骤”已从结构搭建阶段进入 Windows 专项收尾阶段
+   - 图片合并工作台已不再是简化小卡，而是正式升级为桌面工作区卡片壳层
+   - 预览类工作区与流程类工作区的容器背景、内容面和圆角层级已继续统一
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（48/48）
+
+---
+
+## 2026-03-15 - 高级设置模块标题已收进卡片内部
+
+### 本轮改进
+
+1. **设置模块标题不再悬在卡片外沿**
+   - `1. 通用规则`、`2. 自定义关键词`、`3. 精度与微调`、`4. OCR 检测框调节`
+   - 已从 `QGroupBox` 外部标题改成卡片内部标题行
+
+2. **设置卡片内部边距已统一**
+   - 四个设置模块卡片均改为统一的内部 padding 与 spacing
+   - 标题、说明、摘要和内容区的层级更接近正式产品设置页
+
+3. **左侧导航和滚动联动保持不变**
+   - 设置页导航高亮、跳转、滚动同步未受影响
+
+4. **设置模块头部已进一步统一成内部头部区**
+   - 标题、说明、摘要已进入同一内部头部区
+   - `Word 替换规则` 子卡已回到与左侧同一类卡片容器
+
+5. **设置导航与底部操作栏已继续收口**
+   - 左侧导航新增轻提示与底部信息卡容器
+   - 底部 `取消 / 保存设置` 操作区已统一按钮高度与宽度节奏
+   - 设置子卡内表单标签、分隔线与 padding 已继续统一
+
+6. **设置页整体比例已继续向桌面设置中心收口**
+   - 左侧导航栏宽度、内边距与区块节奏已继续优化
+   - 导航提示与状态摘要之间已加入轻分隔
+   - 底部保存栏外边距、按钮宽度与内容区比例已进一步稳定
+
+7. **设置页已加入按窗口宽度响应的比例策略**
+   - 顶部概览卡的指标区与快捷入口区已改成可重排网格
+   - 自定义关键词区、扫描微调区会按窗口宽度自动在双列 / 单列之间切换
+   - 高级设置在大窗口下更像桌面设置中心，小窗口下也不会再靠固定比例硬撑
+   - 顶部概览卡、左侧导航、右侧内容已不再使用固定比例
+   - 设置页会按当前窗口宽度自动调整导航宽度、主体间距、概览卡 padding 与底部操作区宽度节奏
+
+8. **批量工作台已接入真正的断点重排**
+   - 阶段卡已支持桌面端横排、中窗口两列、窄窗口单列
+   - 指标卡已支持四列 / 两列 / 单列重排
+   - 动作区已支持四列 / 两列 / 单列重排
+   - 结果区已支持宽窗口主区 + 左侧辅助轨、中窗口上下双区、窄窗口单列
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - PDF / 图片工作台工具位已按场景重排
+
+### 本轮改进
+
+1. **`使用/反馈` 已移出 PDF / 图片工具栏主操作位**
+   - PDF / 图片工作台下，`使用/反馈` 已移动到顶部工作台右侧
+   - 避免继续占据工具栏主操作位
+
+2. **`适应页面` 已固定回到 PDF 工具栏实位**
+   - `适应页面` 已移动到原 `使用/反馈` 所在的工具栏位置
+   - 不再依赖先点 `更多` 再执行
+
+3. **模式显隐链已同步接好**
+   - `PDF / 图片 / Word / 批量` 下的工具栏与顶部按钮显隐已重新接通
+   - PDF 旧的左侧 `适应` 按钮已停用，避免重复入口
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - 已加入按窗口高度响应的桌面工作区策略
+
+### 本轮改进
+
+1. **真实工作区现在不只按宽度响应**
+   - 已新增按窗口高度感知的桌面工作区策略
+   - 大窗口 / 全屏下，PDF / Word / 批量工作区会继续压缩外围边距并放开壳层利用率
+
+2. **PDF / Word 全屏观感已继续收口**
+   - PDF / Word 在高窗口下会进一步压缩顶部/底部与壳层内部 padding
+   - 全屏时不再只横向变宽，纵向比例也更像桌面工作台
+
+3. **批量页大窗口主次关系已继续增强**
+   - 高窗口下，批量页卡片允许继续纵向扩展
+   - 左侧辅助轨继续保持克制，右侧结果区与结果表高度继续提升
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - 真实工作区利用率与批量结果主区已继续强化
+
+### 本轮改进
+
+1. **PDF / Word / 批量 / 图片工作区已继续放开桌面舞台**
+   - 真实工作区左右舞台边距已进一步缩小
+   - PDF / Word 预览壳层最大宽度已继续放开
+   - 大窗口与全屏下，中心工作区已更能吃满可用空间
+
+2. **Word 预览头部与内容区过渡已继续统一**
+   - Word 工作区顶部到内容区的节奏已继续收口
+   - 双栏头部与内容区之间的留白更接近正式桌面工作台
+
+3. **批量页右侧结果主区已继续强化**
+   - 左侧辅助轨宽度已进一步收紧
+   - 右侧 `结果清单` 主区最小宽度已提高
+   - `结果清单` 继续保持主区，`本轮摘要 / 处理动态` 更明确退居辅助
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - Word 双栏头部与批量页 section 头已进一步统一
+
+### 本轮改进
+
+1. **Word 双栏头部已继续桌面化**
+   - 双栏头部高度、标签圆角、内边距和中缝留白已统一收口
+   - `原文预览 / 替换后预览` 头部更接近正式工作台标签语言
+
+2. **批量页 section 头已继续统一**
+   - `本轮摘要 / 结果清单 / 处理动态` 的标题字级与结果说明字级已继续拉齐
+   - 批量页主辅区的层级语言更接近 Word / PDF 工作区
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - 批量页主辅区比例已继续向结果主区倾斜
+
+### 本轮改进
+
+1. **批量页左侧辅助轨已继续收紧**
+   - 宽窗口下，`本轮摘要 / 处理动态` 左侧列宽已进一步收口
+   - 左侧两块内容已更明确地承担辅助信息角色
+
+2. **批量页右侧结果主区已继续放大**
+   - `结果清单` 主区比例已继续提高
+   - 结果区最小宽度已提升，更适合桌面端与大窗口场景
+
+3. **宽窗口下的主辅关系已更清楚**
+   - 批量页下半区已更像 `左侧信息轨 + 右侧结果主区`
+   - 不再像两列相似权重的普通表单布局
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - 大窗口下真实工作区空间利用率已继续增强
+
+### 本轮改进
+
+1. **PDF / Word / 批量 / 图片工作区横向利用率已继续增强**
+   - 真实工作区行级 stretch 已继续放开
+   - 大窗口和全屏下，中心工作区不再保守悬在中间
+
+2. **批量页三块内容已进一步形成主次关系**
+   - `结果清单` 保持主区并允许继续纵向扩展
+   - `本轮摘要 / 处理动态` 改成更克制的辅助区块
+   - 三块内容已补上统一轻卡片边界
+
+3. **Word 双栏开关状态下的空间分配已更明确**
+   - 对比开启时左右面板保持对等分配
+   - 单栏时右侧不再占比，单文档预览更像桌面工作台
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - 真实工作区宽度与高度利用率已继续放开
+
+### 本轮改进
+
+1. **PDF / Word / 批量 / 图片工作区已继续放开桌面舞台**
+   - 真实工作区左右舞台边距已继续缩小
+   - PDF / Word 预览壳层最大宽度已继续放开
+   - 批量 / 图片工作区卡片最大宽度也已并入同一套桌面宽度体系
+
+2. **Word 双栏内部留白已继续压缩**
+   - 双栏预览内部 padding 已继续减薄
+   - 对比开启时左右面板保持对等分配，单栏时右侧不再占比
+
+3. **批量页在大窗口下已更能吃满高度**
+   - `结果清单` 已允许继续纵向扩展
+   - `处理动态` 也已允许继续纵向扩展
+   - 全屏或大窗口下不再过早被固定高度卡住
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - 批量页下半区已改成桌面式双区布局
+
+### 本轮改进
+
+1. **批量页下半区已重排为桌面式双区**
+   - 宽窗口下：`本轮摘要 / 处理动态` 位于左侧列，`结果清单` 位于右侧主区
+   - 窄窗口下：三块内容会自动收回单列，避免压坏布局
+
+2. **批量结果区主区高度已继续放开**
+   - 结果表格已获得更稳定的主区高度
+   - 摘要与日志的高度节奏也已重新分配，更像工作台而不是表单堆叠
+
+3. **顶部工作台标题区行距已继续统一**
+   - 顶部 `标题 / 副标题` 行距已纳入同一套密度规则
+   - PDF / Word / 批量工作区顶部的统一感更稳定
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - 批量结果区结果头已并成同一行
+
+### 本轮改进
+
+1. **批量结果区标题与工具条已合并**
+   - `结果清单` 标题不再单独占一行
+   - `结果计数 + 筛选按钮` 已并入同一条结果头
+   - 结果区第一眼层级更像正式工作台
+
+2. **结果头已接入统一高度基线**
+   - `结果清单`、`结果计数`、三枚筛选按钮都已并入同一高度规则
+   - 行内对齐与节奏比前一版更稳定
+
+3. **顶部工作台标题区行距已轻量收口**
+   - 标题和副标题之间的行距已统一
+   - PDF / Word 顶部工作台头部观感更利落
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - PDF 工具栏底边遮挡已继续收口
+
+### 本轮改进
+
+1. **PDF / 图片模式工具栏垂直空间已继续统一**
+   - 工具栏底部留白已增加，避免按钮底边与下方分隔线打架
+   - 工具栏分组容器已统一抬高，不再与按钮共用同一条过紧的高度基线
+
+2. **缩放组与翻页组状态框已并入同一高度规则**
+   - `35%`、`1 / 1` 这类状态框已与两侧图标按钮统一高度
+   - 中部控件的整体对齐感更稳定
+
+3. **工具栏右侧功能组同步沿同一规则收口**
+   - `使用/反馈`、`更多`、`导出` 与缩放/翻页组继续保持统一上下节奏
+   - 后续将继续沿“对齐、统一、克制”的标准推进
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - 批量页动作区已改成响应式网格
+
+### 本轮改进
+
+1. **批量页动作区已接入响应式重排**
+   - 宽窗口下，`重新设置规则 / 重新选择文档 / 仅重试失败文档 / 打开输出位置` 会整齐横排
+   - 窄窗口下会自动收成两列网格，避免一长串按钮挤压
+
+2. **批量动作按钮已统一宽度下限**
+   - 保持同一行里的重量感更稳定
+   - 不再因为文案长短差异出现明显跳动
+
+3. **批量工作台继续沿统一密度规则收口**
+   - 动作区现已并入现有密度系统
+   - 后续随着窗口宽度变化会自动保持整齐
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - Word 联动顺滑度已继续微调，批量页 section 头已统一
+
+### 本轮改进
+
+1. **Word 双栏联动已继续提顺滑度**
+   - Python 侧轮询兜底频率已适度放缓，减少干扰
+   - 前端滚动事件同步继续走 `requestAnimationFrame`
+   - 直接滚动触发仍优先于轮询兜底
+
+2. **批量页三段标题已统一成 section 头**
+   - `本轮摘要 / 结果清单 / 处理动态` 已接入同一套标题样式
+   - 区块之间已补轻量留白，节奏更接近正式工作台
+
+3. **批量页筛选按钮高度基线已继续稳定**
+   - 三枚筛选按钮已保持统一高度和宽度下限
+   - 与结果计数摘要条更容易对齐
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - Word 双栏联动顺滑度已继续微调，批量/图片页宽度已并入工作区体系
+
+### 本轮改进
+
+1. **Word 双栏联动顺滑度已继续收口**
+   - 前端定时上报频率已提高
+   - 滚动事件同步已接入 `requestAnimationFrame`
+   - 程序化滚动锁定时长已缩短，双栏跟手感更轻
+
+2. **批量 Word / 图片合并页已并入桌面工作区宽度体系**
+   - 不再使用偏保守的小卡片宽度上限
+   - 会跟随桌面窗口宽度自然展开
+   - 与 PDF / Word 工作区开始共享同一套宽度策略
+
+3. **批量结果筛选按钮已继续统一基线**
+   - 三枚筛选按钮已接入统一高度和最小宽度
+   - 与摘要条、结果表的节奏更一致
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - Word 双栏滚动联动已补齐前端定时上报与关闭清理保护
+
+### 本轮改进
+
+1. **双栏滚动联动已改成三层同步**
+   - 前端滚动事件继续主动上报滚动比例
+   - 前端新增定时上报，避免单次滚动事件漏报后完全失联
+   - Python 侧仍保留轮询兜底，双栏联动更稳
+
+2. **程序化滚动已继续补强防回环**
+   - 目标侧收到外部滚动后，会记录已应用比例
+   - 回传到 Python 时会识别为“刚刚程序推动”，不再反向推回另一侧
+
+3. **关闭崩溃已加入对象销毁级保护**
+   - Word 预览 WebView 有效性检查已升级为 `sip.isdeleted` 级别
+   - 已销毁的 `QWebEngineView` / `QWebEnginePage` 不会再进入滚动同步链
+
+4. **测试桩已同步修正**
+   - `Word` 预览文档构建测试已改为匹配真实注入方式
+   - 避免因为桩对象没有真实注入交互脚本而误报失败
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（45/45）
+
+---
+
+## 2026-03-15 - Word 双栏对比预览已支持同步滚动
+
+### 本轮改进
+
+1. **双栏对比预览已支持联动滚动**
+   - 左侧原文预览滚动时，右侧替换后预览会同步到相近位置
+   - 右侧滚动时，左侧也会反向联动
+
+2. **同步滚动已加入防回环处理**
+   - 程序化滚动不会再次反向触发对侧同步
+   - 避免双栏互相推送导致抖动或来回跳动
+
+3. **双栏滚动同步已接入现有 WebChannel 预览桥**
+   - 原文与替换预览共享同一套滚动同步桥接
+   - 单栏模式下会自动停用，不影响原有预览行为
+
+4. **已补充基础回归测试**
+   - 锁住滚动同步脚本钩子存在
+   - 锁住桥接收到滚动比例后会交给主窗口处理
+
+5. **已补充轮询兜底机制**
+   - 即使前端滚动事件回传不稳定，Python 侧也会定时读取左右滚动比例
+   - 双栏对比滚动同步的稳定性进一步提高
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（44/44）
+
+---
+
+## 2026-03-15 - PDF 顶部衔接与批量结果区已继续统一
+
+### 本轮改进
+
+1. **PDF 顶部信息区与预览区已再压一档**
+   - PDF 模式下，工作区顶部过渡继续收紧
+   - 顶部上下文与预览壳层之间的衔接更利落
+
+2. **批量结果区摘要条已统一基线**
+   - 结果计数摘要、筛选按钮现在按同一垂直基线排列
+   - 摘要条整体高度和密度更接近正式产品工作台
+
+3. **批量结果表头与列宽已更稳定**
+   - `状态 / 操作` 表头已居中
+   - `状态 / 操作` 两列已使用更稳定的固定宽度策略
+   - 结果区整体对齐感继续提升
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - PDF 工具栏缩放与翻页组对齐已继续收口
+
+### 本轮改进
+
+1. **工具栏分组已切到统一垂直基线**
+   - 缩放组、翻页组与其他工具组现在统一按同一高度容器居中
+   - 不再出现同一排里某组略高、某组略低的观感
+
+2. **`35% / 1/1` 状态框已统一宽度**
+   - 缩放百分比和页码状态框会自动取同一宽度
+   - 同类信息块在工具栏里更整齐、更像一套组件
+
+3. **工具栏元信息块已固定尺寸策略**
+   - 状态框已明确按固定高度、固定尺寸策略渲染
+   - 后续文案变化时也不容易再次出现基线漂移
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 工作区顶部冗余已继续做减法
+
+### 本轮改进
+
+1. **PDF / Word 顶部上下文已继续去重**
+   - PDF / Word 工作区已不再同时保留两层模式标识
+   - 顶部层级更干净，减少重复播报同一状态
+
+2. **PDF / Word 副标题已继续压缩**
+   - PDF 页码信息已改成更紧凑的 `当前 / 总页数`
+   - Word 副标题也继续缩短，保留文件、段落、表格和对比状态
+
+3. **批量结果筛选条交互细节已继续稳住**
+   - 结果筛选按钮会按可用状态切换鼠标形态
+   - 功能区与状态区的交互反馈更一致
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - Word 单栏状态与预览宽度已继续收口
+
+### 本轮改进
+
+1. **Word 单栏状态已更像单文档工作台**
+   - 对比隐藏时，双栏头部不再继续保留
+   - 单栏预览不再带着“双栏模式的头部痕迹”
+
+2. **Word 单栏预览宽度已放开**
+   - 单栏模式不再沿用双栏预览的宽度上限
+   - 单文档预览在桌面端会更接近“正常工作区宽度”，不再像把移动端卡片塞进桌面端
+
+3. **PDF / Word 工作区宽度策略已更分场景**
+   - PDF 仍按文档舞台宽度收口
+   - Word 则开始区分单栏与双栏两种工作台宽度
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 真实工作区可见节奏已继续收口
+
+### 本轮改进
+
+1. **PDF / Word 预览顶部衔接已进一步压顺**
+   - 真实预览模式下顶部过渡继续压缩
+   - 预览壳层与内部内容的上下节奏更接近同一套桌面工作台
+
+2. **Word 双栏内部比例已再顺一档**
+   - 双栏头部和内容区之间的节奏继续减弱“分段感”
+   - 预览壳层边界已进一步轻量化，更接近文档舞台而不是卡片套卡片
+
+3. **批量结果区三段节奏继续统一**
+   - 结果筛选条、结果表、日志区的间距与顶部节奏已继续收口
+   - 批量页从上到下更接近统一产品语言
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 预览过渡与批量结果筛选条已继续收口
+
+### 本轮改进
+
+1. **PDF / Word 预览顶部过渡已再压紧一档**
+   - 在真实预览模式下，预览区与工具栏之间的顶部过渡继续收窄
+   - 预览外壳 padding 与内部内容 padding 也同步下调，减少“壳套壳”的厚重感
+
+2. **批量结果筛选条已正式化**
+   - `全部 / 成功 / 失败` 筛选按钮已接入统一高度、宽度下限和更稳定的胶囊样式
+   - 不再只是功能存在、视觉还像裸按钮
+
+3. **批量结果区节奏更稳定**
+   - 结果筛选条顶部边距、结果表、摘要框、日志区高度继续与当前密度联动
+   - 大窗口与紧凑窗口下的层级更稳
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 真实工作区间距体系已继续统一
+
+### 本轮改进
+
+1. **PDF / Word 预览壳层已接入同一套内边距规则**
+   - 预览外壳 padding、预览内容 padding、双栏头部间距已开始统一
+   - 不再是 PDF 一套、Word 一套分别靠局部数值硬顶
+
+2. **批量 Word 页面已接入同一套 section 间距规则**
+   - 头部、阶段卡、指标卡、动作区、结果筛选条、摘要区、日志区的间距已一起收口
+   - 后续可以继续沿同一套参数做微调，不需要逐块找补
+
+3. **批量结果区尺寸也开始跟随密度联动**
+   - 摘要框、结果表、日志区的高度已开始随密度切换
+   - 大窗口和紧凑窗口下的节奏更稳定
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 真实工作区内部层级已继续统一
+
+### 本轮改进
+
+1. **Word 双栏头部继续减弱分割感**
+   - 双栏标题之间的生硬竖线已改成纯留白分隔
+   - 头部标签继续轻量化，减少“硬切割”的感觉
+
+2. **批量 Word 页面已开始统一边界语言**
+   - 步骤卡、指标卡、结果表、日志区、摘要区的边框、圆角、背景语言已继续收口
+   - 批量页开始与首页、PDF / Word 预览区保持同一套桌面浅色风格
+
+3. **真实工作区整体层级更接近同一套产品语言**
+   - 首页、预览区、批量页不再像三套设计
+   - 后续可以继续围绕统一间距、统一边界、统一层级往下收
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 真实工作区内部层级已开始统一
+
+### 本轮改进
+
+1. **Word 双栏头部已继续变轻**
+   - 原来的生硬中缝已改成纯留白分隔
+   - 双栏头部继续保持标签化，但减少了“硬切割”感
+
+2. **批量 Word 卡片语言已开始向主工作区靠拢**
+   - 步骤卡、指标卡、结果表、日志表、摘要卡的边框与背景语言已统一收口
+   - 批量页不再像另一套设计风格
+
+3. **批量结果区的层级更清楚**
+   - 结果表表头、表体分隔、摘要区和日志区的边界感更克制
+   - 更接近当前首页与预览区的统一浅色桌面风格
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 工具栏横向节奏已继续收口
+
+### 本轮改进
+
+1. **按钮组内更紧、组间更松**
+   - 主按钮组、Word 组、PDF 组、缩放组、翻页组、工具组的组内间距继续压紧
+   - 组与组之间的整体留白略放开，工具栏层次更清楚
+
+2. **文字按钮宽度下限已按角色统一**
+   - 主操作按钮、设置类按钮、对比按钮、反馈按钮、更多按钮分别采用更稳定的最小宽度
+   - 保留文案驱动的可变宽度，但避免视觉节奏忽长忽短
+
+3. **工具栏整体节奏继续向桌面软件靠拢**
+   - 不做死板等宽
+   - 重点保证统一高度、稳定宽度下限和更明确的分组呼吸感
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 预览外壳边线与工具栏按钮高度已继续收口
+
+### 本轮改进
+
+1. **预览区外围多余边线已去掉**
+   - `previewWorkspaceCard` 外层边框已移除
+   - 预览区不再出现影响视觉的外围细线
+
+2. **工具栏按钮高度基线已整体抬一档**
+   - 主按钮、次按钮、切换按钮、图标按钮所在工具栏总高度一起上调
+   - 按钮底边显示不完整的问题继续收口
+
+3. **按钮高度统一性进一步加强**
+   - 工具栏仍按同一套 `control_height` 约束
+   - 左右宽度可按内容变化，但上下高度保持一致
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 主工具栏动作顺序已按使用逻辑重排
+
+### 本轮改进
+
+1. **“高级设置”已前置到主操作区**
+   - 原来的“替换规则”按钮已从主工具栏移除
+   - “设置”已改名为“高级设置”，并放到原“替换规则”所在位置
+
+2. **反馈入口已直接常驻工具栏**
+   - “反馈”已改名为“使用/反馈”
+   - 不再通过“更多”菜单二次点击进入
+
+3. **“更多”恢复为纯溢出菜单**
+   - 只有窄窗口下的隐藏动作才会进入“更多”
+   - 宽窗口里不再为了单个反馈入口额外显示“更多”
+
+4. **首页欢迎区按钮文案同步统一**
+   - 首页右上工具同步改为“高级设置 / 使用/反馈”
+   - 首页与真实工作区保持一致的命名逻辑
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 预览区左右留白再次收紧
+
+### 本轮改进
+
+1. **Word / PDF 预览区左右留白继续缩小**
+   - 进一步压缩工作区外层横向边距
+   - 让预览区更接近桌面工作台的满幅占比
+
+2. **预览壳层横向占比继续提高**
+   - 调整居中壳层在横向布局中的 stretch 比例
+   - 左右只保留更克制的呼吸感，不再留下过多空白
+
+3. **顶部空隙再顺手收一档**
+   - 预览区与工具栏之间的距离继续缩短
+   - 上下边界关系更统一
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 预览区与工具栏/边框的间距体系继续统一
+
+### 本轮改进
+
+1. **Word / PDF 工作区顶部空隙已继续压缩**
+   - 预览区与工具栏之间的纵向空白进一步缩窄
+   - 顶部与底部的边距关系开始更一致，不再头重脚轻
+
+2. **Word / PDF 预览壳层左右外边距已继续收窄**
+   - 预览区与左右边框之间的留白继续缩小
+   - 桌面端不再像中间悬着一张窄卡，而是更接近满幅工作台
+
+3. **工作区内部 padding 与壳层宽度约束同步收口**
+   - 预览壳层最大宽度进一步放开
+   - PDF 画布与 Word 预览容器的内部 padding 一并压缩，统一观感
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - Word 预览过窄与 PDF 三重边框已继续收口
+
+### 本轮改进
+
+1. **Word 单栏预览已明显拉宽**
+   - Word 工作区外层横向分配不再是平均分配
+   - 单栏预览在桌面端会真正占到更合理的宽度
+
+2. **PDF 中间那层多余边框已移除**
+   - `pdfPageCanvas` 的中间边框已删除
+   - 保留外层工作区壳和页面本身，减少三重框叠加感
+
+3. **PDF / Word / 批量 / 图片页的居中宽度进一步统一**
+   - 四类真实工作区的横向占比继续统一
+   - 避免 Word 过窄、PDF 过紧、批量页和图片页过散
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 真实工作区开始统一成桌面壳层
+
+### 本轮改进
+
+1. **PDF 与 Word 工作区接入统一壳层**
+   - PDF 预览区新增统一桌面卡片壳
+   - Word 对比预览也收进同一类工作区壳层
+   - 首页和真实工作区开始形成连续的产品外观
+
+2. **批量 Word / 图片合并页也收进统一宽度**
+   - 批量页和图片合并页改为居中桌面卡片
+   - 宽度、边距和首页 / 预览工作区开始走同一套约束
+
+3. **工作区宽度收口已纳入密度逻辑**
+   - `wide / compact / narrow` 下的工作区壳层最大宽度和外边距已统一接管
+   - 后续继续收视觉时不需要再一页页单独补边距
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 首页全屏时底部留白继续收口
+
+### 本轮改进
+
+1. **欢迎页主卡允许随高窗口自然长高**
+   - `idle` 首页主卡和入口区不再只按内容最小高度收缩
+   - 全屏或高窗口时，多出来的高度会分配给首页本身
+
+2. **入口区开始吸收额外垂直空间**
+   - 四张入口卡已允许继续纵向扩展
+   - 首页不再把大量高度丢给卡片下方空白区域
+
+3. **网格行列拉伸同步补齐**
+   - 首页主动作和 `2 x 2` 入口网格都补上了对应的行列 stretch
+   - 全屏时仍保持桌面端整齐感
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 首页欢迎页按桌面网格继续重排
+
+### 本轮改进
+
+1. **首页主卡继续拓宽**
+   - 欢迎页主卡和外层边距继续按桌面端放开
+   - 不再维持过窄的中轴卡片观感
+
+2. **主动作与入口卡统一成同一套网格**
+   - `选择文件 / 批量 Word` 已改成 2 列网格动作区
+   - 与下方入口卡共用桌面端列宽逻辑，左右边界更统一
+
+3. **四张入口卡改成严格网格**
+   - 不再用两行独立 `QHBoxLayout` 各自算宽度
+   - 改成 `QGridLayout` 后，桌面端默认严格 `2 x 2`
+   - 入口卡高度也已统一，避免大小参差
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 首页欢迎页按桌面端重新收骨架
+
+### 本轮改进
+
+1. **欢迎页从超窄中轴改回桌面首页结构**
+   - 重新整理了 `idle` 首页头部骨架
+   - 标题/副标题与 `设置 / 更多`、`本地离线 / 自动分流` 分成左右两区
+   - 首页主卡最大宽度、内边距、入口卡高度和区块间距重新收口
+
+2. **首页入口区恢复桌面端节奏**
+   - `选择文件 / 批量 Word` 统一成同宽同高主动作
+   - `PDF / Word / 批量 / 图片合并` 入口区继续保持 `2 x 2` 为主，只在窄窗口下改单列
+   - 欢迎页不再被过度压成移动端式单列长卡
+
+3. **响应式宽度判定修正**
+   - `_refresh_toolbar_responsiveness()` 改为直接使用 Qt 逻辑宽度
+   - 不再按屏幕缩放再次除一次，避免 Retina / Windows 高缩放下被过早判成窄布局
+   - 这也是之前首页在大窗口里仍然像窄屏的主要根因之一
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+---
+
+## 2026-03-15 - 首页欢迎页三处明显问题已直接修掉
+
+### 本轮改进
+
+1. **顶部空状态细线框直接清掉**
+   - `idle` 模式下顶部工作台条和空状态工具栏已整体隐藏
+   - 欢迎页不再在上方留下空白壳层和细线框
+
+2. **首页主按钮重新统一**
+   - `选择文件 / 批量 Word` 已统一为同一高度基线
+   - 同时把 `设置 / 更多` 移进欢迎卡标题区，空状态顶部不再重复占位
+
+3. **下方多余模块已移除**
+   - 首页底部那块额外过渡模块已删除
+   - 欢迎页整体更干净，不再多出一块独立卡片
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-15 - 空状态壳层做了一轮整组减法
+
+### 本轮改进
+
+1. **启动首页顶部重复壳层明显减少**
+   - `idle` 模式下顶部工作台条已隐藏
+   - 工具栏左侧 `打开` 也从空状态顶栏移除，避免和欢迎页主按钮重复
+
+2. **空状态底部噪音一起收掉**
+   - `idle` 模式下底部 0% 进度区已隐藏
+   - 启动首页不再像“还没开始就挂着进度条”
+
+3. **首页与工作区的过渡继续统一**
+   - 欢迎区、流程带、入口区、工作区过渡壳已连成一套空状态舞台
+   - 启动首页整体更接近正式产品首页
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 首页下方补上轻量工作区过渡壳
+
+### 本轮改进
+
+1. **欢迎页与真实工作区之间不再直接断层**
+   - 首页主卡下方新增轻量工作区过渡壳
+   - 启动首页与后续 PDF / Word 工作台之间的落差更小
+
+2. **过渡信息保持克制**
+   - 仅保留一行短提示和模式标签
+   - 用更少的信息完成“接下来会进入哪里”的承接
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页改成顶部锚定舞台
+
+### 本轮改进
+
+1. **欢迎页不再有明显的上下居中悬浮感**
+   - 首页主卡改成更偏顶部锚定的布局
+   - 更像真正的桌面软件首页，而不是中间漂着一张卡
+
+2. **欢迎区、流程带、入口区宽度继续收稳**
+   - 三段宽度再次统一收窄
+   - 首页第一屏的视觉重心更集中
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 常用入口区也收进统一视觉轴线
+
+### 本轮改进
+
+1. **常用入口区不再在首页下半区突然铺满**
+   - 入口标题和入口卡已收进独立容器
+   - 现在会与欢迎区、流程带保持同一条视觉轴线
+
+2. **首页第一屏完整度继续提升**
+   - 欢迎区、流程带、入口区三段开始更像一整套首页舞台
+   - 观感更稳，也更接近成熟桌面软件首页
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 流程带与欢迎区收进同一视觉轴线
+
+### 本轮改进
+
+1. **流程带不再横向铺满整张卡片**
+   - `推荐流程` 已与上方欢迎区对齐
+   - 首页上半屏从“分段摆放”变成更完整的一体结构
+
+2. **欢迎页上半区比例继续收口**
+   - 欢迎区和流程带的宽度比例更接近正式产品首页
+   - 第一眼更集中，也更安静
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 首页上半区收成完整欢迎区
+
+### 本轮改进
+
+1. **标题与主动作已收进同一欢迎区**
+   - 首页标题、副标题和主动作不再分散铺开
+   - 启动第一屏更像一个完整入口舞台
+
+2. **欢迎页上半区继续聚焦**
+   - 欢迎区最大宽度单独控制
+   - 视觉重心更集中，不会横向散得太开
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页入口卡接入真正响应式排布
+
+### 本轮改进
+
+1. **窄窗口下入口卡自动改单列**
+   - 欢迎页入口卡不再固定两列硬挤
+   - 小窗口、半屏和高缩放下会更像正式产品首页
+
+2. **首页响应式继续贴近 Windows 真实使用场景**
+   - 欢迎页在窄宽度下的可读性和点击节奏进一步优化
+   - 更符合 Windows 用户常见的拖拽缩窗、分屏使用方式
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 首页主按钮切到欢迎页专用样式
+
+### 本轮改进
+
+1. **首页主按钮正式脱离工具栏观感**
+   - `选择文件 / 批量 Word` 已切到欢迎页专用按钮样式
+   - 不再只是复用工具栏按钮，首页第一眼更像真正入口区
+
+2. **欢迎页按钮命中区继续优化**
+   - 首页主按钮高度和宽度进一步上提
+   - 大窗口和高 DPI 下更稳，也更适合 Windows 使用习惯
+
+3. **入口区呼吸感继续拉开**
+   - 首页动作区按钮间距和按钮下方提示间距继续优化
+   - 首页上半区的节奏更清楚
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 首页欢迎卡进入成品感分色阶段
+
+### 本轮改进
+
+1. **欢迎舞台继续收窄**
+   - 欢迎卡默认最大宽度继续收窄
+   - 首页第一屏更聚焦，不再横向铺得太满
+
+2. **入口卡加入轻量分色**
+   - PDF / Word / 批量 / 图片四类入口卡加入克制的浅色区分
+   - 保留简洁前提下，第一眼更容易分辨不同入口
+
+3. **入口文案继续压短**
+   - 欢迎标题、副标题和入口卡说明进一步收短
+   - 首页阅读路径更快，更接近正式产品首页
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 首页入口卡继续拉稳
+
+### 本轮改进
+
+1. **主动作区更通透**
+   - 主动作区外壳进一步减弱
+   - 启动首页上半区更像一个完整入口，而不是又一层卡片
+
+2. **入口卡继续拉稳**
+   - 入口卡高度继续统一上提
+   - 顶部识别条、标题、标签、说明之间的比例更顺
+
+3. **首页更像成品页**
+   - 欢迎页从“很多盒子并排”继续往“轻层级、清楚模块”推进
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页流程带继续减重
+
+### 本轮改进
+
+1. **流程带视觉继续减重**
+   - `推荐流程` 区不再有完整边框块感
+   - 欢迎页从上到下的盒子层级减少了一层，页面更通透
+
+2. **窄窗口下自动收辅助文字**
+   - `按文件类型自动进入` 在非宽窗口下会自动隐藏
+   - `自动分流` 标识在最窄模式下会自动隐藏
+   - 拖拽提示在窄窗口下会自动收短
+
+3. **欢迎页上半区继续变轻**
+   - 主动作条内边距和流程区比例继续收口
+   - 第一屏更像成品页，不像说明区叠卡片
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 入口卡文案与对齐精修
+
+### 本轮改进
+
+1. **入口卡说明继续压短**
+   - 四张入口卡的说明文案继续收短
+   - 第一眼更容易扫完，不需要读整句长说明
+
+2. **入口卡标签宽度统一**
+   - `单文档 / 批量处理 / 图片工具` 标签补了稳定最小宽度
+   - 卡片头部更整齐，不会因为字数不同显得参差
+
+3. **入口卡内容对齐更稳**
+   - 标签居中，说明文本固定左上对齐
+   - 首页入口卡整体更像完整的产品模块
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页标题区继续减法
+
+### 本轮改进
+
+1. **顶部工作台条在首页只保留欢迎语**
+   - `idle` 模式下顶部副标题已隐藏
+   - 首页顶区更安静，不再和主卡片重复说明
+
+2. **主卡片副标题继续压短**
+   - 欢迎页主卡片副标题已收成 `打开或拖拽文件即可开始`
+   - 主动作区信息更聚焦
+
+3. **拖拽提示继续压短**
+   - 动作条中的提示改成 `支持直接拖拽到窗口`
+   - 欢迎页文字密度进一步下降
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页标题区补充信任标识
+
+### 本轮改进
+
+1. **欢迎页标题区新增轻量信任标识**
+   - 标题右侧新增 `本地离线` 和 `自动分流` 两枚轻量标识
+   - 让首页第一眼更像成熟产品，同时强化本地处理这个关键信号
+
+2. **标题区比例继续优化**
+   - 标题、说明和动作区的比例更均衡
+   - 欢迎页上半区既不空，也不会重新变得拥挤
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页顶部默认更干净
+
+### 本轮改进
+
+1. **启动首页默认不再显示顶部说明栏**
+   - `idle` 模式下，顶部说明栏只有在真的有临时提示时才显示
+   - 启动欢迎页第一屏明显更干净
+
+2. **顶部欢迎语继续压缩**
+   - 顶部副标题改成 `拖拽或打开文件即可开始处理`
+   - 主卡片副标题同步压短，避免上下重复表达
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 常用入口分区头收口
+
+### 本轮改进
+
+1. **常用入口改成真正的分区头**
+   - 现在是“常用入口 + 按文件类型自动进入”的双列头部
+   - 首页更像正式产品页的分区，而不是单独一行标题
+
+2. **入口卡统一收进专门的网格容器**
+   - 四张入口卡现在由统一容器管理间距和行距
+   - 大窗口和紧凑窗口下的呼吸感更一致
+
+3. **入口卡继续精修**
+   - 入口卡高度、内边距和行距继续统一
+   - 首页的卡片区看起来更像一组完整模块
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页主动作条继续收口
+
+### 本轮改进
+
+1. **主动作条改成上下节奏更顺的结构**
+   - 从“一排按钮 + 一段提示”改成“按钮行在上、拖拽提示在下”
+   - 大窗口和紧凑窗口下都更稳，不会显得一整条横向挤在一起
+
+2. **首页主按钮更整齐**
+   - `选择文件` 和 `批量 Word` 补了更稳定的最小宽度
+   - 欢迎页第一眼视觉重心更明确
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页流程带收口
+
+### 本轮改进
+
+1. **推荐流程改成一条轻量流程带**
+   - 不再是单独一行说明再堆一行步骤
+   - 现在改成 `推荐流程 + 五步标签` 的紧凑组合，欢迎页节奏更顺
+
+2. **首页纵向层级继续压缩**
+   - 主动作条下面直接接流程带，再进入常用入口
+   - 减少一层层往下读的断点，第一屏更利落
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页顶部去重
+
+### 本轮改进
+
+1. **顶部工作台条改成欢迎语**
+   - `idle` 模式下顶部标题已改为 `欢迎使用 PrivacyGuard`
+   - 说明文案也压缩成更简洁的一句话
+
+2. **欢迎页顶部 badge 在 idle 模式隐藏**
+   - 启动首页不再额外挂一个“开始”胶囊
+   - 进入 PDF / Word / 批量 / 图片模式后，badge 仍会正常显示
+
+3. **首页主卡片标题继续去重复**
+   - 主卡片标题改成 `选择一种开始方式`
+   - 与顶部欢迎语分工更清楚，不再上下都在重复“开始”
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页入口卡更易扫描
+
+### 本轮改进
+
+1. **四种入口卡增加类型标签**
+   - 现在每张入口卡都会显示 `单文档 / 批量处理 / 图片工具` 这类轻量标签
+   - 用户第一眼更容易分清入口性质，不需要先读完整段说明
+
+2. **入口卡信息层级更明确**
+   - 卡片头部改成“标题 + 类型标签”
+   - 下面再放说明文本，欢迎页第一屏更像成熟产品的模块入口
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页居中限宽
+
+### 本轮改进
+
+1. **首页主卡片改为居中有限宽**
+   - 欢迎页主卡片不再在大窗口里横向铺满
+   - 现在更像一个居中的“入口舞台”，观感更稳，也更像正式桌面软件首页
+
+2. **响应式继续补齐**
+   - 首页主卡片宽度会按宽屏 / 紧凑窗口自动收口
+   - 入口卡最小高度和主动作条间距也已接入响应式逻辑
+
+3. **大窗口下信息更聚焦**
+   - 用户第一眼更容易聚焦到欢迎卡片核心区域
+   - 减少“整页摊开、信息显得发散”的感觉
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页主动作前置
+
+### 本轮改进
+
+1. **首页主动作更靠前**
+   - `选择文件` 和 `批量 Word` 被前置到欢迎卡片上半区
+   - 用户一打开软件就能先看到“下一步该点哪里”，不必先扫完整页
+
+2. **首页底部重复动作移除**
+   - 取消了原来卡片底部那排重复按钮
+   - 欢迎页层级更干净，不再有“信息在上、真正入口在最下方”的拖沓感
+
+3. **入口卡继续整齐化**
+   - 四种入口卡统一了最小高度和内部节奏
+   - 拖拽提示被收进主动作条里，第一屏信息更集中
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页首页继续精简
+
+### 本轮改进
+
+1. **欢迎页文案继续压缩**
+   - 顶部默认操作指引改成一句话说明，不再像长说明书
+   - 首页主标题、副标题、推荐流程文案都进一步缩短
+
+2. **首页入口区继续产品化**
+   - 五步流程按钮收短成更紧凑的 `导入 / 规则 / 处理 / 复核 / 导出`
+   - 四种入口卡描述改成更短、更直观的说明
+   - 增加独立的“常用入口”轻标签，避免首页信息层级混在一起
+
+3. **首页动作按钮继续简化**
+   - `选择文件开始` 改为 `选择文件`
+   - `直接批量替换 Word` 改为 `批量 Word`
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 欢迎页细边框回归修复
+
+### 本轮改进
+
+1. **欢迎页文本标签显式去边框**
+   - 对首页欢迎卡片标题、说明、流程提示、路线卡标题和描述补了 `border: none`
+   - 切断最近几轮 UI 样式调整对欢迎页标签的细边框泄漏
+
+2. **首页观感回到更干净的状态**
+   - 欢迎页保留卡片层级，但不再让普通说明文字看起来像被很多细框包住
+   - 不影响你已经确认过的工具栏、PDF / Word 工作台结构
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 文档舞台感继续收口
+
+### 本轮改进
+
+1. **预览区承载层加了更轻的舞台边界**
+   - 主滚动区域补了更克制的边界
+   - PDF 页面和 Word 预览壳层开始有更明确但更轻的文档承载感
+   - 目标是让内容区更像“文档舞台”，而不是一整片灰底上直接摆内容
+
+2. **整体底色继续提亮**
+   - 预览区底色从偏灰继续往更轻的方向提了一步
+   - 让 PDF / Word 工作区第一眼更干净
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 预览舞台继续收口
+
+### 本轮改进
+
+1. **PDF 画布不再强制横向扩展**
+   - PDF 单页 / 双页画布的 size policy 已从横向扩展改为按内容优先
+   - 目标是减少“左边是一页、右边是一大片空白”的观感
+   - 让单页 PDF 在大窗口里更容易保持居中和规整
+
+2. **预览区外边距继续压缩**
+   - PDF 画布容器外边距、页间距继续缩小
+   - Word 双栏内容区间距也继续收紧
+   - 整体会更像紧凑的文档舞台，而不是内容被包在很厚的留白里
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 主工具栏去外壳感
+
+### 本轮改进
+
+1. **工具栏分组容器改成更轻的排版容器**
+   - 工具栏外层分组容器的背景和边框已全部压掉
+   - 分组仍然存在，但主要只负责排版，不再形成一层层大胶囊外壳
+   - 第一眼会更像轻量工作条，而不是“容器里再套按钮”
+
+2. **工具栏间距继续压缩**
+   - 工具栏整体间距、组内间距、组内边距都进一步收紧
+   - 让按钮之间更连贯，减少上方区域的块状堆叠感
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-14 - 顶部密度继续收口
+
+### 本轮改进
+
+1. **主工作台顶部继续压高度**
+   - 统一上下文条的内边距和间距继续收紧
+   - 保留标题、摘要和必要状态，但整体更紧凑
+   - 进一步靠近“专业工具软件”的轻量顶部条，而不是说明面板
+
+2. **Word 双栏头改成更轻的标签式头部**
+   - 原来的整条块状头部改成更轻的标签式样式
+   - `原文预览 / 替换后预览` 现在更像轻量分栏标识
+   - 减少大面积浅色块在页面上方堆叠带来的压迫感
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-13 - 主工作台与 PDF 文案简化回退
+
+### 本轮改进
+
+1. **收掉主工作台顶部冗余引导标签**
+   - 已将工作台顶部那层多标签提示全部隐藏
+   - 回到更简洁的单状态栏结构，只保留：
+     - 标题
+     - 摘要
+     - 必要时的临时任务提示
+   - 避免再次把已合并的状态栏重新堆回复杂说明
+
+2. **PDF 主文案统一改回“脱敏”语义**
+   - 运行时可见文案中，PDF 相关主标题和主按钮已不再使用“涂抹”作为主表达
+   - 现在统一改成：
+     - `PDF 脱敏工作台`
+     - `PDF 脱敏模式`
+     - `智能脱敏 / 重新脱敏`
+     - `导出 PDF`
+   - 图片合并完成后的目标流程提示，也同步改成 `PDF 脱敏`
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_word_replace_rules -v` ✅（23/23）
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-13 - 启动回归热修（QGridLayout 导入）
+
+### 问题现象
+
+- 启动应用时直接报错：
+  - `NameError: name 'QGridLayout' is not defined`
+- 触发点：
+  - 主工作台顶部新增引导标签后，`setup_ui()` 中开始实例化 `QGridLayout()`
+  - 但 `PyQt6.QtWidgets` 导入列表里漏掉了 `QGridLayout`
+
+### 修复内容
+
+- 已将 `QGridLayout` 补回到 `main.py` 顶部的 `PyQt6.QtWidgets` 导入列表
+- 这次属于启动层热修，没有改动任何业务逻辑
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-13 - 主工具栏结果态继续细化
+
+### 本轮改进
+
+1. **主按钮开始识别“首次处理 / 重做处理”**
+   - PDF 模式下：
+     - 首次处理显示 `智能涂抹`
+     - 已有结果后显示 `重新涂抹`
+   - Word 模式下：
+     - 首次处理显示 `智能替换`
+     - 已有结果后显示 `重新替换`
+   - 让用户一眼知道当前是第一次处理，还是准备基于已有结果重新执行
+
+2. **Word 规则按钮显示当前启用数量**
+   - Word 模式下如果已启用规则，会显示：
+     - `替换规则 3`
+     - 窄一点时显示 `规则 3`
+   - 用户不用进入弹窗，也能先知道当前规则是否已经配好
+
+3. **Word 对比按钮提示更具体**
+   - 没有文档时会提示先打开 Word
+   - 没有结果时会提示先配置规则或执行智能替换
+   - 已有结果时会明确提示“显示右侧替换后预览”或“隐藏右侧替换后预览”
+
+4. **新增纯逻辑测试**
+   - 新增工具栏结果态文案测试
+   - 继续锁住 PDF / Word 在已有结果时的主按钮文案
+
+### 验证结果
+
+- `python3 -m unittest tests.unit.test_word_replace_rules -v` ✅（23/23）
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（42/42）
+
+## 2026-03-13 - 主工具栏模式文案继续收口
+
+### 本轮改进
+
+1. **主按钮文案开始区分 PDF 与 Word**
+   - PDF 模式下：
+     - `智能脱敏` 改成 `智能涂抹`
+     - `导出` 改成 `导出 PDF`
+   - Word 模式下：
+     - `智能脱敏` 改成 `智能替换`
+     - `导出` 改成 `导出 Word`
+   - 在窄窗口下仍会自动退回到更短的按钮文案，保持响应式稳定
+
+2. **按钮提示语一起切到模式语义**
+   - PDF 会提示“执行 PDF 智能涂抹扫描”
+   - Word 会提示“执行 Word 智能替换扫描”
+   - 让用户更容易感知这是两套不同逻辑，不再混成一个抽象的“脱敏”
+
+3. **新增纯逻辑测试**
+   - 新增工具栏模式文案 helper 测试
+   - 锁住 PDF / Word 模式下的扫描和导出文案
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_word_replace_rules -v` ✅（22/22）
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（41/41）
+
+## 2026-03-13 - 批量结果筛选条继续产品化
+
+### 本轮改进
+
+1. **批量结果筛选按钮开始显示数量**
+   - `全部 / 成功 / 失败` 筛选按钮现在会直接带上计数
+   - 例如：
+     - `全部 8`
+     - `成功 6`
+     - `失败 2`
+   - 用户不用先读表格，也能先知道这轮结果的大概分布
+
+2. **新增纯逻辑测试**
+   - 新增批量筛选按钮文案 helper 测试
+   - 继续保持批量工作台辅助逻辑可单测覆盖
+
+### 验证结果
+
+- `python3 -m unittest tests.unit.test_word_replace_rules -v` ✅（21/21）
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（40/40）
+
+## 2026-03-13 - 设置页顶部与批量结果状态继续细化
+
+### 本轮改进
+
+1. **设置页顶部标签改成动态摘要**
+   - 原来的两枚静态标签，已经改成会实时变化的摘要标签
+   - 现在会直接显示：
+     - 通用规则启用数
+     - 自定义关键词条数
+     - Word 替换规则启用数
+     - 扫描是否还是推荐值
+     - OCR 当前调节百分比
+   - 让用户一进设置页，就先看到“当前配置大概是什么状态”
+
+2. **批量结果表格状态列更直观**
+   - `成功 / 失败 / 占位提示` 现在不只是文字换色
+   - 状态列补了更明显的底色区分，视觉上更像状态块
+   - 成功、失败、空结果三种状态更容易一眼分辨
+
+3. **新增纯逻辑测试**
+   - 新增设置页顶部动态摘要标签 helper 测试
+   - 继续保持设置页与批量工作台辅助逻辑可单测覆盖
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_word_replace_rules -v` ✅（20/20）
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（39/39）
+
+## 2026-03-13 - 主工作台引导继续收口
+
+### 本轮改进
+
+1. **顶部工作台新增模式专属引导标签**
+   - 在统一上下文条内新增轻量引导标签
+   - 会按当前模式自动切换：
+     - idle
+     - PDF
+     - Word
+     - 批量 Word
+     - 图片合并
+   - 让用户不用只看按钮，也能直接知道“下一步应该做什么”
+
+2. **PDF / Word / 批量模式提示更清楚**
+   - PDF：
+     - 会提示先智能脱敏或进入人工复核
+     - 保留黑 / 白切换和手动画框提示
+   - Word：
+     - 会提示先检查替换规则或复核替换结果
+     - 会根据对比预览开关，动态提示“可打开”或“可隐藏”
+   - 批量 Word：
+     - 会根据规则确认 / 执行中 / 已完成，切换不同阶段提示
+
+3. **新增纯逻辑测试**
+   - 新增主工作台引导 helper 测试
+   - 覆盖：
+     - idle / PDF / Word 的下一步提示
+     - 批量 Word 不同阶段的提示
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_word_replace_rules -v` ✅（19/19）
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（38/38）
+
+## 2026-03-13 - 批量结果筛选与设置分层继续推进
+
+### 本轮改进
+
+1. **批量结果清单新增筛选**
+   - 结果表格上方新增：
+     - `全部`
+     - `仅成功`
+     - `仅失败`
+   - 支持按结果类型快速筛选，不需要在长表格里自己找
+   - 新增结果计数文案：
+     - 总条数
+     - 成功数量
+     - 失败数量
+   - 当筛选条件下没有结果时，会显示明确占位提示，而不是只剩空白表格
+
+2. **设置页头部分层增强**
+   - 设置页顶部新增两枚提示标签：
+     - `常用设置：通用规则 / 关键词 / Word 替换`
+     - `高级微调：扫描 / 覆盖 / OCR 检测框`
+   - 让首次进入设置页的用户更容易区分“经常改的”和“没必要先动的”
+
+3. **新增纯逻辑测试**
+   - 新增批量结果筛选测试
+   - 新增批量结果计数测试
+   - 新增百分比格式化测试
+   - 继续保持批量工作台的辅助逻辑可单测覆盖
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_word_replace_rules -v` ✅（17/17）
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（36/36）
+
+## 2026-03-13 - 设置中心与批量结果工作台继续收口
+
+### 本轮改进
+
+1. **设置中心侧栏状态化**
+   - 左侧导航不再只是静态目录
+   - 现在会实时显示：
+     - 通用规则启用数量
+     - 自定义关键词条数
+     - 扫描与微调是否偏离默认
+     - OCR 检测框当前百分比
+   - 侧栏底部新增“常用区 / 高级区”状态摘要，帮助用户快速判断是否改到了高风险参数
+
+2. **批量 Word 结果区表格化**
+   - 批量工作台新增结果清单表格
+   - 列展示：
+     - 状态
+     - 输入文档
+     - 结果说明
+     - 操作提示
+   - 结果阶段支持：
+     - 双击成功行直接打开输出文档
+     - 双击失败行定位原文件
+   - 在规则确认 / 执行中 / 未开始阶段，也会显示占位提示，不再只看到纯文本摘要
+
+3. **新增纯逻辑回归测试**
+   - 新增设置导航标签构建测试
+   - 新增批量结果行构建测试
+   - 继续保持 UI 辅助逻辑尽量可测试，减少只在真机点击时才暴露的问题
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_word_replace_rules -v` ✅（14/14）
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（33/33）
+
+## 2026-03-13 - Word 预览 CSS f-string 运行时热修
+
+### 问题现象
+
+- 打开 `.docx` 时弹窗报错：
+  - `NameError: name 'display' is not defined`
+- 调用链位于：
+  - `open_pdf -> _open_word_docx -> render_word_preview -> _build_word_preview_documents`
+
+### 根因分析
+
+- 为统一 Windows-first 字体栈，近期把多段 Word 预览 / HTML 包装 / 文件对话框样式改成了 `f-string`
+- 其中若干 CSS 字面量花括号没有转义，导致 Python 在运行时把：
+  - `p:empty { display: none; ... }`
+  误解析成 f-string 表达式
+- 编译检查不会捕获这类错误，因为它属于运行时求值异常
+
+### 本轮修复
+
+1. **修复 Word 预览样式块**
+   - `_build_word_preview_documents()` 中的 CSS 花括号已全部转义
+   - `_build_word_replaced_preview_html()` 中的 CSS 花括号已全部转义
+
+2. **修复 HTML 注入样式块**
+   - 高亮 HTML 注入路径中的 CSS 花括号已全部转义
+
+3. **修复文件对话框样式块**
+   - `_get_file_dialog_style()` 中的 `QFileDialog` QSS 花括号已全部转义
+
+4. **新增回归测试**
+   - 新增轻量级测试，直接覆盖：
+     - Word 预览文档样式构建
+     - 替换后预览样式构建
+     - 文件对话框样式构建
+   - 防止后续再次因 `f-string + CSS` 组合触发运行时异常
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- `python3 -m unittest tests.unit.test_word_replace_rules -v` ✅（12/12）
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v` ✅（31/31）
+
+## 2026-03-13 - v38 UI 重构启动（cp31）
+
+### 本轮目标
+
+1. 在 dirty worktree 环境下建立安全检查点，避免直接依赖 git 回退
+2. 形成 Windows-first 的完整 UI 改造执行方案
+3. 启动第一批低风险、高收益的主界面基础改造
+
+### 本轮新增记录
+
+- 新增检查点：`v38_ui_refactor_cp31_20260313_140645`
+- 新增执行方案文档：`docs/current/V38_UI_REFACTOR_PLAN.md`
+- 更新回滚日志：`rollback_journal.md`
+
+### 已开始执行的代码改造
+
+1. **Windows-first 设计基线**
+   - `theme.py` 从偏旧的 Big Sur 观感，调整为更适合 Windows 办公软件的颜色、圆角、字体链与间距
+   - 字体链改为 `Segoe UI Variable / Segoe UI / Microsoft YaHei UI / Microsoft YaHei`
+
+2. **主窗口模式感增强**
+   - 新增顶部模式标识：
+     - `等待导入`
+     - `PDF 涂抹模式`
+     - `Word 替换模式`
+     - `批量 Word 替换`
+     - `图片合并中`
+   - 主工具栏开始改为按模式显示控件，减少 PDF / Word 工具混杂
+
+3. **Word 专属能力显式化**
+   - 新增工具栏按钮：
+     - `替换规则`
+     - `对比预览`
+   - 用户现在可以主动隐藏 / 恢复 Word 右侧替换后预览
+   - 不再只依赖内部状态自动开关 compare 面板
+
+4. **模式可见性重构**
+   - PDF 模式保留：
+     - 黑 / 白切换
+     - 单 / 双页
+     - 缩放与翻页
+   - Word 模式显示：
+     - 替换规则
+     - 对比预览显隐
+   - Idle / batch 模式收起无关控件，降低第一眼复杂度
+
+5. **设置中心结构化**
+   - `SettingsDialog` 新增顶部说明区
+   - 左侧新增设置导航，支持在：
+     - `通用规则`
+     - `自定义关键词`
+     - `扫描与微调`
+     - `OCR 检测框`
+     之间快速跳转
+   - 保留原有功能，但组织方式更像真正的“设置中心”
+
+6. **主工具栏层级增强**
+   - 顶部工具栏新增分段分隔线
+   - 打开 / 设置 / 智能脱敏 / 模式标识
+   - Word 专属工具
+   - PDF 专属工具
+   - 缩放翻页
+   - 导出 / 反馈
+   的层次更清楚，降低按钮挤在一起的旧感
+
+7. **模式回退补丁**
+   - 图片合并失败时，界面模式会自动从 `image_merge` 回退
+   - 避免界面停留在错误的视觉状态
+
+8. **主工作台流程区落地**
+   - 主界面新增轻量 `工作台状态区`
+   - 按当前模式显示：
+     - 当前在做什么
+     - 下一步建议
+     - 5 步主路径（导入 / 规则 / 处理 / 复核 / 导出）
+   - 让第一次打开软件时不再只看到一大片空白预览区
+
+9. **空状态工作台落地**
+   - 新增首屏空状态卡片
+   - 明确说明：
+     - 单个 PDF 进入 PDF 涂抹
+     - 单个 Word 进入 Word 替换
+     - 多个 Word 进入批量规则模式
+     - 多图片进入合并 PDF
+   - 补了直接开始按钮，降低小白第一次上手成本
+
+10. **批量 Word 工作台可视化**
+    - 新增批量 Word 专属工作台
+    - 显式区分：
+      - `文档替换规则模式`
+      - `批量替换执行模式`
+      - `结果模式`
+    - 批量处理中现在会显示：
+      - 已选文件数
+      - 当前文件
+      - 启用规则数
+      - 成功 / 失败计数
+      - 最近处理动态
+    - 提供：
+      - `重新设置规则`
+      - `重新选择文档`
+      两个继续操作入口
+
+11. **图片合并模式可见化**
+    - 多图合并时新增轻量状态卡
+    - 不再只靠信息栏一行字提示
+    - 合并完成后仍自动进入 PDF 工作台，不改变原有逻辑
+
+12. **首屏结构减法**
+    - 顶部工作台从多行说明压缩为更短的模式摘要条
+    - `idle` 状态下直接隐藏顶部摘要条，避免首屏出现“上面一块、下面又一块”的重复信息
+    - 原顶部流程说明已合并进首屏主卡片
+    - 首屏主卡片改为：
+      - 一段简短主说明
+      - 5 步流程
+      - 4 个入口卡片（PDF / Word / 批量 Word / 图片合并 PDF）
+      - 两个主要动作按钮
+    - 目标是让第一屏更像正式产品首页，而不是说明文档堆叠
+
+13. **上下文条整合**
+    - 原“顶部提示条”与“下方工作台摘要条”已合并为单一上下文条
+    - 现在上方统一显示：
+      - 当前文档 / 当前模式摘要
+      - 右侧模式徽标
+      - 需要时出现的临时任务提示（扫描中 / 批量处理中 / 完成 / 错误）
+    - 删除了原来位于工具栏下方的重复工作台摘要条
+    - 目标是去同存异，只保留一处上下文表达，不再上下重复播报同一信息
+
+14. **工具栏减法与分组重排**
+    - 工具栏移除了重复的模式徽标显示，模式信息只保留在统一上下文条
+    - 将 `设置 / 反馈 / 导出` 移到右侧低频区
+    - 左侧高频区聚焦为：
+      - `打开`
+      - `智能脱敏`
+      - `替换规则`
+      - `对比预览`
+      - PDF 即时控件
+    - 按钮文案去掉 emoji，整体更克制，更像正式桌面软件
+    - PDF 翻页区域只保留一处分组分隔线，减少竖线噪音
+
+15. **工具栏控件质感收口**
+    - 工具栏按钮统一压低高度与内边距，更贴近 Windows 桌面软件密度
+    - PDF 的 `黑遮罩 / 白遮罩 / 双页` 改成胶囊式切换观感
+    - 缩放百分比与页码改成轻量状态片，不再是裸文字
+    - 翻页和缩放图标按钮增加细边框与悬停反馈，减少“漂浮文本按钮”感
+    - `设置 / 反馈 / 导出` 保持低频区，但视觉与左侧高频动作已统一
+
+16. **响应式工具栏整改**
+    - 工具栏新增 `宽屏 / 中等宽度 / 窄窗口` 三档响应式策略
+    - 宽度不足时不再硬挤按钮，而是：
+      - 自动切换到短文案
+      - 将低频动作收进 `更多`
+      - 在 PDF 窄模式下隐藏 `首页 / 尾页` 按钮并转入菜单
+    - 工具栏按钮、切换控件、缩放和页码状态片都改为按内容宽度固定
+    - 解决用户拖小窗口、半屏、缩放时按钮文字被压坏的问题
+    - 为缩写后的按钮补上 tooltip，保证短文案下仍然易懂
+
+17. **工具栏按钮重叠与截断修复**
+    - PDF 的 `黑遮罩 / 白遮罩 / 双页` 不再依赖错误的原生开关样式，统一改为真正的可切换胶囊按钮
+    - `更多` 按钮改成手动弹出菜单，去掉系统菜单箭头对按钮宽度的干扰
+    - 工具栏宽度计算从“只看文字”升级为“文字宽度 + Qt sizeHint”，避免不同平台控件内边距导致截断
+    - 为工具栏按钮关闭默认按钮态，减少 macOS / Windows 缩放时的额外焦点装饰干扰
+    - 重点修复用户反馈的“左侧按钮与文字重叠、右侧文字半截和箭头跑出按钮”问题
+
+18. **Windows DPI / 命中区专项收口**
+    - 工具栏响应式切档不再只看窗口宽度，改为按 Windows DPI 换算后的有效宽度判断
+    - 新增工具栏密度指标收口：按 `100% / 125% / 150%+` 缩放分别调整工具栏高度、间距、边距和图标按钮尺寸
+    - 缩放百分比、页码状态片和主按钮的高度统一随 DPI 放大，减少高缩放下文字贴边与命中区偏小的问题
+    - 首屏与顶部上下文条的边距同步轻量适配，避免高缩放时主卡片显得过挤
+    - 为后续 Windows 真机 `100% / 125% / 150% / 175%` 视觉巡检打好基础
+
+19. **工具栏分组化减噪**
+    - 顶部工具栏不再是一整排散开的按钮，改为按业务语义拆成主操作组、Word 组、PDF 组、缩放组、翻页组和系统动作组
+    - PDF 的即时控件、缩放和翻页现在有清晰边界，第一眼更容易理解“当前正在做什么”
+    - 低频系统动作单独放到右侧工具组里，减少和文档处理动作混在一起的压迫感
+    - 新增工具栏分组显隐逻辑：当某一组下的控件都隐藏时，整个组一起消失，避免残留空壳
+    - 为后续继续压工具栏视觉噪音、做 Windows 真机微调提供更稳定的结构基础
+
+20. **工具栏分组回归热修复**
+    - 修复工具栏分组改造引入的悬空分隔条问题
+    - 根因是两个未挂入布局的 `QFrame` 分隔条仍被纳入 PDF 模式显隐控制，导致它们以独立顶层小窗口形式显示
+    - 现已移除这两个悬空分隔条的创建和显隐控制，避免再次出现屏幕中间竖线和应用无法完全退出的问题
+
+21. **工具栏整条空白热修复**
+    - 修复工具栏分组可见性判断错误导致的整条空白问题
+    - 根因是分组显隐使用了 `isVisible()`，在窗口尚未真正显示时会把所有分组都误判为不可见
+    - 现已改为基于 `isHidden()` 判断“是否被显式隐藏”，确保工具栏分组在 PDF / Word / 批量模式切换后能正常恢复显示
+
+22. **设置中心底部操作区整理**
+    - 左侧设置导航标题与区块编号已对齐，降低首次进入时的理解成本
+    - 底部从单一“保存设置”按钮改成说明 + `取消` + `保存设置` 的操作栏
+    - 保留原有设置逻辑不变，只做低风险的层次整理，避免在主界面回归刚修复时继续叠加高风险改动
+
+23. **设置区块状态摘要**
+    - 为 `通用规则 / 自定义关键词 / 扫描与微调 / OCR 检测框` 四个区块补上当前状态摘要
+    - 用户进入设置页后，不需要逐项阅读就能知道当前启用了多少规则、替换文本是什么、扫描精度与检测框调节值分别是多少
+    - 摘要会跟随勾选框、关键词输入、Word 规则、扫描模式、偏移量和 OCR 调节滑块实时刷新
+    - 保持原有保存链路不变，只增强信息组织方式
+
+24. **设置导航跟随滚动**
+    - 左侧设置导航现在会跟随右侧内容滚动自动高亮当前分区
+    - 每个设置区块补充了简短用途说明，降低“参数很多但不知道先看哪块”的理解门槛
+    - 保持原有导航点击跳转逻辑不变，只增强“滚动时也知道自己在哪一节”的反馈感
+
+25. **设置中心概览卡**
+    - 在设置内容顶部新增“当前配置概览”总览卡，把通用规则、自定义关键词、Word 规则、OCR 调节四类核心状态集中展示
+    - 四个设置区块统一升级为更明确的卡片结构，并给右侧 Word 规则面板补上独立的浅色内嵌面板
+    - 现在用户进入设置中心后，第一眼就能先看总览，再决定深入哪一节，而不是从长表单顶部一路往下找
+
+26. **设置中心快捷入口与双列规则**
+    - 概览卡新增 4 个快捷跳转按钮，可以直接定位到通用规则、关键词、扫描微调和 OCR 区块
+    - 通用规则从单列改成双列排版，减少空白和纵向拉长，让设置页信息密度更接近成熟桌面产品
+    - 这一轮保持原有规则保存与加载逻辑不变，只优化信息组织与操作路径
+
+27. **设置内容字段卡片化**
+    - 自定义关键词、Word 规则、扫描模式、覆盖微调、OCR 检测框都已拆成独立字段卡片
+    - 设置页不再只是“标签 + 控件”直铺，而是具备更清晰的字段级标题、说明和边界
+    - 这一轮属于设置中心的结构深化，视觉变化较大，但仍保持原有保存逻辑与业务逻辑不变
+
+28. **设置中心就地操作化**
+    - `通用规则` 区新增 `恢复推荐勾选 / 全部勾选 / 全部清空`，用户不需要逐个点选就能快速回到常用状态
+    - `自定义关键词` 区新增 `清空关键词`，`Word 替换规则` 区新增 `恢复默认替换词`
+    - `扫描与微调` 区新增 `恢复推荐值`，`OCR 检测框` 区新增 `恢复 0%`
+    - 这轮只增强设置中心的就地操作体验，不改变原有保存逻辑和业务链路
+
+29. **批量 Word 工作台三段式升级**
+    - 批量页从“标题 + 一行摘要 + 日志列表”升级成更像正式产品的三段式工作台
+    - 新增 3 段流程轨道：`规则确认 / 执行替换 / 查看结果`
+    - 新增 4 张关键指标卡：`已选文档 / 启用规则 / 当前进度 / 执行结果`
+    - 新增“本轮摘要”面板，会按 `规则确认 / 执行中 / 已完成 / 已停止` 自动切换说明和结果摘要
+    - 这轮不改批量处理线程和结果逻辑，只增强批量 Word 的界面表达和状态反馈
+
+30. **批量 Word 结果态动作补齐**
+    - 批量页结果阶段新增 `仅重试失败文档` 和 `打开输出位置`
+    - `仅重试失败文档` 会直接复用本轮失败输入列表重新进入批量规则确认
+    - `打开输出位置` 会定位到本轮首个成功输出文件所在目录，便于用户继续检查或发送文件
+    - 这轮继续保持线程与批处理逻辑不变，只增强结果态的“下一步动作”
+
+31. **主工具栏低频动作继续收口**
+    - `反馈` 已从主工具栏移出，统一收进 `更多` 菜单，减少顶部右侧按钮噪音
+    - `设置` 改成只在宽屏工具栏内联显示，较窄窗口时自动进入 `更多`
+    - 工具栏首次显示和跨屏切换时会重新计算密度，改善 Windows 多显示器 / 不同缩放比切换后的按钮尺寸与文案稳定性
+
+32. **Windows DPI / 命中区专项收口**
+    - 工具栏、上下文条、工作台标题、流程步骤、Word 对比头、批量摘要区都已按显示缩放做动态字号和高度收口
+    - 底部进度条和 `取消` 按钮已随 DPI 自动放大，减少 Windows 高缩放下过小、难点的问题
+    - 轻量状态徽标和流程步骤已改成读取动态字号，避免 `125% / 150%` 下出现文字偏小或层级失衡
+
+33. **按钮基线与预览字体进一步 Windows-first**
+    - 所有主按钮现在都会跟随 DPI 动态调整字体、padding、图标按钮比例，不再只是外层容器变高
+    - `更多` 按钮样式刷新已独立抽出来，避免密度切换后丢失特殊样式
+    - Word 预览和替换后预览、通用 HTML 包装、文件对话框字体栈都已切到 `Segoe UI Variable / Segoe UI / Microsoft YaHei UI / Microsoft YaHei`
+    - 目标是让主壳、控件和文档预览在 Windows 上的视觉语言更统一
+
+34. **原生导航图标与符号稳定性收口**
+    - PDF 翻页按钮已切到 Qt 原生标准图标，减少不同字体下 `⏮ / ◀ / ▶ / ⏭` 的观感差异
+    - 缩放按钮改成更稳定的 `- / +` 文本，不再依赖 emoji 式字符
+    - 图标按钮会随 DPI 一起调整 `iconSize`，让 Windows 高缩放下的按钮图标比例更自然
+
+35. **窄窗口工具栏再减噪**
+    - Word 模式下，窄窗口会把 `对比预览` 收进 `更多`，避免顶部一排长按钮继续挤占空间
+    - PDF 模式下，窄窗口会把 `适应页面` 收进 `更多`，保留黑/白、单双页和核心翻页动作在主栏
+    - 这一轮属于响应式收口，不删除功能，只把低频动作在窄场景下按优先级后移
+
+### 本轮验证
+
+- `python3 -m compileall -q main.py privacyguard tests`：通过
+- `python3 -m unittest tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace tests.unit.test_app_config tests.unit.test_mixed_pdf_ocr tests.unit.test_pdf_text_hit_dedup -v`：17/17 通过
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`：28/28 通过
+
+### 下一步
+
+1. 在 Windows 真机上做 DPI / 字体 / 按钮命中区专项走查
+2. 按真机截图继续压缩主工具栏视觉噪音，做最后一轮微调
+3. 视 Windows 真机效果决定是否再收口设置中心与批量页细节
+
+---
+
+## 2026-03-11 - PyInstaller 打包模块导入失败修复（cp30）
+
+### 问题现象
+
+- Windows 打包完成后，打开应用出现弹窗错误：
+  ```
+  ModuleNotFoundError: No module named 'privacyguard.utils.security'
+  ```
+- 文件 `security.py` 存在于 dist 目录中，但无法被导入
+
+### 根因分析
+
+1. **语法错误**：`privacyguard/utils/security.py` 第 56 行存在 Python 3.11 不兼容的语法：
+   ```python
+   return False, f"路径包含危险字符: {repr('\\')}"
+   ```
+   - Python 3.11 不允许在 f-string 的 `{}` 表达式中直接使用反斜杠
+
+2. **连锁反应**：
+   - 语法错误导致模块无法被导入
+   - `collect_submodules('privacyguard')` 返回空列表
+   - PyInstaller 无法检测到任何 privacyguard 子模块
+   - 打包后的应用缺少必要的模块
+
+### 修复内容
+
+1. **修复 f-string 语法错误**（`privacyguard/utils/security.py`）：
+   - 将反斜杠先赋值给变量，再在 f-string 中使用
+   - 同时修复了 `shell_metacharacters` 循环中的类似问题
+
+2. **将相对导入改为绝对导入**：
+   - `privacyguard/__init__.py`
+   - `privacyguard/utils/__init__.py`
+   - `privacyguard/ocr/__init__.py`
+
+3. **优化 PyInstaller 配置**：
+   - 添加 `hook-privacyguard.py` hook 文件
+   - 添加 `runtime_hook_privacyguard.py` 运行时 hook
+   - 在 spec 文件中手动添加所有 privacyguard 子模块到 hiddenimports
+
+### 经验教训
+
+1. **仔细阅读打包日志**：不要忽略任何 WARNING，它们可能包含关键信息
+2. **Python 版本兼容性**：Python 3.11 对 f-string 的语法检查更严格
+3. **问题定位要准确**：语法错误会导致模块无法导入，进而影响 PyInstaller 的模块检测
+
+### 相关文件
+
+- `privacyguard/utils/security.py` - 关键修复
+- `privacyguard/__init__.py` - 相对导入改绝对导入
+- `privacyguard/utils/__init__.py` - 相对导入改绝对导入
+- `privacyguard/ocr/__init__.py` - 相对导入改绝对导入
+- `packaging/windows/config/PrivacyGuard_windows.spec` - hiddenimports 配置
+- `packaging/windows/config/hook-privacyguard.py` - 新增 hook 文件
+- `packaging/windows/config/runtime_hook_privacyguard.py` - 新增 runtime hook
+- `docs/diary/20260311_pyinstaller_packaging_fix_diary.md` - 详细排查日记
+
+### 待验证
+
+- 重新打包并测试应用启动
+
+---
+
+## 2026-03-10 - v37.7.2 版本/文档/打包方案同步（cp28 / cp29）
+
+### 本次目标
+
+1. 为 Word 原文预览刷新修复定义新的补丁版本
+2. 统一 active 文档、恢复说明、协作入口与打包方案
+3. 同步 Windows 安装器默认版本与 EXE 版本资源
+
+### 主要更新
+
+- 版本定义：
+  - `version.txt` -> `37.7.2`
+  - `main.py` -> `37.7.2 - Word Preview Refresh Fix`
+- 文档同步：
+  - `README.md`
+  - `PROJECT_INDEX.md`
+  - `CLAUDE.md`
+  - `docs/current/*`
+  - `docs/guides/QUICK_START_FOR_CLAUDE_CODE.md`
+  - `docs/packaging/*`
+- packaging 同步：
+  - `packaging/README.md`
+  - `packaging/DUAL_OCR_PACKAGING.md`
+  - `packaging/windows/config/PrivacyGuard_Setup.iss`
+  - `packaging/windows/config/version_info.txt`
+  - `packaging/windows/docs/*`
+  - `packaging/windows/scripts/README*.txt`
+  - `packaging/macos/docs/*`
+  - `packaging/macos/scripts/README.txt`
+
+### 验证结果
+
+- `python3 packaging/windows/scripts/generate_version_info.py`：通过
+- `python3 -m compileall -q main.py privacyguard tests`：通过
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`：28/28 通过
+
+### 回滚与检查点
+
+- 新增检查点：
+  - `20260310_release_sync_cp28_pre`
+  - `20260310_release_sync_cp29_verified`
+
+---
+
+## 2026-03-10 - Word 原文预览红色高亮串位修复（cp26 / cp27）
+
+### 问题现象
+
+- 打开 Word 后，进入“高级设置”修改自定义关键词并保存。
+- 左侧“原文预览”出现多处异常红色高亮。
+- 这些红色高亮并不是用户手动右键添加的脱敏区域。
+- 点击“智能脱敏”后，界面又恢复正常。
+
+### 根因
+
+- Word 预览增量刷新脚本此前使用 `querySelectorAll('[data-key]')`。
+- 但正文块容器和嵌套的高亮 `<mark>` 都带有 `data-key`。
+- 二次刷新时，脚本把整段正文 HTML 塞进旧高亮节点内部，导致高亮嵌套和串位，视觉上表现为异常红块。
+
+### 修复内容
+
+- 新增 `WORD_PREVIEW_BLOCK_SELECTOR = '[data-word-block="1"][data-key]'`
+- 新增 `build_word_panel_update_script(...)`，统一构建只更新正文块的增量刷新脚本。
+- `_apply_word_panel_updates()` 改为复用该脚本，不再更新高亮 `<mark>` 节点。
+- `_add_data_key_attributes()` 为正文块补充 `data-word-block="1"`。
+- `_add_data_key_regex_fallback()` 同步补充：
+  - `data-key`
+  - `data-original-text`
+  - `data-word-block="1"`
+
+### 测试
+
+- 新增测试：
+  - `test_word_panel_update_script_targets_only_word_blocks`
+  - `test_regex_fallback_marks_word_preview_blocks`
+- 回归结果：
+  - `python3 -m compileall -q main.py tests/unit/test_word_replace_rules.py`：通过
+  - `python3 -m unittest tests.unit.test_word_replace_rules tests.unit.test_app_config tests.unit.test_pdf_text_hit_dedup tests.unit.test_package_imports tests.test_path_validation tests.unit.test_batch_word_replace tests.unit.test_mixed_pdf_ocr tests.unit.test_ocr_api -v`：28/28 通过
+
+## 2026-03-09 - v37.7.1 发布同步（cp24 / cp25）
+
+### 本次目标
+
+1. 定义 mixed PDF OCR hotfix 的补丁版本
+2. 统一 active 文档、日志、打包方案与版本资源
+3. 生成带上下文的今日日记，保证下次接手可快速恢复
+
+### 主要更新
+
+- 版本定义：
+  - `version.txt` -> `37.7.1`
+  - `main.py` -> `37.7.1 - Mixed PDF OCR Hotfix`
+- 文档同步：
+  - `README.md`
+  - `PROJECT_INDEX.md`
+  - `CLAUDE.md`
+  - `docs/current/*`
+  - `docs/guides/QUICK_START_FOR_CLAUDE_CODE.md`
+  - `docs/packaging/*`
+- packaging 同步：
+  - `packaging/README.md`
+  - `packaging/DUAL_OCR_PACKAGING.md`
+  - `packaging/windows/config/PrivacyGuard_Setup.iss`
+  - `packaging/windows/config/version_info.txt`
+  - `packaging/windows/docs/*`
+  - `packaging/windows/scripts/README*.txt`
+  - `packaging/macos/docs/*`
+  - `packaging/macos/scripts/README.txt`
+- 新增日记：
+  - `docs/diary/20260309_2338_release_sync_diary.md`
+
+### 验证结果
+
+- `python3 packaging/windows/scripts/generate_version_info.py`：通过
+- `python3 -m compileall -q main.py privacyguard tests`：通过
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`：26/26 通过
+
+### 回滚与检查点
+
+- 新增检查点：
+  - `20260309_release_sync_cp24_pre`
+  - `20260309_release_sync_cp25_verified`
+
+---
+
+## 2026-03-09 - 混合型 PDF 图片区域 OCR 热修复（cp22 / cp23）
+
+### 问题现象
+
+- 混合型 PDF 中，文本层关键词能脱敏，但嵌入图片 / 扫描区域中的同一关键词无法脱敏。
+- 用户侧表现为：同一页上半部分文本被命中，下半部分图片里的手机号 / 身份证号没有任何反应。
+
+### 根因
+
+- 当前 PDF 扫描策略是“文本页 / 扫描页”二选一。
+- 只要 `page.get_text()` 返回了足够多的文本，就直接走文本搜索，不再对页面中的图片块执行 OCR。
+- 导出链本身支持图片像素销毁，问题只发生在“扫描阶段没有产出图片区域脱敏框”。
+
+### 修复内容
+
+- 新增共享模块：
+  - `privacyguard/ocr/mixed_pdf.py`
+- 新增共享能力：
+  - 提取 `page.get_text("dict")` 中的图片块区域
+  - 对图片块裁剪渲染后执行 OCR
+  - 将局部 OCR 命中的坐标偏移回页面坐标
+- `main.py`
+  - PDF 页面改为混合扫描：
+    - 文本层命中
+    - 嵌入图片块 OCR 命中
+    - 无文本层时回退整页 OCR
+  - 高级设置提示文案从“仅对纯图片PDF生效”改为“对扫描区域 / 嵌入图片区域生效”
+- `privacyguard/workers/ocr_worker.py`
+  - 同步接入共享混合扫描逻辑，避免两套实现继续漂移
+
+### 新增测试
+
+- `tests/unit/test_mixed_pdf_ocr.py`
+  - 覆盖图片块提取去重
+  - 覆盖图片块 OCR 坐标偏移回页面坐标
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests`：通过
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.unit.test_pdf_text_hit_dedup tests.unit.test_package_imports tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace tests.unit.test_app_config tests.test_path_validation tests.unit.test_ocr_api -v`：26/26 通过
+
+### 回滚与检查点
+
+- 新增检查点：
+  - `20260309_mixed_pdf_ocr_cp22_pre`
+  - `20260309_mixed_pdf_ocr_cp23_verified`
+
+---
+
+## 2026-03-09 - Word compare 空白热修复（cp19 / cp20）
+
+### 问题现象
+
+- 打开单个 Word 后，初始右侧“替换后预览”为空或隐藏。
+- 首次点击“智能脱敏”后，右侧预览可能整块空白。
+- 终端日志没有直接报业务异常，界面逻辑属于静默失败。
+
+### 根因
+
+- 右侧 WebView 在“无候选结果”状态下被加载成空白页。
+- 后续首次进入 compare 模式时，状态机误判右侧文档已经准备完成。
+- 因此只执行局部 DOM 更新，没有先加载右侧完整 HTML 文档，导致更新打不到任何 `data-key` 节点。
+
+### 修复内容
+
+- `main.py`
+  - 新增 `should_reload_word_panel(...)`，统一判断某个 Word 面板是否必须重新加载完整文档。
+  - 为左右两个 WebView 分别增加：
+    - 已加载源路径
+    - 目标源路径
+    - ready 状态
+  - compare 模式从空白页切入时，强制对右侧执行 `setHtml(...)` 完整加载，再应用局部更新。
+
+### 新增测试
+
+- `tests/unit/test_word_replace_rules.py`
+  - 新增 `test_compare_panel_reload_required_after_blank_state`
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests`：通过
+- `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.unit.test_pdf_text_hit_dedup tests.unit.test_package_imports tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace tests.unit.test_app_config tests.test_path_validation tests.unit.test_ocr_api -v`：26/26 通过
+
+### 回滚与检查点
+
+- 新增检查点：
+  - `20260309_word_compare_bugfix_cp19_pre`
+  - `20260309_word_compare_bugfix_cp20_verified`
+
+---
+
+## 2026-03-09 - Priority Remediation Plan 执行完成
+
+### 本次目标
+
+1. 修复代码审查中确认的运行时安全问题
+2. 修复 `privacyguard` 导入时对 OCR 依赖的强耦合
+3. 修复文本型 PDF 重复命中带来的错误结果和性能浪费
+4. 将 Word 预览切换为局部 DOM 更新，降低整页重绘
+5. 修复设置“看似保存成功、实际未完全持久化”的问题
+
+### 关键代码改动
+
+- 路径校验统一：
+  - `main.py` 删除重复 `validate_safe_path()` 实现
+  - 统一调用 `privacyguard.utils.security.validate_safe_path`
+
+- 包级导入稳定性：
+  - `privacyguard/__init__.py` 改为懒导入 worker / OCR 对象
+  - `privacyguard/workers/__init__.py` 同步改为懒导入
+  - `privacyguard/workers/ocr_worker.py` 使用延迟 `RapidOCR` 初始化
+
+- 文本型 PDF 去重：
+  - 新增 `privacyguard/ocr/text_pdf.py`
+  - 文本页重复字符串只 search 一次并复用结果
+  - `main.py` 与模块化 worker 统一复用共享实现
+
+- Word 预览性能：
+  - 新增原文高亮分段函数 `build_highlight_preview_segments`
+  - Word 左右预览改为首屏加载 + `data-key` 局部更新
+  - 原有基于整页 HTML 全局正则替换的活动渲染链路停止使用
+
+- 配置与版本一致性：
+  - `SimpleConfig` 新增 `save()`
+  - 设置窗口保存时改为批量写入后统一落盘
+  - 新增 `redaction.custom_keywords` 持久化
+  - `main.py` / `privacyguard.__version__` 统一从 `version.txt` 读取
+
+### 新增测试
+
+- `tests/unit/test_package_imports.py`
+- `tests/unit/test_pdf_text_hit_dedup.py`
+- `tests/unit/test_app_config.py`
+- `tests/test_path_validation.py` 新增路径前缀绕过用例
+- `tests/unit/test_word_replace_rules.py` 新增原文高亮分段用例
+
+### 验证结果
+
+- `python3 -m compileall -q main.py privacyguard tests`：通过
+- `python3 -m unittest tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`：24/24 通过
+
+### 回滚与检查点
+
+- 新增检查点：
+  - `20260309_runtime_remediation_cp14_start`
+  - `20260309_runtime_remediation_cp18_verified`
+
+---
+
+## 2026-03-02 - v37.7.0 发布收敛（多轮测试反馈修复）
+
+### 今日核心目标
+
+1. 基于测试反馈修复 Word 替换相关 UI 与流程逻辑错误
+2. 将“规则替换 + 智能脱敏 + 手动脱敏”统一到替换后预览
+3. 完成版本号定义、文档一致性更新、可回滚检查点记录
+
+### 关键修复与改进
+
+- 入口交互简化：
+  - 移除主界面“批量替换”独立按钮。
+  - 批量入口并入“打开/拖拽”：当选择 `>=2` 个 Word 文件时自动触发批量流程。
+  - 批量开始前先弹出“替换规则设置”对话框，不再要求必须预先在高级设置里配置。
+
+- 高级设置整合：
+  - “统一替换文本”并入“2.自定义关键词”右侧。
+  - 集成“打开替换规则设置”按钮，点击后仍打开原有规则弹窗（界面保持不变）。
+  - 设置窗口改为可滚动内容区 + 底部固定保存按钮，优化小屏显示不全与拥挤问题。
+
+- Word 预览融合：
+  - 双栏顶部标题改为紧凑头部，降低空白和横向占位。
+  - 右侧“替换后预览”改为融合渲染：
+    - 规则替换
+    - 手动脱敏
+    - 智能脱敏
+  - 统一替换冲突优先级：`规则 > 手动 > OCR`。
+  - 统一高亮样式：替换后字段以同一高亮展示，并随撤回/重做实时刷新。
+
+### 回滚与检查点
+
+- 新增检查点：
+  - `20260302_word_preview_fusion_cp8_pre`
+  - `20260302_word_preview_fusion_cp9_verified`
+  - `20260302_release_docs_cp10_pre`
+  - `20260302_release_docs_cp11_verified`
+- 详见：`rollback_journal.md`
+
+### 验证结果
+
+- `python3 -m compileall -q main.py tests/unit/test_word_replace_rules.py`：通过
+- `python3 -m unittest tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`：16/16 通过
+
+---
+
+## 2026-03-02 - Word 多字段替换 + 批量替换（Phase 1）+ 回滚机制
+
+### 本次目标
+
+1. 新增 Word 多字段替换能力（精确+正则）
+2. 新增 Word 批量替换流程（`.docx + .doc`）
+3. 新增可回滚检查点机制，确保可随时恢复
+
+### 备份与回滚（第 0 阶段）
+
+- 新增检查点目录：
+  - `backups/iteration_checkpoints/20260302_word_batch_replace_cp0`
+  - `backups/iteration_checkpoints/20260302_word_batch_replace_cp1`
+  - `backups/iteration_checkpoints/20260302_word_batch_replace_cp2`
+  - `backups/iteration_checkpoints/20260302_word_batch_replace_cp3`
+  - `backups/iteration_checkpoints/20260302_word_batch_replace_cp4`
+- 每个检查点均生成 `snapshot_src.tar.gz`（排除 `dist/`、`releases/`、`venv*` 等大目录）
+- 新增：
+  - `restore_checkpoint.sh`（按 checkpoint 脚本化回滚）
+  - `ROLLBACK_GUIDE.md`（一键回滚 + 单文件回滚）
+  - `rollback_journal.md`（里程碑回滚日志）
+
+### 代码实现（Phase 1）
+
+- `main.py`
+  - 新增规则引擎与区间合并工具函数：
+    - `normalize_word_replace_rules`
+    - `build_word_rule_matches`
+    - `merge_word_matches_with_priority`
+    - `replace_matches_in_paragraph`
+  - 新增 `WordReplaceRulesDialog`：
+    - 多条规则编辑（启用、模式、查找、替换）
+    - 规则上移/下移
+    - JSON 导入/导出（含 `version=1`）
+  - 新增 `WordBatchReplaceWorker`：
+    - 批量处理 `.docx/.doc`
+    - `.doc` 转换：LibreOffice 优先，失败 fallback antiword
+    - 失败文件交互决策：跳过继续 / 停止任务
+    - 进度信号与汇总信号
+  - UI 改造：
+    - 工具栏新增 `📚 批量替换`
+    - Word 模式右上角改为 `🧩 替换规则`
+    - 主预览区支持 Word 左右双栏（原文/替换后）
+  - Word 导出逻辑增强：
+    - 规则替换 + 手动脱敏 + OCR 脱敏统一合并
+    - 冲突优先级：规则 > 手动 > OCR
+- 新增测试：
+  - `tests/unit/test_word_replace_rules.py`
+  - `tests/unit/test_batch_word_replace.py`
+
+### 验证结果
+
+- 编译检查：
+  - `python3 -m compileall -q main.py privacyguard tests/unit/test_word_replace_rules.py tests/unit/test_batch_word_replace.py`
+  - 结果：通过
+- 测试：
+  - `python3 -m unittest tests.test_path_validation -v`（7 项通过）
+  - `python3 -m unittest tests.unit.test_ocr_api -v`（2 项通过）
+  - `python3 -m unittest tests.unit.test_word_replace_rules -v`（4 项通过）
+  - `python3 -m unittest tests.unit.test_batch_word_replace -v`（2 项通过）
+
+### 迭代边界说明
+
+- 本次完成：Phase 1（同一套规则应用全部批量文件）
+- 已记录但未实现：Phase 2（每文件单独规则映射）
+
+---
+
+## 2026-03-02 - P0/P1/P2/P3 修复 + Markdown 文档整合
+
+### 本次目标
+
+1. 先修复代码审查中的 P0/P1/P2/P3 级问题
+2. 整理项目 Markdown 文档，合并重复入口
+3. 将本次会话修改内容完整记录到日志
+
+### 代码修复记录
+
+#### P0 修复
+
+- `main.py`
+  - 修复 `_convert_with_antiword()` 缺少 `subprocess` 导入导致的异常路径崩溃风险（`NameError`）。
+
+#### P1 修复
+
+- `main.py`
+  - 重构 Word 保存替换逻辑，从“整段字符串替换”改为“基于 run 位置偏移替换”。
+  - 新增 `_replace_in_paragraph(..., text_offset=...)` 与 `_apply_range_to_runs(...)`，避免跨 run 文本错位/误替换。
+  - 修复表格单元格段落偏移处理，减少复杂文档脱敏后内容错位风险。
+
+#### P2 修复
+
+- `main.py`
+  - OCR 文本 PDF 分支增加 `page.search_for` 结果缓存，减少重复检索开销。
+  - 拖拽预览命中坐标修复：统一到 `self.scroll` 坐标系，修正边界判断误差。
+  - 扫描完成状态修复：引入 `self._ocr_processed_pages`，避免以命中数误判“已完成”。
+  - Word 预览 HTML 缓存机制：新增 `self._word_base_html` / `self._word_html_source_path`，并在文档切换时失效清理。
+- `privacyguard/workers/word_worker.py`
+  - 完成信号中新增 `__scan_meta__`（`processed_pages`、`total_pages`、`cancelled`）。
+- `privacyguard/workers/ocr_worker.py`
+  - 同步增加 OCR 文本检索缓存优化，与主流程保持一致。
+
+#### P3 修复
+
+- `privacyguard/utils/security.py`
+  - 路径校验改为平台感知（Windows / 非 Windows 差异化处理）。
+  - 新增 URL 编码危险序列检查与 `commonpath` 白名单校验。
+  - 扩展名白名单比较改为大小写无关。
+- `tests/test_path_validation.py`
+  - 重写为针对生产函数 `validate_safe_path` 的 `unittest`，并覆盖平台分支行为。
+- `tests/unit/test_ocr_api.py`
+  - 重写为无硬编码路径的 OCR API 冒烟测试。
+
+### 文档修复与整合（Markdown）
+
+#### 重复入口整合
+
+- 将打包文档统一收敛到 `docs/packaging/`：
+  - `docs/packaging/README.md` 设为主入口
+  - `packaging/README.md` 改为目录索引
+  - `packaging/windows/docs/WINDOWS_BUILD_GUIDE.md` 改为索引跳转
+  - `packaging/macos/docs/MACOS_BUILD_GUIDE.md` 改为索引跳转
+- 合规报告收敛：
+  - `docs/合规性评估报告.md` 增加版本演进段（吸收 v36 结论）
+  - `docs/合规性评估报告_v36.md` 改为历史索引文档，避免并行双维护
+- `PROJECT_INDEX.md` 重写为最新文档地图，明确“主文档 vs 索引文档 vs 归档文档”边界。
+
+### 打包方案修复（packaging/）
+
+#### 脚本一致性修复
+
+- Windows:
+  - `packaging/windows/config/PrivacyGuard_Setup.iss` 改为支持命令行注入版本：
+    - 使用 `#ifndef MyAppVersion` 默认值
+    - `3_build_with_setup.bat` / `4_create_installer_only.bat` 编译时传入 `/DMyAppVersion=%VERSION%`
+  - 修复虚拟环境路径不一致问题（`venv_win` vs `venv`）：
+    - `2_build_exe.bat`
+    - `2_build_exe_fix_dll.bat`
+    - `2_build_exe_enhanced.bat`
+    - `3_build_with_setup.bat`
+  - `build_complete.bat` 去除硬编码版本文案，改为以 `version.txt` 为准并增加空版本保护。
+- macOS:
+  - `build_complete.sh` 去除硬编码版本文案，虚拟环境改为优先 `venvmac`、兼容 `venv`。
+  - `build_macos_app.sh` 同步支持 `venvmac` / `venv` 双路径。
+
+#### 打包文档同步
+
+- 更新 `packaging/` 下文档，统一为“版本来自 version.txt”的口径：
+  - `packaging/windows/scripts/README.txt`
+  - `packaging/windows/scripts/README_FIXED.txt`
+  - `packaging/windows/scripts/打包命令.txt`
+  - `packaging/macos/scripts/README.txt`
+  - `packaging/DUAL_OCR_PACKAGING.md`
+  - `packaging/windows/config/version_info.txt`（补充维护说明）
+
+### 验证结果
+
+- 语法检查：
+  - `python3 -m compileall -q main.py privacyguard/workers/word_worker.py privacyguard/workers/ocr_worker.py`
+  - `python3 -m compileall -q privacyguard/utils/security.py tests/test_path_validation.py tests/unit/test_ocr_api.py`
+  - 结果：通过
+- 测试：
+  - `python3 -m unittest tests.test_path_validation -v`（7 项通过）
+  - `python3 -m unittest tests.unit.test_ocr_api -v`（2 项通过）
 
 ---
 
@@ -1909,7 +4730,7 @@ ImportError: DLL load failed while importing onnxruntime_pybind11_state:
    - 打包时复制 launcher_wrapper.bat
    - 增强 VC++ 缺失警告
 
-6. **新增故障排除文档** (`packaging/windows/TROUBLESHOOTING.md`)
+6. **新增故障排除文档** (`packaging/windows/archive/TROUBLESHOOTING.md`)
    - 详细解释 DLL 错误原因
    - 提供下载链接和解决方案
 
@@ -1921,7 +4742,7 @@ M  packaging/windows/scripts/2_build_exe.bat
 M  packaging/windows/scripts/4_create_installer_only.bat
 M  packaging/windows/scripts/check_vcredist.bat
 A  packaging/windows/scripts/launcher_wrapper.bat
-A  packaging/windows/TROUBLESHOOTING.md
+A  packaging/windows/archive/TROUBLESHOOTING.md
 ```
 
 ---
@@ -2444,7 +5265,7 @@ PrivacyApp v24 稳定性测试
 - 在 spec 文件中手动指定隐式导入
 - 在文档中说明误报情况
 
-**详细记录**: 参见 `packaging/windows/docs/BUILD_LOG.md`
+**详细记录**: 参见 `packaging/windows/archive/ERROR_LOG_20260218.md`
 
 #### 双平台状态
 

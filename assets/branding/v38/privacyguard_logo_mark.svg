@@ -1,0 +1,20 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="160" y1="112" x2="864" y2="912" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F7ED7"/>
+      <stop offset="1" stop-color="#0E5FB0"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="356" y1="530" x2="670" y2="530" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#0EA5A3"/>
+    </linearGradient>
+  </defs>
+  <rect x="92" y="92" width="840" height="840" rx="212" fill="url(#bg)"/>
+  <path d="M512 214L702 286V470C702 612 622 730 512 790C402 730 322 612 322 470V286L512 214Z" fill="white"/>
+  <path d="M430 340C430 318.909 447.091 301.818 468.182 301.818H565.273L614 350.545V585.818C614 606.909 596.909 624 575.818 624H468.182C447.091 624 430 606.909 430 585.818V340Z" fill="#EAF3FF"/>
+  <path d="M565.273 301.818V331.455C565.273 342.001 573.818 350.545 584.364 350.545H614L565.273 301.818Z" fill="#BFD9F8"/>
+  <rect x="376" y="478" width="296" height="104" rx="52" fill="url(#bar)"/>
+  <rect x="406" y="512" width="236" height="14" rx="7" fill="white" fill-opacity="0.95"/>
+  <rect x="406" y="538" width="202" height="14" rx="7" fill="white" fill-opacity="0.8"/>
+  <path d="M298 681C350 744 424 785 512 807C600 785 674 744 726 681" stroke="white" stroke-opacity="0.22" stroke-width="28" stroke-linecap="round"/>
+</svg>

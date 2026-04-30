@@ -1,214 +1,126 @@
-# PrivacyGuard 项目 Claude Code 快速上手指南
+# PrivacyGuard Claude Code 快速上手指南
 
-> 本文档帮助 Claude Code 在下次开发时快速获取全局信息、理解项目进度，从而快速上手开发。
-
----
-
-## 核心上下文文件
-
-PrivacyGuard 项目已经配置了完善的上下文管理系统，Claude Code 只需读取以下关键文件即可快速理解项目：
-
-### 必读文件（按优先级）
-
-| 优先级 | 文件 | 内容 | 用途 |
-|--------|------|------|------|
-| ⭐⭐⭐ | `CLAUDE.md` | 项目架构、核心类、开发命令、关键实现细节 | Claude Code 的首要参考 |
-| ⭐⭐⭐ | `docs/current/STATUS.md` | 当前版本、状态、最新修复 | 快速了解项目状态 |
-| ⭐⭐ | `docs/current/DEV_LOG.md` | 详细开发日志、版本历史 | 了解开发进度 |
-| ⭐⭐ | `CHANGELOG.md` | 版本更新记录 | 了解功能演进 |
-| ⭐ | `config.json.template` | 配置系统结构 | 了解可配置项 |
-
-### 推荐的首次对话 Prompt
-
-```
-请先阅读以下文件了解项目当前状态：
-1. CLAUDE.md - 项目架构和开发指南
-2. docs/current/STATUS.md - 当前版本状态
-3. docs/current/DEV_LOG.md - 最新开发日志
-
-然后告诉我：
-- 当前版本号和项目状态
-- 最近修复了什么问题
-- 下一步计划做什么
-```
+> 用于下次继续开发时，最快速接上当前进度。
 
 ---
 
-## 项目关键信息速查
+## 先读这些文件
 
-### 当前版本
+按下面顺序读取：
 
-- **版本号**: v37.5.0 (Seal Detection - OpenCV)
-- **发布日期**: 2026-02-27
-- **状态**: 功能完整 / 印章检测功能
-- **OCR 引擎**: RapidOCR（单引擎架构，v37.4.0 移除 PaddleOCR）
+1. `docs/current/STATUS.md`
+2. `docs/current/DEV_LOG.md`
+3. `docs/current/V38_UI_REFACTOR_PLAN.md`
+4. `CHANGELOG.md`
+5. `rollback_journal.md`
+6. `CLAUDE.md`
+7. `docs/current/PRIORITY_REMEDIATION_PLAN.md`
+8. `docs/diary/20260309_2338_release_sync_diary.md`
+9. `docs/diary/20260311_pyinstaller_packaging_fix_diary.md`
 
-### 核心架构
+---
 
-```
-PrivacyApp/
-├── main.py                 # 主程序 (~2600 行，单体架构)
-├── theme.py                # 主题系统
-├── config.json             # 用户配置
-├── CLAUDE.md              # ⭐ Claude Code 必读
-├── docs/
-│   └── current/
-│       ├── STATUS.md      # ⭐ 项目状态
-│       ├── DEV_LOG.md     # ⭐ 开发日志
-│       └── RECOVERY_GUIDE.md  # 恢复指南
-├── packaging/              # 打包脚本
-│   ├── windows/           # Windows 打包
-│   └── macos/             # macOS 打包
-└── backups/               # 版本备份
-```
+## 当前基线
 
-### 核心类
+- **版本号**: v37.7.4
+- **版本标识**: `37.7.4 - Release Audit and Final Polish`
+- **最后更新**: 2026-03-18
+- **当前状态**:
+  - `v37.7.4` 运行基线稳定
+  - v38 UI 改造代码层已完成
+  - 首页、PDF、Word、批量、图片、高级设置已统一到桌面级壳层语言
+  - 当前默认阶段已切换到真机截图驱动的细节抛光
 
-| 类名 | 用途 | 关键方法 |
-|------|------|----------|
-| `MainWindow` | 主 UI 控制器 | `_open_pdf`, `_open_word`, `run_ocr_scan` |
-| `SinglePageCanvas` | PDF 页面渲染 | `paintEvent`, `add_manual_redaction` |
-| `OCRWorker` | OCR 后台线程 | `run`, `_scan_page_ocr`, `_detect_seals` (v37.5.0) |
-| `WordWorker` | Word 处理线程 | `run` |
-| `WebViewBridge` | Python-JS 桥接 | `add_redaction`, `remove_redaction` |
-| `ConfigManager` | 配置管理 | `get`, `set`, `reload` |
+---
 
-### 常用命令
+## 当前最重要的事实
+
+1. `main.py` 仍然是活动运行时主入口。
+2. `privacyguard/` 有共享模块，但不要假设所有逻辑都已完全模块化。
+3. 版本唯一来源是 `version.txt`。
+4. `privacyguard` 包导入必须保持 OCR 懒加载，不要恢复 eager import。
+5. PDF 混合页当前依赖：
+   - 文本层命中
+   - `page.get_text("dict")` 图片块提取
+   - 图片块 OCR
+   - 页面坐标偏移修正
+6. Word 预览当前依赖：
+   - `data-key` 标记
+   - 分块 HTML 片段生成
+   - 局部 DOM 更新
+   - compare 面板 loaded-source 状态判断
+
+---
+
+## 快速命令
 
 ```bash
-# 激活虚拟环境
-source venv/bin/activate  # macOS
-venv\Scripts\activate     # Windows
+cd /Users/a49144/Desktop/codexhub/PrivacyGuardApp
 
 # 运行应用
-python main.py
+python3 main.py
 
 # 语法检查
-python -c "import ast; ast.parse(open('main.py').read()); print('OK')"
+python3 -m compileall -q main.py privacyguard tests
 
-# 运行测试
-python tests/scripts/test_stability.py
-
-# 打包
-packaging/windows/scripts/build_complete.bat  # Windows
-./packaging/macos/scripts/build_complete.sh   # macOS
+# 主回归测试
+python3 -m unittest \
+  tests.unit.test_mixed_pdf_ocr \
+  tests.test_path_validation \
+  tests.unit.test_ocr_api \
+  tests.unit.test_package_imports \
+  tests.unit.test_pdf_text_hit_dedup \
+  tests.unit.test_app_config \
+  tests.unit.test_word_replace_rules \
+  tests.unit.test_batch_word_replace \
+  -v
 ```
 
 ---
 
-## 下次开发时的推荐工作流
+## 如果继续开发
 
-### 步骤 1: 启动 Claude Code 并提供上下文
+### 默认下一步
 
-```bash
-cd C:\Users\Admin\Desktop\claudecodehub\PrivacyApp
-claude
-```
+如果没有新的回归 bug，当前优先继续：
 
-### 步骤 2: 使用推荐的首次 Prompt（见上方）
+1. 真机截图驱动的 UI 细节抛光
+2. 每文件单独规则映射（Phase 2）
+3. 批量规则集模板管理
+4. 替换后预览按来源筛选高亮
 
-### 步骤 3: 描述具体任务
+### 如果是回归 bug
 
-```
-我想要 [具体功能/修复描述]，请帮我：
-1. 分析需要修改哪些文件
-2. 设计实现方案
-3. 编写代码
-4. 测试验证
-```
+先确认：
 
----
-
-## 关键实现细节备忘
-
-### PDF 处理流程
-
-1. 用户打开 PDF → `MainWindow._open_pdf()`
-2. 点击智能脱敏 → `MainWindow.run_ocr_scan()`
-3. OCRWorker 扫描页面
-4. 结果存储在 `self.page_data[page_num]`
-5. 脱敏框在 `SinglePageCanvas.paintEvent()` 绘制
-
-### Word 处理流程
-
-1. 用户打开 Word → `MainWindow._open_word()`
-2. mammoth 转换为 HTML
-3. QWebEngineView 显示
-4. WebViewBridge 处理交互
-5. 三遍占位符替换策略避免 HTML 标签破坏
-
-### 配置系统 (v37.0)
-
-- JSON 配置文件：`config.json`
-- 点分隔访问：`config.get("app.window.default_width")`
-- 热重载：`config.reload()`
-
-### 安全特性 (v36.2)
-
-- 路径验证：`validate_safe_path()` 防止命令注入
-- 临时文件管理：`TempFileManager` 自动清理
-- 具体异常捕获：替代裸 `except Exception`
+1. 是否影响 PDF、Word，还是两者都有
+2. 是否发生在 compare 模式切换时
+3. 是否发生在首次打开文档后第一次执行操作时
+4. PDF 是否涉及混合页中的图片 / 扫描区域
+5. 是否和 `data-key` 定位、局部 DOM 更新有关
 
 ---
 
-## 验证方法
+## 当前验证基线
 
-### 功能测试
-
-1. 打开 PDF 文件
-2. 执行智能脱敏
-3. 调整脱敏框
-4. 保存并验证
-
-### 打包验证
-
-1. 运行 `build_complete.bat`
-2. 解压生成的 ZIP
-3. 运行 PrivacyGuard.exe
-4. 测试完整功能流程
-
-### 语法验证
-
-```bash
-python -c "import ast; ast.parse(open('main.py').read()); print('OK')"
-python tests/scripts/test_stability.py
-```
+- `python3 -m compileall -q main.py privacyguard tests`：通过
+- 主回归测试：`52/52` 通过
 
 ---
 
-## 已知限制
+## 当前回滚点
 
-| 问题 | 优先级 | 状态 |
-|------|--------|------|
-| 精确模式偶尔失败 (<5%) | LOW | 可接受，有全局模式备用 |
-| 大文档性能延迟 (50+ 页) | LOW | 可接受 |
+- `20260309_runtime_remediation_cp18_verified`
+- `20260309_word_compare_bugfix_cp20_verified`
+- `20260309_mixed_pdf_ocr_cp23_verified`
+- `20260309_release_sync_cp25_verified`
+- `20260310_word_preview_highlight_cp27_verified`
+- `20260310_release_sync_cp29_verified`
+- `20260311_pyinstaller_packaging_fix_cp30_verified`
+- `v38_ui_refactor_cp31_20260313_140645`
 
----
+查看：
 
-## 最近修复记录
-
-### v37.5.0 (2026-02-27)
-- 🆕 印章自动检测功能（OpenCV 实现）
-- 🔧 修复：文本型 PDF 分支也执行印章检测
-- 🔧 修复：config.json 缺少印章规则导致 UI 不显示复选框
-
-### v37.4.0 (2026-02-23)
-- 🗑️ 完全移除 PaddleOCR，统一使用 RapidOCR
-- 代码量减少约 500+ 行
-
-### v37.0.10 (2026-02-21)
-- LibreOffice 路径检测修复
-- 扫描模式配置调整（新增 1.0x 普通模式）
-
----
-
-## 总结
-
-要让 Claude Code 快速上手 PrivacyGuard 开发：
-
-1. **始终保留 `CLAUDE.md`** - 这是 Claude Code 的核心参考文档
-2. **维护 `docs/current/STATUS.md`** - 记录当前状态和最新变更
-3. **更新 `docs/current/DEV_LOG.md`** - 记录每次开发的详细信息
-4. **使用推荐的首次 Prompt** - 让 Claude Code 先读取关键文件
-
-这套文档体系已经建立完善，只需按照推荐流程操作即可。
+- `rollback_journal.md`
+- `ROLLBACK_GUIDE.md`
+- `restore_checkpoint.sh`

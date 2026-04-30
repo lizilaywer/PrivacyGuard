@@ -43,9 +43,15 @@
         "pattern": "(?<!\\d)([1-9]\\d{12,18})(?!\\d)",
         "enabled": true,
         "description": "匹配13-19位银行卡号"
+      },
+      "印章": {
+        "pattern": "__SEAL_DETECTION__",
+        "enabled": false,
+        "description": "使用 OpenCV 自动检测并脱敏红色印章区域（基于颜色和形状分析）"
       }
     },
     "replacement_text": "[已脱敏]",
+    "custom_keywords": "",
     "scan": {
       "default_level": 1.0,
       "available_levels": [1.0, 1.5, 2.0],
@@ -64,6 +70,13 @@
     "precise_locator": {
       "enabled": false,
       "description": "启用像素级精准定位，通过垂直像素投影分析精确计算字符位置，可解决子字符串涂抹偏移问题，但会增加约20%处理时间。适合需要高精度涂抹的场景，如仅涂抹身份证号中的部分数字。"
+    },
+    "seal_detection": {
+      "enabled": false,
+      "description": "启用印章自动检测功能，使用 OpenCV 图像处理识别红色印章区域并自动脱敏",
+      "method": "opencv",
+      "min_red_ratio": 0.3,
+      "min_circularity": 0.5
     }
   },
   "ocr": {

@@ -1,123 +1,66 @@
 ================================================================================
-                    PrivacyGuard macOS 打包指南
+                    PrivacyGuard macOS 打包脚本说明
 ================================================================================
 
-📖 本目录包含以下打包脚本：
+当前发布基线：v37.7.4
+版本来源：`version.txt`
+发布目录：`releases/macos/`
 
 --------------------------------------------------------------------------------
  build_macos_app.sh
 --------------------------------------------------------------------------------
-   作用：打包 macOS 应用（.app）和 DMG 安装包
+作用：打包 `.app` 与 DMG，并生成 SHA256。
+虚拟环境：优先 `venvmac`，兼容 `venv`。
+执行方式：使用当前环境中的 `python3 -m PyInstaller`。
+缓存目录：`build/.pyinstaller-cache`
+主要输出：
+- `dist/PrivacyGuard.app`
+- `releases/macos/PrivacyGuard-<version>-macOS.dmg`
+- `releases/macos/PrivacyGuard-<version>-macOS.dmg.sha256`
 
-   什么时候运行：
-   - 需要生成 macOS 应用时
-   - 发布新版本时
-
-   会做什么：
-   - 清理旧构建文件
-   - 执行 PyInstaller 打包
-   - 验证 .app 结构
-   - 创建 DMG 安装包
-   - 生成 SHA256 校验和
-
-   输出：
-   - dist/PrivacyGuard.app          （macOS 应用）
-   - releases/macos/PrivacyGuard-36.4-macOS.dmg （安装包）
+--------------------------------------------------------------------------------
+ build_complete.sh
+--------------------------------------------------------------------------------
+作用：完整流程（清理、构建、校验、清理包体、签名、可选 DMG）。
+虚拟环境：优先 `venvmac`，兼容 `venv`。
+执行方式：使用当前环境中的 `python3 -m PyInstaller`。
+缓存目录：`build/.pyinstaller-cache`
+优先使用 `create-dmg` 生成美化 DMG；未安装时回退到 `hdiutil` 生成标准 DMG；若 DMG 仍失败，会保底复制 `.app` 到 `releases/macos/`。
+主要输出：
+- `releases/macos/PrivacyGuard-<version>-macOS.dmg`
+- `releases/macos/PrivacyGuard-<version>-macOS.dmg.sha256`
 
 --------------------------------------------------------------------------------
  sign_macos_app.sh
 --------------------------------------------------------------------------------
-   作用：使用开发者证书对应用进行代码签名
-
-   什么时候运行：
-   - 需要分发应用给其他用户时
-   - 避免 Gatekeeper 警告
-
-   ⚠️ 需要：
-   - Apple Developer 账号
-   - 开发者证书
+作用：对 `.app` 签名（需开发者证书）
+环境变量：
+- `PRIVACYGUARD_CODESIGN_IDENTITY`
 
 --------------------------------------------------------------------------------
  notarize_macos_app.sh
 --------------------------------------------------------------------------------
-   作用：将 DMG 提交到 Apple 进行公证
-
-   什么时候运行：
-   - 公开发布应用时
-   - 需要避免 Gatekeeper 拦截
-
-   ⚠️ 需要：
-   - Apple Developer 账号
-   - 应用专用密码
-   - 开发者团队 ID
+作用：对 DMG 公证（需 Apple Developer 账号）
+环境变量：
+- `PRIVACYGUARD_NOTARY_PROFILE`
+- 或 `PRIVACYGUARD_APPLE_ID` / `PRIVACYGUARD_APP_SPECIFIC_PASSWORD` / `PRIVACYGUARD_TEAM_ID`
 
 ================================================================================
-                            使用步骤
+推荐流程
 ================================================================================
 
-基础打包（无签名）：
+基础发布：
+1. `bash packaging/macos/scripts/build_complete.sh`
 
-    1. 打开终端
-    2. cd 到项目根目录
-    3. 运行: bash packaging/macos/scripts/build_macos_app.sh
-    4. 在 releases/macos/ 目录找到 DMG 文件
+签名+公证：
+1. `bash packaging/macos/scripts/build_macos_app.sh`
+2. 配置并运行 `sign_macos_app.sh`
+3. 配置并运行 `notarize_macos_app.sh`
 
-带签名的完整流程（推荐公开发布）：
+本轮同步说明：
+- macOS 打包脚本已统一改为使用当前环境中的 PyInstaller 和项目内缓存
+- `build_complete.sh` 已验证到 `.app` 产物生成与发布目录回退
+- 当前 active 说明、索引和默认版本都已同步到 `v37.7.4`
+- 当前正式发布默认入口：`bash packaging/macos/scripts/build_complete.sh`
 
-    1. 修改 sign_macos_app.sh，设置 CODESIGN_ID
-    2. 修改 notarize_macos_app.sh，设置 Apple ID 和 Team ID
-    3. 运行: bash packaging/macos/scripts/build_macos_app.sh
-    4. 运行: bash packaging/macos/scripts/sign_macos_app.sh
-    5. 重新打包 DMG（签名后的应用）
-    6. 运行: bash packaging/macos/scripts/notarize_macos_app.sh
-
-================================================================================
-                            常见问题
-================================================================================
-
-Q: 打包后的 app 无法打开，提示"无法验证开发者"？
-A: 这是正常的，因为应用未签名。解决方法：
-   - 右键点击应用 > 打开 > 仍要打开
-   - 或在系统设置 > 隐私与安全性中允许
-
-Q: 如何获得 Apple Developer 证书？
-A: 访问 https://developer.apple.com，注册开发者账号（年费 $99）
-
-Q: 打包时间太长？
-A: 正常现象，PyInstaller 需要分析所有依赖。
-   - 首次打包可能需要 10-15 分钟
-   - 后续打包会更快
-
-Q: DMG 文件太大？
-A: 应用包含 Python、PyQt6、OCR 引擎等，体积较大是正常的。
-   可以使用 UPX 压缩（已在配置中启用）
-
-================================================================================
-                            文件说明
-================================================================================
-
-packaging/macos/
-├── scripts/
-│   ├── build_macos_app.sh          ← 主要打包脚本
-│   ├── sign_macos_app.sh           ← 代码签名脚本
-│   ├── notarize_macos_app.sh       ← 公证脚本
-│   └── README.txt                  ← 本文件
-├── config/
-│   ├── PrivacyGuard.spec           ← PyInstaller 配置
-│   └── entitlements.plist          ← 签名权限配置
-└── assets/
-    └── PrivacyGuard.icns           ← 应用图标
-
-releases/macos/                     ← macOS 发布目录（自动创建）
-├── PrivacyGuard-36.4-macOS.dmg     ← DMG 安装包
-└── *.sha256                        ← 校验文件
-
-================================================================================
-                            联系支持
-================================================================================
-
-遇到问题？
-- 查看 packaging/macos/docs/MACOS_BUILD_GUIDE.md 详细文档
-- 在 GitHub 提交 Issue
-
-================================================================================
+最后更新：2026-03-18

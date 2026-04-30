@@ -16,12 +16,14 @@ dist-packages/
 
 # Virtual Environment
 venv/
+venv_win/
+venvmac/
 .venv/
 env/
 
-# Build
-build/PrivacyGuard/
-dist/PrivacyGuard.app/
+# Build output
+build/
+dist/
 *.spec
 
 # IDE
@@ -39,13 +41,29 @@ dist/PrivacyGuard.app/
 tests/reports/*.html
 tests/output/
 
-# Release builds (keep structure)
-# releases/*.zip
-# releases/*.dmg
-
 # Local config
 .env
 .env.local
 
 # Development backups
 backups/
+*.backup_*
+main.py.backup_*
+theme.py.backup_*
+
+# Claude Code temp files
+claude-*-cwd
+
+# Project management temp
+.project/
+
+# Release binaries (keep source, not built artifacts)
+releases/**/*.dmg
+releases/**/*.zip
+releases/**/*.exe
+releases/**/*.sha256
+releases/macos/PrivacyGuard.app/
+
+# Windows build
+venv_win/
+nul

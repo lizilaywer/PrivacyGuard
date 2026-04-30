@@ -1,118 +1,99 @@
-# PrivacyGuard 打包配置
+# PrivacyGuard 打包目录说明（索引）
 
-本文档说明 PrivacyGuard 项目的打包系统结构。
+本目录只保留打包脚本、spec、安装程序配置和轻量索引。完整说明统一维护在：
 
-## 目录结构
+- `docs/packaging/README.md`
+- `docs/packaging/windows-packaging-guide.md`
+- `docs/packaging/macos-packaging-guide.md`
 
-```
-packaging/
-├── windows/          # Windows 打包方案（完全独立）
-│   ├── scripts/      # 一键打包脚本
-│   ├── config/       # 配置文件
-│   ├── assets/       # 资源文件
-│   └── docs/         # 打包文档
-│
-└── macos/            # macOS 打包方案（完全独立）
-    ├── scripts/      # 打包脚本
-    ├── config/       # 配置文件
-    ├── assets/       # 资源文件
-    └── docs/         # 打包文档
-```
+---
 
-## 设计原则
+## 当前打包发布基线
 
-1. **完全独立**：每个平台有独立的目录，不共享配置
-2. **路径清晰**：所有脚本使用相对路径，可在任何位置运行
-3. **统一输出**：所有平台输出到 `releases/{platform}/` 目录
-4. **保留缓存**：`build/` 目录仅用于 PyInstaller 构建缓存
+- 当前应用版本：`v37.7.4`
+- 版本标识：`37.7.4 - Release Audit and Final Polish`
+- 版本唯一来源：项目根目录 `version.txt`
 
-## Windows 打包
+---
 
-### 快速开始
+## 当前约定
 
-```batch
-# 首次打包（按顺序执行）
-packaging\windows\scripts\1_初始化环境.bat
-packaging\windows\scripts\3_完整打包带安装程序.bat
+- Windows EXE 版本资源：`packaging/windows/scripts/generate_version_info.py` 在构建前自动生成
+- Windows / macOS PyInstaller 统一绑定当前虚拟环境，并使用项目内缓存：
+  - Windows：`build\.pyinstaller-cache`
+  - macOS：`build/.pyinstaller-cache`
+- Windows 主要产物：
+  - `releases/windows/PrivacyGuard-v<version>-Windows-Portable.zip`
+  - `releases/windows/PrivacyGuard-<version>-Setup.exe`
+- macOS 主要产物：
+  - `releases/macos/PrivacyGuard-<version>-macOS.dmg`
+  - `releases/macos/PrivacyGuard-<version>-macOS.dmg.sha256`
+  - 若当前环境无法完成 DMG 创建，脚本会保底复制 `releases/macos/PrivacyGuard.app`
 
-# 后续打包
-packaging\windows\scripts\3_完整打包带安装程序.bat
-```
+---
 
-### 文件说明
-
-| 文件 | 说明 |
-|------|------|
-| `scripts/1_初始化环境.bat` | 首次运行，安装依赖 |
-| `scripts/2_一键打包.bat` | 仅生成 exe |
-| `scripts/3_完整打包带安装程序.bat` | 生成 exe + 安装程序（推荐） |
-| `scripts/4_仅创建安装程序.bat` | 从已有 exe 创建安装程序 |
-| `config/PrivacyGuard_windows.spec` | PyInstaller 配置 |
-| `config/PrivacyGuard_Setup.iss` | Inno Setup 安装脚本 |
-| `assets/icon.ico` | 应用图标 |
-
-### 输出位置
-
-- 便携版：`dist/PrivacyGuard.exe`
-- 安装程序：`releases/windows/PrivacyGuard-{version}-Setup.exe`
-
-## macOS 打包
-
-### 快速开始
-
-```bash
-# 打包应用
-bash packaging/macos/scripts/build_macos_app.sh
-
-# 签名（需要开发者证书）
-bash packaging/macos/scripts/sign_macos_app.sh
-
-# 公证（需要 Apple Developer 账号）
-bash packaging/macos/scripts/notarize_macos_app.sh
-```
-
-### 文件说明
-
-| 文件 | 说明 |
-|------|------|
-| `scripts/build_macos_app.sh` | 主打包脚本 |
-| `scripts/sign_macos_app.sh` | 代码签名脚本 |
-| `scripts/notarize_macos_app.sh` | 公证脚本 |
-| `config/PrivacyGuard.spec` | PyInstaller 配置 |
-| `config/entitlements.plist` | 签名权限配置 |
-| `assets/PrivacyGuard.icns` | 应用图标 |
-
-### 输出位置
-
-- 应用包：`dist/PrivacyGuard.app`
-- DMG 安装包：`releases/macos/PrivacyGuard-{version}-macOS.dmg`
-
-## 注意事项
+## 推荐入口
 
 ### Windows
 
-- 需要安装 Inno Setup 6 才能创建安装程序
-- 首次打包前必须运行 `1_初始化环境.bat`
-- 打包后的 exe 可能被杀毒软件误报（PyInstaller 的已知问题）
+正式发布建议：
+
+- 便携版：`packaging\windows\scripts\build_complete.bat`
+- 安装版：`packaging\windows\scripts\3_build_with_setup.bat`
+
+其中：
+- `build_complete.bat` 用于生成便携 ZIP 与 `.sha256`
+- `3_build_with_setup.bat` 用于生成安装包 `Setup.exe` 与 `.sha256`
+
+```cmd
+packaging\windows\scripts\build_complete.bat
+```
+
+如需安装包：
+
+```cmd
+packaging\windows\scripts\3_build_with_setup.bat
+```
 
 ### macOS
 
-- 未签名的应用首次运行需要右键 > 打开 > 仍要打开
-- 签名和公证需要 Apple Developer 账号（年费 $99）
-- DMG 创建后建议进行公证以便用户正常打开
+正式发布建议：
 
-## 历史归档
+- 默认执行：`bash packaging/macos/scripts/build_complete.sh`
+- 若只需要 `.app` 或先做签名准备，可执行：`bash packaging/macos/scripts/build_macos_app.sh`
 
-旧的打包文件已归档到：
-- `backups/archive/platforms_backup_20260217/` - 旧 platforms/ 目录
+```bash
+bash packaging/macos/scripts/build_complete.sh
+```
 
-## 更新记录
+---
 
-- **2026-02-28**: v37.6.1 - 文件拖拽打开功能 + Word拖拽修复
-  - 支持拖拽 PDF/Word/图片到预览区域打开
-  - 修复 Word 文档打开后无法继续拖拽的问题
-  - 新增视觉反馈（绿色/红色边框）
-- **2026-02-27**: v37.5.0 - 印章自动检测功能 (OpenCV)
-- **2026-02-23**: v37.4.2 - UI 样式修复，GroupBox 标题背景透明化
-- **2026-02-23**: v37.4.1 - 单 OCR 引擎架构，修复 Windows 深色模式问题
-- **2026-02-17**: 重构打包系统，分离 Windows 和 macOS 配置
+## 目录说明
+
+- `packaging/windows/`: Windows 打包脚本、PyInstaller spec、Inno Setup 配置
+- `packaging/macos/`: macOS 打包脚本、签名、公证、entitlements 配置
+- `packaging/DUAL_OCR_PACKAGING.md`: OCR 打包补充说明（文件名保留，内容按单 OCR 维护）
+
+---
+
+## 2026-03-18 本轮同步内容
+
+- Windows 安装器默认回退版本已同步到 `37.7.4`
+- Windows / macOS 打包脚本改为优先使用当前虚拟环境中的 `PyInstaller`
+- Windows / macOS 打包脚本统一切换到项目内 PyInstaller 缓存目录，避免依赖用户目录全局缓存
+- `packaging/windows/scripts/` 已清理不再属于正式主链的历史兼容与解除阻止脚本
+- macOS `build_complete.sh` 现在会在缺少 `create-dmg` 时明确回退到 `hdiutil`，失败后保底复制 `.app` 到发布目录
+- Windows 正式发布入口已明确收口为：
+  - 便携版：`build_complete.bat`
+  - 安装版：`3_build_with_setup.bat`
+- 本轮已验证：
+  - `packaging/windows/scripts/generate_version_info.py`
+  - `python3 -m compileall -q packaging`
+  - macOS 打包脚本语法检查
+  - `packaging/macos/scripts/build_complete.sh` 完整执行到 `.app` 产物生成与发布目录回退
+- 当前机器上的真实结果：
+  - macOS：已实际生成 `releases/macos/PrivacyGuard.app`
+  - macOS：当前环境缺少 `create-dmg`，且 `hdiutil` 本次未成功生成 DMG
+  - Windows：已完成静态复核，但未在当前 macOS 机器上实际执行 `.bat` / Inno Setup
+
+最后同步：2026-03-18

@@ -1,359 +1,148 @@
 # PrivacyGuard 脱敏卫士
 
-> 一款基于 Python + PyQt6 的 PDF/Word 文档智能脱敏工具
+> 基于 Python + PyQt6 的 PDF / Word 文档智能脱敏工具
 
-**版本**: v37.0.10
-**更新**: 2026-02-21
-**状态**: 正式发布
-**主平台**: macOS + Windows
+**当前版本**: v37.7.4
+**版本标识**: `37.7.4 - Release Audit and Final Polish`
+**最后更新**: 2026-03-18
+**当前状态**: 可发布，`v37.7.4` 运行基线稳定；v38 UI 改造代码层已完成，当前默认进入真机截图驱动的细节抛光阶段
 
----
-
-## 📱 最新更新 (v37.0.10)
-
-### 稳定性修复
-- 修复打开新文档时程序卡顿/未响应的问题
-- 修复文件选择窗口内容不显示的问题
-- 添加完整的资源清理机制（线程、QWebEngineView、PDF 文档）
-- 使用原生文件对话框提高稳定性
-- 禁用控制台窗口（不再显示黑框）
+[English](README_EN.md) | [License: GPL v3](LICENSE)
 
 ---
 
-## v37.0.6 - Freeze Fix (2026-02-20)
+## 核心功能
 
-### 冻结修复
-- 修复点击"智能脱敏"后程序未响应的死锁问题
-- 修复 numpy 2.x ABI 兼容性问题（降级到 numpy 1.26.4）
-- 添加 SimpleConfig.set() 方法支持配置保存
-
-### 改进
-- OCR 错误对话框改为非阻塞显示
-- 优化 OCRWorker 信号发送顺序
-- 添加线程清理等待机制
-
----
-
-## v37.0.5 - OCR 稳定性修复 (2026-02-20)
-
-### 问题修复
-- 修复智能脱敏功能点击后程序闪退
-- 增强异常处理和全局异常钩子
-- onnxruntime 降级到更稳定的版本
-
----
-
-## v37.0.4 - 微信二维码功能 (2026-02-19)
-
-### 微信二维码功能
-- 新增微信公众号二维码展示
-- "吐槽"对话框 redesigned，更清晰的社交媒体展示
-- 一键扫码关注公众号
-
-### 打包方案
-- 一键打包脚本 (Windows/macOS)
-- Windows DLL 问题已解决
-- 完整打包指南: [PACKAGING_GUIDE.md](./PACKAGING_GUIDE.md)
+- PDF 智能脱敏
+  - 文字版 PDF：PyMuPDF 文本搜索
+  - 图片版 PDF：RapidOCR
+  - 混合型 PDF：文本层 + 嵌入图片 / 扫描区域同步脱敏
+- Word 脱敏
+  - `.docx` / `.doc`
+  - 智能脱敏
+  - 手动精确 / 全局脱敏
+  - 多字段替换规则（`exact` / `regex`）
+  - 批量替换
+- 预览能力
+  - 左侧原文预览
+  - 右侧替换后预览
+  - 规则替换 + 手动脱敏 + 智能脱敏融合显示
+- 交互能力
+  - 拖拽打开
+  - 高级设置
+  - 批量入口并入“打开/拖拽”
 
 ---
 
-## ⚙️ 配置系统 (v37.0)
-
-PrivacyGuard 支持 JSON 配置文件，可在不修改代码的情况下调整应用行为。
-
-### 配置文件位置
-```
-config.json  (应用目录)
-```
-
-### 可配置项
-- **应用设置**: 名称、窗口尺寸、反馈URL
-- **脱敏规则**: 5条默认规则（支持自定义）
-- **OCR 参数**: 扫描级别、偏移范围
-- **安全配置**: 路径验证、允许扩展名
-
-### 配置示例
-```json
-{
-  "app": {
-    "name": "PrivacyGuard 脱敏卫士",
-    "window": {
-      "default_width": 1300,
-      "default_height": 900
-    }
-  },
-  "redaction": {
-    "scan": {
-      "default_level": 3.0
-    }
-  }
-}
-```
-
----
-
-## 🎯 项目概述
-
-PrivacyGuard 是一个隐私保护工具，能够自动识别和脱敏 PDF 和 Word 文档中的敏感信息（如身份证号、手机号、邮箱等）。
-
-### 核心功能
-- 🔍 **智能识别**: 使用正则表达式和 OCR 自动识别敏感信息
-- 🖨️ **PDF 支持**: 支持图片版 PDF 和文字版 PDF
-- 📝 **Word 支持**: 支持 .docx 和 .doc 格式
-- 🎯 **精确模式手动脱敏**: 只脱敏选中的特定文本
-- 📄 **全局模式手动脱敏**: 自动查找并脱敏所有相同文本
-- 🔄 **批量撤销**: 全局模式支持一键撤销所有相同文本
-- 📍 **滚动位置保持**: 脱敏操作时保持在当前位置
-- ⚙️ **自定义规则**: 支持添加自定义关键词和正则表达式
-- 💾 **导出功能**: 导出脱敏后的文档
-
----
-
-## 🚀 快速开始
-
-### 激活虚拟环境
-```bash
-cd <项目根目录>
-
-# macOS/Linux
-source venv/bin/activate
-
-# Windows
-venv\Scripts\activate
-```
-
-### 启动应用
-```bash
-python main.py
-```
-
----
-
-## 📊 当前开发状态
-
-### ✅ 已完成 (v36.0)
-- ✅ PDF 智能脱敏（OCR + 文字版）
-- ✅ Word 智能脱敏
-- ✅ 精确模式/全局模式手动脱敏
-- ✅ 批量撤销功能
-- ✅ 深色/浅色主题支持
-- ✅ Windows 深色模式优化
-- ✅ 自定义关键词
-- ✅ 导出功能
-
-### ⚠️ 已知小瑕疵
-- ⚠️ 精确模式偶尔失败（<5%，有备用方案）
-- ⚠️ 大文档性能延迟（50+页，<15秒）
-
----
-
-## 📂 项目结构
-
-```
-PrivacyApp/
-├── main.py              # 主程序 (~2600行)
-├── theme.py             # 主题系统
-├── requirements.txt     # 依赖列表
-│
-├── .project/            # 项目元信息 (从这里开始)
-│   ├── STATUS.md       # 快速状态
-│   ├── NEXT_STEPS.md   # 下一步计划
-│   └── QUICK_RECOVERY.md # 快速恢复
-│
-├── docs/                # 文档目录
-│   ├── INDEX.md        # 文档索引
-│   └── current/        # 当前开发文档
-│
-├── backups/             # 版本备份
-│   ├── v36/            # 当前版本
-│   ├── v35.x/          # 上个版本
-│   └── _archive/       # 历史归档
-│
-├── packaging/           # 打包配置
-│   ├── macos/          # macOS 打包
-│   └── windows/        # Windows 打包
-│
-├── releases/            # 发布包
-├── build/               # 构建脚本
-├── dist/                # 构建输出
-└── venv/                # Python 虚拟环境
-```
-
-### 核心文件
-- `main.py` - 主程序 (当前版本: v36.0)
-- `theme.py` - 主题系统
-
-### 快速开始文档
-- `.project/STATUS.md` - 项目状态 (从这里开始)
-- `.project/QUICK_RECOVERY.md` - 快速恢复指南
-- `docs/INDEX.md` - 文档索引
-
----
-
-## 🛠️ 技术栈
-
-### 后端
-- Python 3.11
-- PyQt6 (GUI 框架)
-- PyMuPDF (PDF 处理)
-- python-docx (Word 处理)
-- mammoth (Word 转 HTML)
-- RapidOCR (文字识别)
-
-### 前端
-- QWebEngineView (Qt WebKit)
-- JavaScript (交互逻辑)
-- HTML/CSS (预览渲染)
-
----
-
-## 📋 使用说明
-
-### PDF 文档操作
-1. 点击「📂 打开」选择 PDF 文档
-2. 点击「⚙️ 高级设置」配置脱敏规则
-3. 点击「🔍 智能脱敏」自动识别敏感信息
-4. 手动调整脱敏区域（左键画框，右键删除）
-5. 点击「💾 导出」保存脱敏后的文档
-
-### Word 文档操作
-1. 点击「📂 打开」选择 Word 文档
-2. 设置替换文本（可选）
-3. 点击「🔍 智能脱敏」
-4. **添加脱敏**: 选择文本 → 右键 → 「🔒 添加脱敏」
-5. **撤销脱敏**: 点击红色标记 → 右键 → 「❌ 撤销脱敏」
-6. 点击「💾 导出」保存脱敏后的文档
-
----
-
-## 🔍 调试技巧
-
-### 查看浏览器控制台
-1. 右键预览区域 → 检查元素
-2. 切换到 Console 标签
-3. 查看日志输出
-
-### 关键日志标识
-- `[ScrollRestore]` - 滚动位置保存/恢复
-- `[findTextPosition]` - 文本位置查找
-- `✓✓✓` - 成功
-- `✗✗✗` - 失败
-
----
-
-## 📌 版本历史
-
-### v36.0 (2026-02-14)
-- Windows 深色模式优化
-- 项目结构标准化整理
-
-### v35.x (2026-02-13)
-- Windows 平台支持
-- 图片批量选择功能
-
-### v33.x (2026-02-12)
-- 自适应视图系统
-- 性能优化
-
-### v31.9 (2026-02-12)
-- 🎯 **新增**: 精确模式手动脱敏（只脱敏选中文本）
-- 📄 **新增**: 全局模式手动脱敏（自动查找并脱敏所有相同文本）
-- 🔄 **新增**: 批量撤销功能（全局模式一键撤销）
-- 📍 **修复**: 滚动位置保持（使用 localStorage + 异步保存）
-- 🐛 **修复**: 修复全局手动脱敏只有一处高亮的问题
-- 🐛 **修复**: 修复精确模式偶尔失败的问题
-- 🐛 **修复**: 修复撤销功能对全局模式无效的问题
-
-### v31.8 (2026-02-11)
-- 🔄 **新增**: 全局手动脱敏功能
-- 🐛 **修复**: 修复只有一处高亮的问题
-
-### v31.0-v31.7 (2026-02-11)
-- 🎨 **改进**: Python 高亮代码显示
-- 🐛 **修复**: 队列处理问题
-- 🐛 **修复**: data-key 修复
-- 🔍 **新增**: 高亮修复功能
-
-### v30.3 (2026-02-11)
-- ✨ **新增**: Ultra Compact Highlighting 高亮方案
-- 📝 **新增**: Word 文档实时预览
-- 🖱️ **新增**: 手动脱敏功能（基础版）
-- 📋 **新增**: 右键菜单交互
-
-### v29.0 (2026-02-11)
-- 🔧 **改进**: 深度修复
-
-### v28.0 (2026-02-11)
-- 🐛 **修复**: HTML 高亮显示问题（不再显示裸露 HTML 标签）
-- 🔄 **改进**: 使用占位符三遍替换策略
-
-### v27.0 (2026-02-11)
-- 🔧 **改进**: findTextPosition 增强（详细日志）
-- 🔧 **改进**: 滚动恢复简化
-
-### v26.0 (2026-02-11)
-- 🔧 **新增**: localStorage 自动保存/恢复滚动位置
-- 🔧 **新增**: 页面可见性监听
-
-### v24.0 (2026-02-11)
-- 📝 **新增**: Word 文档支持 (.docx/.doc)
-- 🔧 **新增**: LibreOffice 转换支持
-
-### v23.3 (2026-02-11)
-- ✨ 自适应视图默认改为 100%
-- ✨ 进度条显示百分比，更醒目
-- 🗑️ 移除深色主题，简化界面
-
----
-
-## 📦 依赖安装
+## 快速开始
 
 ```bash
-pip install PyMuPDF python-docx mammoth rapidocr_onnxruntime PyQt6-WebEngine opencv-python numpy
+cd /Users/a49144/Desktop/codexhub/PrivacyGuardApp
+python3 main.py
 ```
 
----
+### 语法检查
 
-## 系统要求
-
-- macOS / Windows / Linux
-- Python 3.8+
-- 至少 4GB 内存
-
----
-
-## 📝 下次开发
-
-**快速恢复**: `cat .project/STATUS.md`
-
-**快速启动**:
 ```bash
-# macOS/Linux
-source venv/bin/activate && python main.py
-
-# Windows
-venv\Scripts\activate && python main.py
+python3 -m compileall -q main.py privacyguard tests
 ```
 
-**详细文档**:
-- `.project/QUICK_RECOVERY.md` - 快速恢复指南
-- `docs/current/DEV_LOG.md` - 开发日志
-- `CLAUDE.md` - Claude 开发指南
+### 主回归测试
 
-**优先级**:
-1. **HIGH**: Windows 平台测试优化
-2. **MEDIUM**: 性能优化（大文档支持）
-3. **LOW**: 改进精确模式稳定性
+```bash
+python3 -m unittest \
+  tests.unit.test_mixed_pdf_ocr \
+  tests.test_path_validation \
+  tests.unit.test_ocr_api \
+  tests.unit.test_package_imports \
+  tests.unit.test_pdf_text_hit_dedup \
+  tests.unit.test_app_config \
+  tests.unit.test_word_replace_rules \
+  tests.unit.test_batch_word_replace \
+  -v
+```
+
+当前基线：`52/52` 通过。
 
 ---
 
-## 📞 开发者
+## 当前项目状态
 
-- **开发者**: wangli
-- **项目路径**: `<项目根目录>`
-- **虚拟环境**: `venv/`
+### 已完成
+
+1. Word 多字段替换与批量替换（Phase 1）
+2. 批量入口并入“打开/拖拽”
+3. 高级设置整合“统一替换文本”与“替换规则入口”
+4. 替换后预览融合：规则替换 + 手动脱敏 + 智能脱敏
+5. 运行时整改：
+   - 路径校验统一
+   - `privacyguard` OCR 懒导入
+   - 文本型 PDF 去重
+   - Word 预览局部 DOM 更新
+   - 设置持久化与版本来源统一
+6. 热修复：
+   - 修复首次智能脱敏后右侧“替换后预览”可能整块空白
+   - 修复混合型 PDF 中图片 / 扫描区域漏脱敏
+   - 修复“高级设置保存后”原文预览异常红色高亮串位
+   - 修复 Windows 打包后 `privacyguard.utils.security` 模块导入失败
+7. 当前基线同步：
+   - 版本号、文档、日志已统一到 `v37.7.4`
+   - `packaging/` 与 `docs/packaging/` 当前说明已同步到当前基线
+8. v38 UI 改造代码层收口：
+   - 首页、PDF、Word、批量 Word、图片合并、高级设置已统一到同一套桌面级壳层语言
+   - 主工作区与设置中心已接入宽窗口 / 全屏 / 超宽窗口响应式策略
+   - Word 双栏对比已补齐联动滚动基础能力
+   - 当前默认重点已从结构改造切换到真机截图驱动的最后一层观感抛光
+
+### 下一步建议
+
+1. 真机截图驱动的最后一层观感收边
+2. 每文件单独规则映射（Phase 2）
+3. 批量规则集模板管理
+4. 替换后预览按来源筛选高亮
 
 ---
 
-**最后更新**: 2026-02-21
-**享受安全的文档脱敏体验！**
+## 文档入口
+
+下次继续开发，建议按这个顺序读：
+
+1. `docs/current/STATUS.md`
+2. `docs/current/DEV_LOG.md`
+3. `docs/current/V38_UI_REFACTOR_PLAN.md`
+4. `CHANGELOG.md`
+5. `rollback_journal.md`
+6. `CLAUDE.md`
+7. `docs/guides/QUICK_START_FOR_CLAUDE_CODE.md`
+8. `docs/diary/20260309_2338_release_sync_diary.md`
+9. `docs/diary/20260311_pyinstaller_packaging_fix_diary.md`
+
+---
+
+## 打包文档
+
+- `docs/packaging/README.md`
+- `docs/packaging/windows-packaging-guide.md`
+- `docs/packaging/macos-packaging-guide.md`
+- `packaging/README.md`
+
+---
+
+## 回滚
+
+当前关键检查点：
+
+- `20260309_runtime_remediation_cp18_verified`
+- `20260309_word_compare_bugfix_cp20_verified`
+- `20260309_mixed_pdf_ocr_cp23_verified`
+- `20260309_release_sync_cp25_verified`
+- `20260310_word_preview_highlight_cp27_verified`
+- `20260310_release_sync_cp29_verified`
+- `20260311_pyinstaller_packaging_fix_cp30_verified`
+- `v38_ui_refactor_cp31_20260313_140645`
+
+参考：
+
+- `rollback_journal.md`
+- `ROLLBACK_GUIDE.md`
+- `restore_checkpoint.sh`

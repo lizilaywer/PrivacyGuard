@@ -1,0 +1,1854 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrivacyGuard v38 极简流程版 UI 概念稿</title>
+  <style>
+    :root {
+      --bg: #eef3f8;
+      --bg-soft: #f7f9fc;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --surface-blue: #f2f7ff;
+      --line: #d9e1eb;
+      --line-soft: #e9eef5;
+      --text: #1c2635;
+      --text-soft: #607086;
+      --text-faint: #8a97a8;
+      --blue: #1677ff;
+      --blue-deep: #0d5fd3;
+      --blue-soft: #eaf3ff;
+      --green: #18a058;
+      --green-soft: #e9f8f0;
+      --amber: #d48806;
+      --amber-soft: #fff7e6;
+      --red: #cf4a4a;
+      --red-soft: #fff1f0;
+      --shadow-lg: 0 20px 60px rgba(22, 40, 70, 0.10);
+      --shadow-md: 0 10px 28px rgba(22, 40, 70, 0.08);
+      --shadow-sm: 0 4px 14px rgba(22, 40, 70, 0.06);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --font-display: "Segoe UI Variable Display", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", sans-serif;
+      --font-body: "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", sans-serif;
+      --font-mono: "Cascadia Code", "Consolas", "SFMono-Regular", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font-body);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top right, rgba(22, 119, 255, 0.06), rgba(22, 119, 255, 0) 26%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 42%, #e7edf5 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.28) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.28) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.35), transparent 75%);
+    }
+
+    .page {
+      width: min(1480px, calc(100vw - 40px));
+      margin: 24px auto 42px;
+    }
+
+    .hero {
+      padding: 28px 32px;
+      border-radius: var(--radius-xl);
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.86);
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(12px);
+    }
+
+    .hero-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 16px 0 10px;
+      font-family: var(--font-display);
+      font-size: clamp(34px, 4vw, 54px);
+      line-height: 1.04;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      max-width: 880px;
+      font-size: 17px;
+      line-height: 1.8;
+      color: var(--text-soft);
+    }
+
+    .hero-card {
+      width: min(360px, 100%);
+      padding: 18px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, #f7fbff, #eef5ff);
+      border: 1px solid rgba(22, 119, 255, 0.10);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.78);
+    }
+
+    .hero-card h3 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      color: var(--blue);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .hero-card ul {
+      margin: 0;
+      padding-left: 18px;
+      color: var(--text-soft);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .scene-nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 22px 0 16px;
+    }
+
+    .tabs {
+      display: inline-flex;
+      gap: 8px;
+      padding: 8px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.70);
+      border: 1px solid rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab {
+      padding: 12px 18px;
+      border: 0;
+      background: transparent;
+      border-radius: 999px;
+      color: var(--text-soft);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 180ms ease;
+    }
+
+    .tab.is-active {
+      background: #ffffff;
+      color: var(--text);
+      box-shadow: 0 8px 20px rgba(22, 40, 70, 0.08);
+    }
+
+    .scene-tip {
+      font-size: 14px;
+      color: var(--text-soft);
+    }
+
+    .scene {
+      display: none;
+      animation: fade-up 220ms ease;
+    }
+
+    .scene.is-active {
+      display: block;
+    }
+
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .window {
+      overflow: hidden;
+      border-radius: 30px;
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid rgba(255, 255, 255, 0.94);
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(14px);
+    }
+
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.84);
+    }
+
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .logo {
+      width: 42px;
+      height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: linear-gradient(180deg, var(--blue), var(--blue-deep));
+      color: #fff;
+      font-size: 18px;
+      font-weight: 900;
+      box-shadow: 0 10px 20px rgba(22, 119, 255, 0.20);
+    }
+
+    .title-text h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 21px;
+      letter-spacing: -0.02em;
+    }
+
+    .title-text p {
+      margin: 4px 0 0;
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .title-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .traffic {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #d2dae4;
+    }
+
+    .traffic:last-child {
+      width: 34px;
+      border-radius: 5px;
+      background: #1d2635;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .badge.blue {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .badge.green {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .badge.amber {
+      color: var(--amber);
+      background: var(--amber-soft);
+    }
+
+    .badge.red {
+      color: var(--red);
+      background: var(--red-soft);
+    }
+
+    .badge.dark {
+      color: #edf3fb;
+      background: #1c2635;
+    }
+
+    .app {
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      min-height: 960px;
+    }
+
+    .header-bar {
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(249, 251, 254, 0.76);
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .step {
+      padding: 14px 14px 15px;
+      border-radius: 18px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line-soft);
+    }
+
+    .step.is-active {
+      background: var(--blue-soft);
+      border-color: rgba(22, 119, 255, 0.14);
+    }
+
+    .step.is-done {
+      background: var(--green-soft);
+      border-color: rgba(24, 160, 88, 0.14);
+    }
+
+    .step-top {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 8px;
+    }
+
+    .step-index {
+      width: 26px;
+      height: 26px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: #ffffff;
+      font-size: 13px;
+      font-weight: 900;
+      color: var(--text);
+      box-shadow: inset 0 0 0 1px rgba(22, 40, 70, 0.08);
+    }
+
+    .step.is-active .step-index {
+      color: #ffffff;
+      background: var(--blue);
+    }
+
+    .step.is-done .step-index {
+      color: #ffffff;
+      background: var(--green);
+    }
+
+    .step strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .step p {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--text-soft);
+    }
+
+    .subheader {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: center;
+      padding: 16px 22px;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .subheader-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: var(--surface);
+      border: 1px solid var(--line-soft);
+      color: var(--text-soft);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .subheader-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      border-radius: 16px;
+      border: 1px solid transparent;
+      background: #ffffff;
+      color: var(--text);
+      font: inherit;
+      font-size: 14px;
+      font-weight: 800;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn.primary {
+      color: #fff;
+      background: linear-gradient(180deg, var(--blue), var(--blue-deep));
+      border-color: rgba(13, 95, 211, 0.36);
+    }
+
+    .btn.secondary {
+      background: var(--surface-soft);
+      border-color: var(--line-soft);
+      box-shadow: none;
+    }
+
+    .btn.soft {
+      background: var(--blue-soft);
+      color: var(--blue);
+      border-color: rgba(22, 119, 255, 0.10);
+      box-shadow: none;
+    }
+
+    .body {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 20px;
+      padding: 20px 22px;
+      min-height: 0;
+      background: linear-gradient(180deg, rgba(248, 250, 252, 0.88), rgba(240, 244, 249, 0.88));
+    }
+
+    .main-column,
+    .side-column {
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      min-width: 0;
+    }
+
+    .card {
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.90);
+      border: 1px solid rgba(22, 40, 70, 0.07);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .card p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.8;
+      color: var(--text-soft);
+    }
+
+    .section {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .section small {
+      color: var(--text-faint);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .upload-zone {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 18px;
+    }
+
+    .dropzone {
+      padding: 28px;
+      border-radius: 24px;
+      background:
+        linear-gradient(180deg, rgba(245, 249, 255, 0.96), rgba(239, 245, 255, 0.96));
+      border: 1px dashed rgba(22, 119, 255, 0.28);
+      min-height: 360px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      text-align: center;
+      gap: 14px;
+    }
+
+    .drop-icon {
+      width: 82px;
+      height: 82px;
+      display: grid;
+      place-items: center;
+      border-radius: 28px;
+      background: #ffffff;
+      color: var(--blue);
+      font-size: 34px;
+      box-shadow: 0 14px 30px rgba(22, 119, 255, 0.10);
+    }
+
+    .dropzone h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 34px;
+      letter-spacing: -0.04em;
+    }
+
+    .dropzone p {
+      max-width: 480px;
+      font-size: 15px;
+    }
+
+    .drop-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .helper-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .helper-item {
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line-soft);
+      font-size: 14px;
+      color: var(--text-soft);
+      line-height: 1.7;
+    }
+
+    .helper-item strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .explain {
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--amber-soft);
+      border: 1px solid rgba(212, 136, 6, 0.10);
+      color: #7d5706;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .explain strong {
+      color: #6a4a04;
+    }
+
+    .recent-list,
+    .rule-list,
+    .summary-list,
+    .analogy-list,
+    .settings-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .recent-item,
+    .rule-item,
+    .summary-item,
+    .analogy-item,
+    .settings-item {
+      padding: 14px 15px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line-soft);
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .row:last-child {
+      margin-bottom: 0;
+    }
+
+    .row strong {
+      font-size: 14px;
+    }
+
+    .muted {
+      color: var(--text-soft);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .mini-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mini-metric {
+      padding: 14px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #f9fbff, #f2f6fb);
+      border: 1px solid var(--line-soft);
+      text-align: center;
+    }
+
+    .mini-metric strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 26px;
+      letter-spacing: -0.04em;
+    }
+
+    .mini-metric span {
+      display: block;
+      margin-top: 4px;
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    .preview-layout {
+      display: grid;
+      grid-template-columns: 180px minmax(0, 1fr);
+      gap: 16px;
+    }
+
+    .doc-list {
+      padding: 10px;
+      border-radius: 18px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line-soft);
+      display: grid;
+      gap: 10px;
+    }
+
+    .doc-item {
+      padding: 12px;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid transparent;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .doc-item.is-active {
+      border-color: rgba(22, 119, 255, 0.16);
+      background: var(--blue-soft);
+      color: var(--text);
+    }
+
+    .preview-stage {
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 12px;
+    }
+
+    .preview-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .segmented {
+      display: inline-flex;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line-soft);
+    }
+
+    .seg {
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      color: var(--text-soft);
+      font-weight: 800;
+    }
+
+    .seg.is-active {
+      color: var(--blue);
+      background: #ffffff;
+      box-shadow: 0 6px 16px rgba(22, 40, 70, 0.06);
+    }
+
+    .paper-wrap {
+      position: relative;
+      overflow: hidden;
+      min-height: 620px;
+      border-radius: 22px;
+      background:
+        linear-gradient(180deg, rgba(232, 238, 246, 0.88), rgba(221, 229, 239, 0.92));
+      border: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+    }
+
+    .paper-wrap::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.30) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.30) 1px, transparent 1px);
+      background-size: 30px 30px;
+      opacity: 0.8;
+    }
+
+    .paper {
+      position: relative;
+      width: min(90%, 780px);
+      aspect-ratio: 0.74;
+      background: #ffffff;
+      border-radius: 22px;
+      border: 1px solid rgba(22, 40, 70, 0.08);
+      box-shadow: 0 24px 48px rgba(22, 40, 70, 0.14);
+      overflow: hidden;
+    }
+
+    .paper::before {
+      content: "";
+      position: absolute;
+      inset: 18px 24px auto 24px;
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(
+        90deg,
+        rgba(28, 38, 53, 0.14) 20%,
+        transparent 20% 26%,
+        rgba(28, 38, 53, 0.14) 26% 54%,
+        transparent 54% 62%,
+        rgba(28, 38, 53, 0.14) 62% 86%
+      );
+    }
+
+    .paper::after {
+      content: "";
+      position: absolute;
+      left: 24px;
+      right: 24px;
+      top: 46px;
+      bottom: 24px;
+      border-radius: 12px;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(28, 38, 53, 0.07),
+          rgba(28, 38, 53, 0.07) 7px,
+          transparent 7px,
+          transparent 28px
+        );
+    }
+
+    .mask,
+    .highlight,
+    .select-frame {
+      position: absolute;
+      border-radius: 10px;
+      z-index: 2;
+    }
+
+    .mask {
+      background: rgba(12, 18, 25, 0.92);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.10);
+    }
+
+    .highlight {
+      background: rgba(255, 214, 102, 0.55);
+      border: 1px solid rgba(187, 125, 0, 0.30);
+    }
+
+    .select-frame {
+      border: 2px dashed rgba(22, 119, 255, 0.72);
+      box-shadow: 0 0 0 6px rgba(22, 119, 255, 0.08);
+      background: rgba(22, 119, 255, 0.04);
+    }
+
+    .callout {
+      position: absolute;
+      max-width: 220px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 1px solid rgba(22, 40, 70, 0.08);
+      box-shadow: var(--shadow-sm);
+      z-index: 3;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-soft);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--text);
+      font-size: 14px;
+    }
+
+    .callout::after {
+      content: "";
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      background: #ffffff;
+      border-left: 1px solid rgba(22, 40, 70, 0.08);
+      border-top: 1px solid rgba(22, 40, 70, 0.08);
+      transform: rotate(45deg);
+    }
+
+    .callout.left::after {
+      left: -8px;
+      top: 18px;
+    }
+
+    .callout.right::after {
+      right: -8px;
+      top: 18px;
+      transform: rotate(225deg);
+    }
+
+    .callout.bottom::after {
+      bottom: -8px;
+      left: 28px;
+      transform: rotate(225deg);
+    }
+
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 22px;
+      border-top: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.84);
+      flex-wrap: wrap;
+    }
+
+    .foot-note {
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .analogy-grid,
+    .design-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .settings-panel {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr);
+      min-height: 920px;
+    }
+
+    .settings-side {
+      padding: 18px;
+      border-right: 1px solid var(--line-soft);
+      background: linear-gradient(180deg, #f8fbff, #f1f5fb);
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .settings-nav-item {
+      padding: 14px 16px;
+      border-radius: 16px;
+      color: var(--text-soft);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .settings-nav-item.is-active {
+      color: var(--text);
+      background: var(--blue-soft);
+      border: 1px solid rgba(22, 119, 255, 0.12);
+    }
+
+    .settings-main {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+    }
+
+    .settings-head {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .settings-head h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 32px;
+      letter-spacing: -0.04em;
+    }
+
+    .settings-head p {
+      margin: 8px 0 0;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .settings-body {
+      padding: 20px 24px;
+      display: grid;
+      gap: 16px;
+      align-content: start;
+      background: linear-gradient(180deg, #fafcff, #f3f6fb);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line-soft);
+    }
+
+    .field label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--text-faint);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 800;
+    }
+
+    .field-box {
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #ffffff;
+      border: 1px solid rgba(22, 40, 70, 0.06);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .rule-table {
+      display: grid;
+      gap: 10px;
+    }
+
+    .rule-row {
+      display: grid;
+      grid-template-columns: 100px minmax(0, 1fr) minmax(0, 1fr) 64px;
+      gap: 10px;
+      align-items: center;
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: var(--surface-soft);
+      border: 1px solid var(--line-soft);
+      font-size: 13px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .pill.exact {
+      color: var(--blue);
+      background: var(--blue-soft);
+    }
+
+    .pill.regex {
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .toggle {
+      width: 46px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(22, 119, 255, 0.22);
+      position: relative;
+      margin-left: auto;
+    }
+
+    .toggle::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 21px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(22, 40, 70, 0.14);
+    }
+
+    .settings-foot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--line-soft);
+      background: rgba(255, 255, 255, 0.88);
+      flex-wrap: wrap;
+    }
+
+    .design-card {
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.90);
+      border: 1px solid rgba(22, 40, 70, 0.07);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .design-card h3 {
+      margin: 0 0 10px;
+      font-size: 18px;
+    }
+
+    .design-card p,
+    .design-card li {
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    .design-card ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    @media (max-width: 1200px) {
+      .body,
+      .upload-zone,
+      .preview-layout,
+      .settings-panel,
+      .analogy-grid,
+      .design-grid,
+      .field-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .steps,
+      .mini-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .hero-top {
+        flex-direction: column;
+      }
+    }
+
+    @media (max-width: 860px) {
+      .page {
+        width: min(100vw - 18px, 100%);
+      }
+
+      .steps,
+      .mini-grid,
+      .analogy-grid,
+      .design-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .subheader,
+      .bottom-bar,
+      .settings-foot {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .rule-row {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">Simple First / China-style Workflow / Local Offline</div>
+          <h1>PrivacyGuard v38 极简流程版概念稿</h1>
+          <p>
+            这版不追求“看起来很炫”，而是追求<strong>第一眼就懂、第一次就会用</strong>。
+            整体按照中国用户熟悉的办公软件逻辑重排：<strong>先导入、再选规则、再一键处理、再人工复核、最后导出</strong>。
+            你可以把它理解成“像寄快递一样”的界面：先放件，选服务，确认处理，检查无误，再发出。
+          </p>
+        </div>
+        <div class="hero-card">
+          <h3>这版的设计目标</h3>
+          <ul>
+            <li>上来先看到“我第一步要做什么”</li>
+            <li>高频功能按顺序排，不把所有参数都堆出来</li>
+            <li>视觉干净、白底清爽、符合中国办公软件习惯</li>
+            <li>仍然适合本地离线桌面软件，不牺牲 Windows 性能</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="scene-nav">
+      <div class="tabs">
+        <button class="tab is-active" data-scene-target="scene-home">1. 首次打开</button>
+        <button class="tab" data-scene-target="scene-work">2. 处理与复核</button>
+        <button class="tab" data-scene-target="scene-settings">3. 设置中心</button>
+        <button class="tab" data-scene-target="scene-explain">4. 通俗解释</button>
+      </div>
+      <div class="scene-tip">建议先看“首次打开”，因为它最能体现“第一眼简洁、顺手上手”的目标。</div>
+    </div>
+
+    <section class="scene is-active" id="scene-home">
+      <article class="window">
+        <div class="titlebar">
+          <div class="title-left">
+            <div class="logo">PG</div>
+            <div class="title-text">
+              <h2>PrivacyGuard 脱敏卫士</h2>
+              <p>离线文档脱敏 / 新手友好模式 / Windows 办公软件体验</p>
+            </div>
+          </div>
+          <div class="title-right">
+            <div class="badge green">本地离线</div>
+            <div class="badge blue">适合第一次使用</div>
+            <div class="traffic"></div>
+            <div class="traffic"></div>
+            <div class="traffic"></div>
+          </div>
+        </div>
+
+        <div class="app">
+          <div class="header-bar">
+            <div class="steps">
+              <div class="step is-active">
+                <div class="step-top">
+                  <div class="step-index">1</div>
+                  <strong>导入文件</strong>
+                </div>
+                <p>先把 PDF 或 Word 放进来，就像把文件交给打印店柜台。</p>
+              </div>
+              <div class="step">
+                <div class="step-top">
+                  <div class="step-index">2</div>
+                  <strong>选择规则</strong>
+                </div>
+                <p>系统默认已经帮你勾好常用规则，不懂也能直接往下走。</p>
+              </div>
+              <div class="step">
+                <div class="step-top">
+                  <div class="step-index">3</div>
+                  <strong>开始处理</strong>
+                </div>
+                <p>一键智能脱敏，像点击“开始扫描”一样直观。</p>
+              </div>
+              <div class="step">
+                <div class="step-top">
+                  <div class="step-index">4</div>
+                  <strong>人工复核</strong>
+                </div>
+                <p>重点检查命中结果，不需要的可撤销，需要的可补框选。</p>
+              </div>
+              <div class="step">
+                <div class="step-top">
+                  <div class="step-index">5</div>
+                  <strong>导出结果</strong>
+                </div>
+                <p>确认没问题后再导出，流程清晰，不容易误操作。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="subheader">
+            <div class="subheader-left">
+              <span>🔎</span>
+              <span>打开本地文件、拖进窗口、或直接选择“开始体验”</span>
+            </div>
+            <div class="subheader-actions">
+              <div class="btn primary">📂 选择文件</div>
+              <div class="btn secondary">🧪 打开演示样例</div>
+              <div class="btn soft">❔ 新手说明</div>
+            </div>
+          </div>
+
+          <div class="body">
+            <div class="main-column">
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>主操作区</small>
+                    <h3 style="margin:4px 0 0;">先让用户把文件放进来，而不是先看到一排按钮</h3>
+                  </div>
+                  <div class="badge dark">第一屏只做一件事</div>
+                </div>
+
+                <div class="upload-zone">
+                  <div class="dropzone">
+                    <div class="drop-icon">📄</div>
+                    <h2>把文档拖到这里</h2>
+                    <p>
+                      支持 <strong>PDF / DOCX / DOC / 图片</strong>。<br>
+                      如果你不想拖拽，也可以直接点下面的按钮选择文件。
+                    </p>
+                    <div class="drop-actions">
+                      <div class="btn primary">选择本地文件</div>
+                      <div class="btn secondary">打开最近处理过的文件</div>
+                    </div>
+                    <div class="badge blue">文件始终在本地处理，不上传云端</div>
+                  </div>
+
+                  <div class="helper-list">
+                    <div class="helper-item">
+                      <strong>默认规则已准备好</strong>
+                      身份证号、手机号、日期时间、邮箱、银行卡号这些常见内容，系统默认已经帮你勾好。
+                    </div>
+                    <div class="helper-item">
+                      <strong>不会设置也能直接用</strong>
+                      小白用户可以直接“导入文件 → 智能脱敏 → 复核 → 导出”，不用先研究高级参数。
+                    </div>
+                    <div class="helper-item">
+                      <strong>高级能力往后收</strong>
+                      OCR 微调、Word 替换规则、模板管理都保留，但不在第一屏打扰用户。
+                    </div>
+                    <div class="explain">
+                      <strong>通俗类比：</strong>
+                      这一屏应该像“医院挂号台”或“快递寄件入口”，用户第一步只需要知道
+                      “<strong>我要先把文件交进去</strong>”，而不是被十几个按钮吓住。
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>最近使用</small>
+                    <h3 style="margin:4px 0 0;">中国用户习惯看到“最近文件”和“继续上次任务”</h3>
+                  </div>
+                  <div class="badge amber">降低重复操作</div>
+                </div>
+
+                <div class="recent-list">
+                  <div class="recent-item">
+                    <div class="row"><strong>合同样本_第12版.pdf</strong><span class="badge green">上次已处理</span></div>
+                    <div class="muted">2026-03-13 09:42 / 12 页 / 可继续复核后导出</div>
+                  </div>
+                  <div class="recent-item">
+                    <div class="row"><strong>庭审记录_脱敏前.docx</strong><span class="badge blue">Word 双栏预览</span></div>
+                    <div class="muted">2026-03-12 18:20 / 含替换规则 / 可恢复工作台</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <aside class="side-column">
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>默认策略</small>
+                    <h3 style="margin:4px 0 0;">让新手不用先做决定</h3>
+                  </div>
+                </div>
+                <div class="summary-list">
+                  <div class="summary-item">
+                    <div class="row"><strong>识别规则</strong><span>默认启用 5 项</span></div>
+                    <div class="muted">身份证 / 手机号 / 日期 / 邮箱 / 银行卡</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="row"><strong>处理方式</strong><span>智能脱敏</span></div>
+                    <div class="muted">适合第一次使用，避免用户一开始先选黑白、单双页、缩放等细节。</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="row"><strong>导出策略</strong><span>安全导出</span></div>
+                    <div class="muted">默认走不可逆脱敏导出，减少误用风险。</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>你会先看到什么</small>
+                    <h3 style="margin:4px 0 0;">把“复杂参数”换成“简单状态”</h3>
+                  </div>
+                </div>
+                <div class="mini-grid">
+                  <div class="mini-metric">
+                    <strong>1</strong>
+                    <span>先选文件</span>
+                  </div>
+                  <div class="mini-metric">
+                    <strong>2</strong>
+                    <span>默认规则</span>
+                  </div>
+                  <div class="mini-metric">
+                    <strong>3</strong>
+                    <span>一键处理</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>为什么这样排</small>
+                    <h3 style="margin:4px 0 0;">先动手，再深入</h3>
+                  </div>
+                </div>
+                <div class="analogy-list">
+                  <div class="analogy-item">
+                    <div class="row"><strong>像微信发文件</strong><span>先选文件</span></div>
+                    <div class="muted">不是先设置高级选项，而是先完成最自然的第一步。</div>
+                  </div>
+                  <div class="analogy-item">
+                    <div class="row"><strong>像打印店流程</strong><span>后选细节</span></div>
+                    <div class="muted">用户把材料给你后，再问“双面吗、黑白吗、份数多少”。</div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="bottom-bar">
+            <div class="foot-note">目标：用户第一次打开时，不看文档也能大概猜到操作顺序。</div>
+            <div class="subheader-actions">
+              <div class="btn secondary">查看全部设置</div>
+              <div class="btn primary">开始体验</div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="scene" id="scene-work">
+      <article class="window">
+        <div class="titlebar">
+          <div class="title-left">
+            <div class="logo">PG</div>
+            <div class="title-text">
+              <h2>文档处理与人工复核</h2>
+              <p>把重点放在“结果是否正确”，而不是让用户盯着复杂控件</p>
+            </div>
+          </div>
+          <div class="title-right">
+            <div class="badge blue">第 3 步处理中</div>
+            <div class="badge green">可进入复核</div>
+            <div class="traffic"></div>
+            <div class="traffic"></div>
+            <div class="traffic"></div>
+          </div>
+        </div>
+
+        <div class="app">
+          <div class="header-bar">
+            <div class="steps">
+              <div class="step is-done">
+                <div class="step-top">
+                  <div class="step-index">1</div>
+                  <strong>导入文件</strong>
+                </div>
+                <p>文件已导入。</p>
+              </div>
+              <div class="step is-done">
+                <div class="step-top">
+                  <div class="step-index">2</div>
+                  <strong>选择规则</strong>
+                </div>
+                <p>默认规则已启用。</p>
+              </div>
+              <div class="step is-active">
+                <div class="step-top">
+                  <div class="step-index">3</div>
+                  <strong>开始处理</strong>
+                </div>
+                <p>系统已识别并生成脱敏结果。</p>
+              </div>
+              <div class="step">
+                <div class="step-top">
+                  <div class="step-index">4</div>
+                  <strong>人工复核</strong>
+                </div>
+                <p>当前推荐进入这一步。</p>
+              </div>
+              <div class="step">
+                <div class="step-top">
+                  <div class="step-index">5</div>
+                  <strong>导出结果</strong>
+                </div>
+                <p>检查通过后即可导出。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="subheader">
+            <div class="subheader-left">
+              <span>📄</span>
+              <span>合同样本_第12版.pdf / 12 页 / 当前显示第 1 页</span>
+            </div>
+            <div class="subheader-actions">
+              <div class="btn primary">✨ 开始智能脱敏</div>
+              <div class="btn secondary">🧷 手动补框选</div>
+              <div class="btn secondary">↶ 撤销</div>
+              <div class="btn soft">⤴ 导出</div>
+            </div>
+          </div>
+
+          <div class="body">
+            <div class="main-column">
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>中间只放文档</small>
+                    <h3 style="margin:4px 0 0;">用户眼睛应该先看到“文档结果”，而不是先看功能按钮</h3>
+                  </div>
+                  <div class="badge dark">主视图最大化</div>
+                </div>
+
+                <div class="preview-layout">
+                  <div class="doc-list">
+                    <div class="doc-item is-active">
+                      <strong>第 1 页</strong><br>
+                      <span class="muted">已命中 14 处</span>
+                    </div>
+                    <div class="doc-item">
+                      <strong>第 2 页</strong><br>
+                      <span class="muted">已命中 9 处</span>
+                    </div>
+                    <div class="doc-item">
+                      <strong>第 3 页</strong><br>
+                      <span class="muted">含图片 OCR</span>
+                    </div>
+                  </div>
+
+                  <div class="preview-stage">
+                    <div class="preview-top">
+                      <div class="muted">当前模式：<strong style="color:var(--text)">复核视图</strong> / 高亮命中 + 手动框选 + 导出前确认</div>
+                      <div class="segmented">
+                        <div class="seg is-active">复核</div>
+                        <div class="seg">原文</div>
+                        <div class="seg">导出预览</div>
+                      </div>
+                    </div>
+
+                    <div class="paper-wrap">
+                      <div class="paper">
+                        <div class="highlight" style="left: 16%; top: 18%; width: 24%; height: 3%;"></div>
+                        <div class="highlight" style="left: 46%; top: 18%; width: 18%; height: 3%;"></div>
+                        <div class="mask" style="left: 25%; top: 31%; width: 34%; height: 3.8%;"></div>
+                        <div class="mask" style="left: 19%; top: 39%; width: 27%; height: 3.8%;"></div>
+                        <div class="highlight" style="left: 51%; top: 57%; width: 22%; height: 2.8%;"></div>
+                        <div class="select-frame" style="left: 50%; top: 55%; width: 26%; height: 8%;"></div>
+                      </div>
+
+                      <div class="callout left" style="top: 18%; left: 18px;">
+                        <strong>这里是自动识别结果</strong>
+                        黄色高亮表示“系统觉得这里可能是敏感信息”，方便人工快速看一眼。
+                      </div>
+
+                      <div class="callout right" style="top: 31%; right: 18px;">
+                        <strong>这里是最终遮罩结果</strong>
+                        黑色区域表示准备导出时会真正被处理掉的部分。
+                      </div>
+
+                      <div class="callout bottom" style="left: 42%; bottom: 18px;">
+                        <strong>手动补框选很直观</strong>
+                        就像截图标注一样，拖一下框出来，不需要理解复杂术语。
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>设计重点</small>
+                    <h3 style="margin:4px 0 0;">处理页不再是“按钮集合”，而是“复核工作区”</h3>
+                  </div>
+                </div>
+                <div class="explain">
+                  <strong>通俗类比：</strong>
+                  这一步就像老师批改试卷。系统先帮你把“疑似重点”圈出来，
+                  你只需要顺着看一遍，觉得对就保留，觉得不对就撤销或补一个。
+                  所以界面重点应该是<strong>让用户看文档、看结果、做确认</strong>，而不是继续堆设置。
+                </div>
+              </div>
+            </div>
+
+            <aside class="side-column">
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>当前结果</small>
+                    <h3 style="margin:4px 0 0;">用户最关心的是“处理得怎么样”</h3>
+                  </div>
+                </div>
+                <div class="summary-list">
+                  <div class="summary-item">
+                    <div class="row"><strong>自动识别</strong><span>126 处</span></div>
+                    <div class="muted">包含文字层搜索与 OCR 混合识别结果。</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="row"><strong>手动补框选</strong><span>18 处</span></div>
+                    <div class="muted">用户新加的内容统一显示在这里，不用再四处找。</div>
+                  </div>
+                  <div class="summary-item">
+                    <div class="row"><strong>待复核页面</strong><span class="badge amber">3 页</span></div>
+                    <div class="muted">优先跳转到结果多、OCR 多、风险高的页面。</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>当前规则</small>
+                    <h3 style="margin:4px 0 0;">规则只保留摘要，不占主舞台</h3>
+                  </div>
+                </div>
+                <div class="rule-list">
+                  <div class="rule-item">
+                    <div class="row"><strong>默认规则</strong><span>5 项</span></div>
+                    <div class="muted">身份证、手机号、邮箱、日期、银行卡</div>
+                  </div>
+                  <div class="rule-item">
+                    <div class="row"><strong>自定义关键词</strong><span>2 组</span></div>
+                    <div class="muted">甲方 / 张三 / 某某律所 / 项目代号</div>
+                  </div>
+                  <div class="rule-item">
+                    <div class="row"><strong>Word 替换规则</strong><span>已待命</span></div>
+                    <div class="muted">当前是 PDF，所以不把 Word 专属复杂能力放到主界面。</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>下一步建议</small>
+                    <h3 style="margin:4px 0 0;">像导航一样告诉用户现在该做什么</h3>
+                  </div>
+                </div>
+                <div class="helper-list">
+                  <div class="helper-item">
+                    <strong>建议 1：先检查高亮最多的页面</strong>
+                    系统自动把风险更高的页面排前面。
+                  </div>
+                  <div class="helper-item">
+                    <strong>建议 2：如果漏掉了，直接框选补上</strong>
+                    不需要回设置页，不要打断用户。
+                  </div>
+                  <div class="helper-item">
+                    <strong>建议 3：检查完再导出</strong>
+                    把“导出”放在流程的最后一步，减少误点。
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <div class="bottom-bar">
+            <div class="foot-note">核心原则：处理页就是“看结果 + 做确认”，不是再次学习软件。</div>
+            <div class="subheader-actions">
+              <div class="btn secondary">跳到下一处命中</div>
+              <div class="btn secondary">进入人工复核</div>
+              <div class="btn primary">确认并导出</div>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="scene" id="scene-settings">
+      <article class="window">
+        <div class="titlebar">
+          <div class="title-left">
+            <div class="logo">⚙</div>
+            <div class="title-text">
+              <h2>设置中心</h2>
+              <p>把现在“长滚动弹窗”改成“像企业软件后台一样的分组设置”</p>
+            </div>
+          </div>
+          <div class="title-right">
+            <div class="badge blue">按组分类</div>
+            <div class="badge green">更容易理解</div>
+            <div class="traffic"></div>
+            <div class="traffic"></div>
+            <div class="traffic"></div>
+          </div>
+        </div>
+
+        <div class="settings-panel">
+          <aside class="settings-side">
+            <div class="settings-nav-item is-active">🧩 通用规则</div>
+            <div class="settings-nav-item">🏷 自定义关键词</div>
+            <div class="settings-nav-item">📝 Word 替换规则</div>
+            <div class="settings-nav-item">🧠 OCR 微调</div>
+            <div class="settings-nav-item">📤 导出安全</div>
+            <div class="settings-nav-item">🪟 Windows 体验</div>
+          </aside>
+
+          <section class="settings-main">
+            <div class="settings-head">
+              <h2>通用规则</h2>
+              <p>
+                默认只展示 80% 用户最常用的设置。复杂能力保留，但分层收纳。
+                这样不会像旧界面那样一打开就是很长、很重、像表格堆起来的一大页。
+              </p>
+            </div>
+
+            <div class="settings-body">
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>默认识别项</small>
+                    <h3 style="margin:4px 0 0;">先给“推荐方案”，而不是让用户从零配置</h3>
+                  </div>
+                  <div class="badge amber">推荐默认值</div>
+                </div>
+                <div class="rule-list">
+                  <div class="rule-item">
+                    <div class="row"><strong>身份证号</strong><span class="badge green">默认开启</span></div>
+                    <div class="muted">多数司法、行政、合同场景都需要。</div>
+                  </div>
+                  <div class="rule-item">
+                    <div class="row"><strong>手机号 / 邮箱 / 日期</strong><span class="badge green">默认开启</span></div>
+                    <div class="muted">属于高频敏感信息，不需要让用户自己一个个理解后再勾选。</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>常用参数</small>
+                    <h3 style="margin:4px 0 0;">把复杂技术参数翻译成用户听得懂的话</h3>
+                  </div>
+                </div>
+                <div class="field-grid">
+                  <div class="field">
+                    <label>扫描清晰度</label>
+                    <div class="field-box"><span>标准模式</span><span>速度快，推荐大多数文件</span></div>
+                  </div>
+                  <div class="field">
+                    <label>遮罩颜色</label>
+                    <div class="field-box"><span>黑色</span><span>法律文书常用</span></div>
+                  </div>
+                  <div class="field">
+                    <label>处理策略</label>
+                    <div class="field-box"><span>先自动，后复核</span><span>默认流程</span></div>
+                  </div>
+                  <div class="field">
+                    <label>导出方式</label>
+                    <div class="field-box"><span>安全导出</span><span>不可逆</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="section">
+                  <div>
+                    <small>Word 规则编辑</small>
+                    <h3 style="margin:4px 0 0;">规则编辑器做成清楚的列表，而不是藏在复杂弹窗里</h3>
+                  </div>
+                  <div class="badge blue">精确 / 正则</div>
+                </div>
+                <div class="rule-table">
+                  <div class="rule-row">
+                    <span class="pill exact">精确</span>
+                    <strong>张三</strong>
+                    <span>[当事人A]</span>
+                    <span class="toggle"></span>
+                  </div>
+                  <div class="rule-row">
+                    <span class="pill regex">正则</span>
+                    <strong>(?&lt;!\d)(1[3-9]\d{9})(?!\d)</strong>
+                    <span>[手机号]</span>
+                    <span class="toggle"></span>
+                  </div>
+                  <div class="rule-row">
+                    <span class="pill exact">精确</span>
+                    <strong>北京市朝阳区...</strong>
+                    <span>[地址已脱敏]</span>
+                    <span class="toggle"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-foot">
+              <div class="foot-note">
+                通俗理解：设置中心应该像“手机设置”或“企业后台设置”，按类分组，
+                而不是像“把所有参数印在一张纸上”。
+              </div>
+              <div class="subheader-actions">
+                <div class="btn secondary">恢复默认</div>
+                <div class="btn secondary">导出模板</div>
+                <div class="btn primary">保存设置</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </article>
+    </section>
+
+    <section class="scene" id="scene-explain">
+      <div class="design-grid">
+        <div class="design-card">
+          <h3>为什么这版更简洁</h3>
+          <ul>
+            <li>第一屏只做一件事：导入文件。</li>
+            <li>高频操作按顺序排，不把所有功能一次塞给用户。</li>
+            <li>文档预览区变大，功能区缩小，用户眼睛先看结果。</li>
+            <li>高级选项进设置中心，不和主流程抢注意力。</li>
+          </ul>
+        </div>
+
+        <div class="design-card">
+          <h3>符合中国软件习惯的地方</h3>
+          <ul>
+            <li>强调“最近文件”“继续上次任务”。</li>
+            <li>提供“推荐默认值”，不让用户自己先做复杂判断。</li>
+            <li>文案直接说人话，比如“标准模式”“安全导出”。</li>
+            <li>整体更像钉钉、飞书、企业微信、WPS 这类软件的理解路径。</li>
+          </ul>
+        </div>
+
+        <div class="design-card">
+          <h3>通俗类比</h3>
+          <div class="analogy-grid">
+            <div class="analogy-item">
+              <div class="row"><strong>像寄快递</strong><span>先放件</span></div>
+              <div class="muted">先把文件交进去，再选服务，而不是先填一堆高级表单。</div>
+            </div>
+            <div class="analogy-item">
+              <div class="row"><strong>像打印店</strong><span>后选细节</span></div>
+              <div class="muted">先确认打印哪份文档，再问黑白、双面、份数等细节。</div>
+            </div>
+            <div class="analogy-item">
+              <div class="row"><strong>像批改试卷</strong><span>先看结果</span></div>
+              <div class="muted">系统先圈重点，人只负责复核，不需要全程手动从头做。</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="design-card">
+          <h3>为什么这版更可行</h3>
+          <p>
+            它不是把你的软件网页化，而是把<strong>界面逻辑重新排序</strong>。
+            对现有 PyQt 架构来说，这意味着主要改的是壳层、布局、组件和信息架构，
+            而不是推翻 PDF 预览、OCR、Word 双栏这些已有的高性能能力。
+          </p>
+        </div>
+
+        <div class="design-card">
+          <h3>对 Windows 更友好的原因</h3>
+          <ul>
+            <li>白底清爽、高对比文字，适合办公场景。</li>
+            <li>不依赖复杂玻璃特效，减少低配 Windows 机器负担。</li>
+            <li>按钮尺寸、留白、表单密度更符合鼠标操作习惯。</li>
+            <li>主界面聚焦文档，不抢占 GPU 和内存。</li>
+          </ul>
+        </div>
+
+        <div class="design-card">
+          <h3>如果继续往下做</h3>
+          <p>
+            下一步最有价值的不是再加更多视觉效果，而是把这套概念稿进一步收敛成
+            <strong>可落地的 PyQt 页面结构、组件拆分和重构顺序</strong>。
+            这样才能既好看，又真能做出来。
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function() {
+      const tabs = Array.from(document.querySelectorAll(".tab"));
+      const scenes = Array.from(document.querySelectorAll(".scene"));
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const target = tab.getAttribute("data-scene-target");
+          tabs.forEach((item) => item.classList.toggle("is-active", item === tab));
+          scenes.forEach((scene) => scene.classList.toggle("is-active", scene.id === target));
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

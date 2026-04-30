@@ -1,0 +1,190 @@
+# Rollback Journal - Word Batch Replace Iteration
+
+## 2026-03-02
+
+- [x] cp0 备份完成
+  - checkpoint: `20260302_word_batch_replace_cp0`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_batch_replace_cp0/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260302_word_batch_replace_cp0/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260302_word_batch_replace_cp0/preflight_meta.json`
+- [x] cp1 UI与规则弹窗
+  - checkpoint: `20260302_word_batch_replace_cp1`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_batch_replace_cp1/snapshot_src.tar.gz`
+- [x] cp2 单文档应用与双栏预览
+  - checkpoint: `20260302_word_batch_replace_cp2`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_batch_replace_cp2/snapshot_src.tar.gz`
+- [x] cp3 批量流程
+  - checkpoint: `20260302_word_batch_replace_cp3`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_batch_replace_cp3/snapshot_src.tar.gz`
+- [x] cp4 测试通过待验收
+  - checkpoint: `20260302_word_batch_replace_cp4`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_batch_replace_cp4/snapshot_src.tar.gz`
+- [x] cp5 UI/交互修正（批量入口并入打开、设置界面整合）
+  - checkpoint: `20260302_word_batch_replace_cp5_ui_logic_fix`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_batch_replace_cp5_ui_logic_fix/snapshot_src.tar.gz`
+- [x] cp6 测试后问题修复前备份（高级设置入口恢复 + 批量规则流程修正）
+  - checkpoint: `20260302_word_batch_replace_cp6_posttest_fix`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_batch_replace_cp6_posttest_fix/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260302_word_batch_replace_cp6_posttest_fix/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260302_word_batch_replace_cp6_posttest_fix/preflight_meta.json`
+- [x] cp7 修复完成并验证通过
+  - checkpoint: `20260302_word_batch_replace_cp7_postfix_verified`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_batch_replace_cp7_postfix_verified/snapshot_src.tar.gz`
+  - verification:
+    - `python3 -m compileall -q main.py`
+    - `python3 -m unittest tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`
+- [x] cp8 预览融合修复前备份（双栏头部UI + 替换后预览融合逻辑）
+  - checkpoint: `20260302_word_preview_fusion_cp8_pre`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_preview_fusion_cp8_pre/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260302_word_preview_fusion_cp8_pre/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260302_word_preview_fusion_cp8_pre/preflight_meta.json`
+- [x] cp9 预览融合修复完成并验证通过
+  - checkpoint: `20260302_word_preview_fusion_cp9_verified`
+  - snapshot: `backups/iteration_checkpoints/20260302_word_preview_fusion_cp9_verified/snapshot_src.tar.gz`
+  - verification:
+    - `python3 -m compileall -q main.py tests/unit/test_word_replace_rules.py`
+    - `python3 -m unittest tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`
+- [x] cp10 版本发布与文档统一前备份
+  - checkpoint: `20260302_release_docs_cp10_pre`
+  - snapshot: `backups/iteration_checkpoints/20260302_release_docs_cp10_pre/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260302_release_docs_cp10_pre/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260302_release_docs_cp10_pre/preflight_meta.json`
+- [x] cp11 版本发布与文档统一完成（已验证）
+  - checkpoint: `20260302_release_docs_cp11_verified`
+  - snapshot: `backups/iteration_checkpoints/20260302_release_docs_cp11_verified/snapshot_src.tar.gz`
+  - verification:
+    - `python3 -m compileall -q main.py docs/current/STATUS.md docs/current/DEV_LOG.md CHANGELOG.md CLAUDE.md docs/guides/QUICK_START_FOR_CLAUDE_CODE.md PROJECT_INDEX.md`
+    - `python3 -m unittest tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`
+- [x] cp12 打包方案统一修复前备份（Windows/macOS packaging refresh）
+  - checkpoint: `20260309_packaging_refresh_cp12_pre`
+  - snapshot: `backups/iteration_checkpoints/20260309_packaging_refresh_cp12_pre/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260309_packaging_refresh_cp12_pre/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260309_packaging_refresh_cp12_pre/preflight_meta.json`
+- [x] cp13 打包方案统一修复完成（已验证）
+  - checkpoint: `20260309_packaging_refresh_cp13_verified`
+  - snapshot: `backups/iteration_checkpoints/20260309_packaging_refresh_cp13_verified/snapshot_src.tar.gz`
+  - verification:
+    - `bash -n packaging/macos/scripts/build_complete.sh`
+    - `bash -n packaging/macos/scripts/build_macos_app.sh`
+    - `bash -n packaging/macos/scripts/sign_macos_app.sh`
+    - `bash -n packaging/macos/scripts/notarize_macos_app.sh`
+    - `python3 -m py_compile packaging/windows/scripts/generate_version_info.py`
+    - `python3 packaging/windows/scripts/generate_version_info.py`
+    - `rg -n '37\.6\.1|36\.4|3_完整打包带安装程序|1_初始化环境|2_一键打包|PrivacyGuard-36\.4|build/PrivacyGuard\.spec|修改 main\.py 中的 VERSION|create-dmg 不可用，复制 \.app|version_info 参考文档' packaging docs/packaging`
+- [x] cp14 运行时整改启动前备份（安全/导入/预览/配置一致性）
+  - checkpoint: `20260309_runtime_remediation_cp14_start`
+  - snapshot: `backups/iteration_checkpoints/20260309_runtime_remediation_cp14_start/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260309_runtime_remediation_cp14_start/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260309_runtime_remediation_cp14_start/preflight_meta.json`
+- [x] cp18 按 PRIORITY_REMEDIATION_PLAN 完成整改并验证通过
+  - checkpoint: `20260309_runtime_remediation_cp18_verified`
+  - snapshot: `backups/iteration_checkpoints/20260309_runtime_remediation_cp18_verified/snapshot_src.tar.gz`
+  - verification:
+    - `python3 -m compileall -q main.py privacyguard tests`
+    - `python3 -m unittest tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`
+- [x] cp19 Word 对比预览空白 bugfix 前备份
+  - checkpoint: `20260309_word_compare_bugfix_cp19_pre`
+  - snapshot: `backups/iteration_checkpoints/20260309_word_compare_bugfix_cp19_pre/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260309_word_compare_bugfix_cp19_pre/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260309_word_compare_bugfix_cp19_pre/preflight_meta.json`
+- [x] cp20 Word 对比预览空白 bugfix 完成（已验证）
+  - checkpoint: `20260309_word_compare_bugfix_cp20_verified`
+  - snapshot: `backups/iteration_checkpoints/20260309_word_compare_bugfix_cp20_verified/snapshot_src.tar.gz`
+  - verification:
+    - `python3 -m compileall -q main.py tests/unit/test_word_replace_rules.py`
+    - `python3 -m unittest tests.unit.test_word_replace_rules tests.unit.test_app_config tests.unit.test_pdf_text_hit_dedup tests.unit.test_package_imports tests.test_path_validation tests.unit.test_batch_word_replace -v`
+- [x] cp21 全量文档同步到当前代码基线（已验证）
+  - checkpoint: `20260309_docs_sync_cp21_verified`
+  - snapshot: `backups/iteration_checkpoints/20260309_docs_sync_cp21_verified/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260309_docs_sync_cp21_verified/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260309_docs_sync_cp21_verified/preflight_meta.json`
+  - scope:
+    - `README.md`
+    - `PROJECT_INDEX.md`
+    - `CLAUDE.md`
+    - `CHANGELOG.md`
+    - `docs/current/STATUS.md`
+    - `docs/current/DEV_LOG.md`
+    - `docs/current/PRIORITY_REMEDIATION_PLAN.md`
+    - `docs/guides/QUICK_START_FOR_CLAUDE_CODE.md`
+  - verification:
+    - `python3 -m compileall -q main.py privacyguard tests`
+    - `python3 -m unittest tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`
+- [x] cp22 混合型 PDF OCR 修复前备份
+  - checkpoint: `20260309_mixed_pdf_ocr_cp22_pre`
+  - snapshot: `backups/iteration_checkpoints/20260309_mixed_pdf_ocr_cp22_pre/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260309_mixed_pdf_ocr_cp22_pre/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260309_mixed_pdf_ocr_cp22_pre/preflight_meta.json`
+- [x] cp23 混合型 PDF OCR 修复完成（已验证）
+  - checkpoint: `20260309_mixed_pdf_ocr_cp23_verified`
+  - snapshot: `backups/iteration_checkpoints/20260309_mixed_pdf_ocr_cp23_verified/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260309_mixed_pdf_ocr_cp23_verified/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260309_mixed_pdf_ocr_cp23_verified/preflight_meta.json`
+  - verification:
+    - `python3 -m compileall -q main.py privacyguard tests`
+    - `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.unit.test_pdf_text_hit_dedup tests.unit.test_package_imports tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace tests.unit.test_app_config tests.test_path_validation tests.unit.test_ocr_api -v`
+- [x] cp24 版本/文档/打包方案同步前备份
+  - checkpoint: `20260309_release_sync_cp24_pre`
+  - snapshot: `backups/iteration_checkpoints/20260309_release_sync_cp24_pre/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260309_release_sync_cp24_pre/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260309_release_sync_cp24_pre/preflight_meta.json`
+- [x] cp25 v37.7.1 发布同步完成（已验证）
+  - checkpoint: `20260309_release_sync_cp25_verified`
+  - snapshot: `backups/iteration_checkpoints/20260309_release_sync_cp25_verified/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260309_release_sync_cp25_verified/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260309_release_sync_cp25_verified/preflight_meta.json`
+  - verification:
+    - `python3 packaging/windows/scripts/generate_version_info.py`
+    - `python3 -m compileall -q main.py privacyguard tests`
+    - `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`
+    - `bash -n packaging/macos/scripts/build_complete.sh`
+    - `bash -n packaging/macos/scripts/build_macos_app.sh`
+    - `bash -n packaging/macos/scripts/sign_macos_app.sh`
+    - `bash -n packaging/macos/scripts/notarize_macos_app.sh`
+- [x] cp26 Word 原文预览红色高亮串位修复前备份
+  - checkpoint: `20260310_word_preview_highlight_cp26_pre`
+  - snapshot: `backups/iteration_checkpoints/20260310_word_preview_highlight_cp26_pre/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260310_word_preview_highlight_cp26_pre/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260310_word_preview_highlight_cp26_pre/preflight_meta.json`
+- [x] cp27 Word 原文预览红色高亮串位修复完成（已验证）
+  - checkpoint: `20260310_word_preview_highlight_cp27_verified`
+  - snapshot: `backups/iteration_checkpoints/20260310_word_preview_highlight_cp27_verified/snapshot_src.tar.gz`
+  - verification:
+    - `python3 -m compileall -q main.py tests/unit/test_word_replace_rules.py`
+    - `python3 -m unittest tests.unit.test_word_replace_rules tests.unit.test_app_config tests.unit.test_pdf_text_hit_dedup tests.unit.test_package_imports tests.test_path_validation tests.unit.test_batch_word_replace tests.unit.test_mixed_pdf_ocr tests.unit.test_ocr_api -v`
+- [x] cp28 v37.7.2 发布同步前备份
+  - checkpoint: `20260310_release_sync_cp28_pre`
+  - snapshot: `backups/iteration_checkpoints/20260310_release_sync_cp28_pre/snapshot_src.tar.gz`
+  - manifest: `backups/iteration_checkpoints/20260310_release_sync_cp28_pre/key_files_manifest.txt`
+  - preflight meta: `backups/iteration_checkpoints/20260310_release_sync_cp28_pre/preflight_meta.json`
+- [x] cp29 v37.7.2 发布同步完成（已验证）
+  - checkpoint: `20260310_release_sync_cp29_verified`
+  - snapshot: `backups/iteration_checkpoints/20260310_release_sync_cp29_verified/snapshot_src.tar.gz`
+  - verification:
+    - `python3 packaging/windows/scripts/generate_version_info.py`
+    - `python3 -m compileall -q main.py privacyguard tests`
+    - `python3 -m unittest tests.unit.test_mixed_pdf_ocr tests.test_path_validation tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_pdf_text_hit_dedup tests.unit.test_app_config tests.unit.test_word_replace_rules tests.unit.test_batch_word_replace -v`
+    - `bash -n packaging/macos/scripts/build_complete.sh`
+    - `bash -n packaging/macos/scripts/build_macos_app.sh`
+    - `bash -n packaging/macos/scripts/sign_macos_app.sh`
+    - `bash -n packaging/macos/scripts/notarize_macos_app.sh`
+- [x] cp30 PyInstaller 打包模块导入失败修复完成（已验证）
+  - checkpoint: `20260311_pyinstaller_packaging_fix_cp30_verified`
+  - verification:
+    - Windows 打包成功
+    - 打包应用正常启动
+    - `ModuleNotFoundError: No module named 'privacyguard.utils.security'` 不再出现
+- [x] cp31 v38 UI 重构启动前检查点（Windows-first UI refactor preflight）
+  - checkpoint: `v38_ui_refactor_cp31_20260313_140645`
+  - snapshot dir: `backups/v38_ui_refactor_cp31_20260313_140645/`
+  - backup files:
+    - `main.py`
+    - `theme.py`
+    - `rollback_journal.md`
+    - `docs/current/STATUS.md`
+    - `docs/current/DEV_LOG.md`
+    - `docs/features/privacyguard_ui_concept_v38_logic_preserved_cn.html`
+  - purpose:
+    - 启动 Windows-first UI 全面改造前保留主运行链与文档基线
+    - 避免在 dirty worktree 中依赖 `git revert` 回退
+    - 后续 UI 迭代统一基于 `cp31` 分阶段推进

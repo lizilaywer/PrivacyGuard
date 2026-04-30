@@ -1,0 +1,22 @@
+<svg width="1200" height="320" viewBox="0 0 1200 320" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="24" y1="18" x2="202" y2="208" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1F7ED7"/>
+      <stop offset="1" stop-color="#0E5FB0"/>
+    </linearGradient>
+    <linearGradient id="bar" x1="80" y1="111" x2="159" y2="111" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#14B8A6"/>
+      <stop offset="1" stop-color="#0EA5A3"/>
+    </linearGradient>
+  </defs>
+  <rect x="24" y="24" width="184" height="184" rx="48" fill="url(#bg)"/>
+  <path d="M116 46L157 62V101C157 131 140 155 116 168C92 155 75 131 75 101V62L116 46Z" fill="white"/>
+  <path d="M97.636 74.9091C97.636 70.2407 101.422 66.4545 106.091 66.4545H127.591L138.364 77.2273V128.273C138.364 132.941 134.578 136.727 129.909 136.727H106.091C101.422 136.727 97.636 132.941 97.636 128.273V74.9091Z" fill="#EAF3FF"/>
+  <path d="M127.591 66.4545V72.9091C127.591 77.5775 131.377 81.3636 136.045 81.3636H142.5L127.591 66.4545Z" fill="#BFD9F8"/>
+  <rect x="80" y="102" width="79" height="28" rx="14" fill="url(#bar)"/>
+  <rect x="89" y="111" width="54" height="4" rx="2" fill="white"/>
+  <rect x="89" y="118" width="46" height="4" rx="2" fill="white" fill-opacity="0.85"/>
+  <text x="252" y="112" fill="#182536" font-size="68" font-weight="800" font-family="Segoe UI Variable, Segoe UI, Microsoft YaHei UI, sans-serif">PrivacyGuard</text>
+  <text x="252" y="175" fill="#31445C" font-size="42" font-weight="700" font-family="Segoe UI Variable, Segoe UI, Microsoft YaHei UI, sans-serif">脱敏卫士</text>
+  <text x="252" y="232" fill="#5B6F88" font-size="28" font-weight="500" font-family="Segoe UI Variable, Segoe UI, Microsoft YaHei UI, sans-serif">本地离线 · 文档隐私保护 · 面向法律场景</text>
+</svg>

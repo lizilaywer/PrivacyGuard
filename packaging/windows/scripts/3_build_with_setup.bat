@@ -30,9 +30,17 @@ for /f "usebackq tokens=*" %%a in ("%PROJECT_DIR%\version.txt") do (
 echo [INFO] Version: %VERSION%
 set "DIST_DIR=%PROJECT_DIR%\dist"
 set "RELEASE_DIR=%PROJECT_DIR%\releases\windows"
+set "PYINSTALLER_CONFIG_DIR=%PROJECT_DIR%\build\.pyinstaller-cache"
+set "VENV_PATH="
+
+if exist "venv_win\Scripts\activate.bat" (
+    set "VENV_PATH=venv_win"
+) else if exist "venv\Scripts\activate.bat" (
+    set "VENV_PATH=venv"
+)
 
 echo [CHECK] Checking environment...
-if not exist "venv\Scripts\activate.bat" (
+if not defined VENV_PATH (
     echo [ERROR] Virtual environment not found
     echo Please run: 1_init_environment.bat
     pause
@@ -43,15 +51,25 @@ echo [OK] Environment check passed
 echo.
 
 :: Activate virtual environment
-call venv\Scripts\activate.bat
+call "%VENV_PATH%\Scripts\activate.bat"
+
+echo [PRE-CHECK] Generating version resource...
+python "%~dp0generate_version_info.py"
+if errorlevel 1 (
+    echo [ERROR] Failed to generate version_info.txt
+    pause
+    exit /b 1
+)
 
 echo [Step 1/5] Cleaning old builds...
 if exist "%DIST_DIR%" (
     rmdir /s /q "%DIST_DIR%" 2>nul
 )
-if exist "build\build" (
-    rmdir /s /q "build\build" 2>nul
+if exist "build" (
+    rmdir /s /q "build" 2>nul
 )
+if not exist "%PROJECT_DIR%\build" mkdir "%PROJECT_DIR%\build"
+if not exist "%PYINSTALLER_CONFIG_DIR%" mkdir "%PYINSTALLER_CONFIG_DIR%"
 if not exist "%RELEASE_DIR%" mkdir "%RELEASE_DIR%"
 echo [OK] Cleanup complete
 echo.
@@ -60,7 +78,7 @@ echo [Step 2/5] Building application...
 echo    This may take 5-10 minutes...
 echo.
 
-pyinstaller --clean --noconfirm "%CONFIG_DIR%\PrivacyGuard_windows.spec"
+python -m PyInstaller --clean --noconfirm "%CONFIG_DIR%\PrivacyGuard_windows.spec"
 
 if errorlevel 1 (
     echo.
@@ -74,11 +92,12 @@ echo.
 
 echo [Step 3/5] Copying files...
 if exist "%PROJECT_DIR%\LICENSE.txt" (
-    copy "%PROJECT_DIR%\LICENSE.txt" "%DIST_DIR%\" >nul 2>&1
+    copy "%PROJECT_DIR%\LICENSE.txt" "%DIST_DIR%\%APP_NAME%\" >nul 2>&1
 )
 if exist "%PROJECT_DIR%\README.md" (
-    copy "%PROJECT_DIR%\README.md" "%DIST_DIR%\" >nul 2>&1
+    copy "%PROJECT_DIR%\README.md" "%DIST_DIR%\%APP_NAME%\" >nul 2>&1
 )
+copy "%~dp0launcher_wrapper.bat" "%DIST_DIR%\%APP_NAME%\" >nul 2>&1
 echo [OK] Done
 echo.
 
@@ -116,7 +135,7 @@ if not defined INNO_PATH (
 )
 
 echo    Compiling installer...
-"%INNO_PATH%" "%CONFIG_DIR%\PrivacyGuard_Setup.iss" /Q
+"%INNO_PATH%" "%CONFIG_DIR%\PrivacyGuard_Setup.iss" /DMyAppVersion=%VERSION% /Q
 
 if errorlevel 1 (
     echo [ERROR] Failed to create installer

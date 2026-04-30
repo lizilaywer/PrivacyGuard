@@ -10,11 +10,33 @@ import numpy as np
 import cv2
 import fitz
 from PyQt6.QtCore import QThread, pyqtSignal, QRectF
-from rapidocr_onnxruntime import RapidOCR
 import re
+
+from privacyguard.ocr.mixed_pdf import (
+    collect_embedded_image_clip_rects,
+    collect_image_block_ocr_hits,
+)
+from privacyguard.ocr.text_pdf import collect_text_pdf_hit_boxes
 
 # 常量定义
 PROGRESS_UPDATE_INTERVAL = 0.05
+
+
+def create_rapidocr_engine():
+    """延迟初始化 RapidOCR，避免模块导入阶段因依赖缺失崩溃。"""
+    try:
+        from rapidocr_onnxruntime import RapidOCR
+    except ImportError as exc:
+        raise RuntimeError(f"RapidOCR 未安装: {exc}") from exc
+    except OSError as exc:
+        raise RuntimeError(f"RapidOCR 动态库加载失败: {exc}") from exc
+    return RapidOCR()
+
+
+def create_rapidocr_results(engine, image):
+    """统一 RapidOCR 原始结果结构，便于复用混合页辅助逻辑。"""
+    result, _ = engine(image)
+    return result or []
 
 
 class OCRWorker(QThread):
@@ -99,49 +121,44 @@ class OCRWorker(QThread):
 
                     page = doc[i]
                     rects = []
+                    all_patterns = self.rules + self.custom_keywords
 
                     page_text = page.get_text()
-                    is_text_pdf = len(page_text.strip()) > 20
+                    page_dict = page.get_text("dict")
+                    image_clip_rects = collect_embedded_image_clip_rects(page_dict)
 
-                    if is_text_pdf:
-                        all_patterns = self.rules + self.custom_keywords
-                        for pat in all_patterns:
-                            for match in re.finditer(pat, page_text, re.IGNORECASE):
-                                found_str = match.group()
-                                try:
-                                    hits = page.search_for(found_str)
-                                    if hits:
-                                        for h in hits:
-                                            safe_rect = QRectF(h.x0, h.y0, h.width, h.height)
-                                            rects.append(safe_rect)
-                                except RuntimeError as e:
-                                    print(f"搜索文本错误: {e}")
-                                    pass
-                    else:
+                    if page_text.strip():
+                        hit_boxes = collect_text_pdf_hit_boxes(page, all_patterns, page_text=page_text)
+                        rects.extend(QRectF(x, y, w, h) for x, y, w, h in hit_boxes)
+
+                    if not image_clip_rects and not page_text.strip():
+                        image_clip_rects = [(page.rect.x0, page.rect.y0, page.rect.x1, page.rect.y1)]
+
+                    if image_clip_rects:
                         if ocr_engine is None:
-                            ocr_engine = RapidOCR()
+                            ocr_engine = create_rapidocr_engine()
 
-                        pix = page.get_pixmap(matrix=fitz.Matrix(SCAN_SCALE, SCAN_SCALE))
-                        img_data = np.frombuffer(pix.tobytes("png"), dtype=np.uint8)
-                        img_np = cv2.imdecode(img_data, cv2.IMREAD_COLOR)
-
-                        scan_img = self.preprocess_image(img_np) if self.use_enhance else img_np
-                        ocr_result, _ = ocr_engine(scan_img)
-
-                        if ocr_result:
-                            for line in ocr_result:
-                                box, text = line[0], line[1]
-                                all_patterns = self.rules + self.custom_keywords
-                                for pat in all_patterns:
-                                    for match in re.finditer(pat, text, re.IGNORECASE):
-                                        sub_rect = self.calculate_sub_rect(box, text, match.span())
-                                        if sub_rect:
-                                            rects.append(QRectF(
-                                                sub_rect.x()/SCAN_SCALE,
-                                                sub_rect.y()/SCAN_SCALE,
-                                                sub_rect.width()/SCAN_SCALE,
-                                                sub_rect.height()/SCAN_SCALE
-                                            ))
+                        image_hit_rects = collect_image_block_ocr_hits(
+                            page,
+                            all_patterns,
+                            SCAN_SCALE,
+                            recognize_fn=lambda scan_img: create_rapidocr_results(ocr_engine, scan_img),
+                            calculate_rect_fn=lambda box, text, span, _scan_img: self.calculate_sub_rect(
+                                box,
+                                text,
+                                span,
+                            ),
+                            clip_to_page_rect_fn=lambda local_rect, clip_rect: QRectF(
+                                local_rect.x() / SCAN_SCALE + clip_rect[0],
+                                local_rect.y() / SCAN_SCALE + clip_rect[1],
+                                local_rect.width() / SCAN_SCALE,
+                                local_rect.height() / SCAN_SCALE,
+                            ),
+                            preprocess_fn=self.preprocess_image if self.use_enhance else None,
+                            page_dict=page_dict,
+                            image_clip_rects=image_clip_rects,
+                        )
+                        rects.extend(image_hit_rects)
 
                     # v36.4: 通过信号发送单页结果（线程安全）
                     self.page_result_signal.emit(i, rects)

@@ -279,6 +279,7 @@ exe = EXE(
     codesign_identity=None,
     entitlements_file=None,
     icon=os.path.join(windows_dir, 'assets', 'icon.ico'),
+    version=os.path.join(current_dir, 'version_info.txt'),
 )
 
 coll = COLLECT(

@@ -1,11 +1,11 @@
 #!/bin/bash
 #
 # PrivacyGuard macOS 应用打包脚本
-# 版本: 37.0.4
+# 版本: from version.txt
 # 说明: 自动化打包 macOS .app 和 DMG 安装包
 #
 
-set -e  # 遇到错误立即退出
+set -euo pipefail
 
 # 颜色定义
 RED='\033[0;31m'
@@ -32,6 +32,7 @@ MACOS_DIR="$(dirname "$SCRIPT_DIR")"
 BUILD_DIR="${PROJECT_ROOT}/build"
 DIST_DIR="${PROJECT_ROOT}/dist"
 RELEASE_DIR="${PROJECT_ROOT}/releases/macos"
+PYINSTALLER_CONFIG_DIR="${BUILD_DIR}/.pyinstaller-cache"
 
 echo -e "${BLUE}========================================${NC}"
 echo -e "${BLUE}  PrivacyGuard macOS 打包脚本${NC}"
@@ -70,9 +71,12 @@ if ! command -v python3 &> /dev/null; then
     exit 1
 fi
 
-# 激活虚拟环境
-if [ -f "${PROJECT_ROOT}/venv/bin/activate" ]; then
-    print_info "激活虚拟环境"
+# 激活虚拟环境（优先 venvmac，兼容 venv）
+if [ -f "${PROJECT_ROOT}/venvmac/bin/activate" ]; then
+    print_info "激活虚拟环境: venvmac"
+    source "${PROJECT_ROOT}/venvmac/bin/activate"
+elif [ -f "${PROJECT_ROOT}/venv/bin/activate" ]; then
+    print_info "激活虚拟环境: venv"
     source "${PROJECT_ROOT}/venv/bin/activate"
 else
     print_warn "未找到虚拟环境，使用系统 Python"
@@ -81,7 +85,7 @@ fi
 # 检查 PyInstaller
 if ! python3 -c "import PyInstaller" 2>/dev/null; then
     print_info "安装 PyInstaller"
-    pip install pyinstaller
+    python3 -m pip install pyinstaller
 fi
 
 # 检查图标文件
@@ -104,6 +108,8 @@ print_step "清理旧构建文件"
 rm -rf "${BUILD_DIR}"
 rm -rf "${DIST_DIR}"
 rm -rf "${PROJECT_ROOT}/__pycache__"
+mkdir -p "${BUILD_DIR}"
+mkdir -p "${PYINSTALLER_CONFIG_DIR}"
 
 print_info "清理完成"
 
@@ -114,7 +120,10 @@ print_step "执行 PyInstaller 打包（这可能需要几分钟）"
 
 cd "${PROJECT_ROOT}"
 
-pyinstaller --clean \
+export PYINSTALLER_CONFIG_DIR
+print_info "使用本地 PyInstaller 缓存: ${PYINSTALLER_CONFIG_DIR}"
+
+python3 -m PyInstaller --clean \
     --noconfirm \
     "${MACOS_DIR}/config/PrivacyGuard.spec"
 
@@ -223,18 +232,18 @@ echo -e "${GREEN}========================================${NC}"
 echo -e "${GREEN}  打包完成！${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
-echo -e "📦 ${BLUE}应用位置:${NC}"
+echo -e "${BLUE}应用位置:${NC}"
 echo -e "   .app:  ${APP_PATH}"
 echo -e "   DMG:   ${DMG_PATH}"
 echo ""
-echo -e "📊 ${BLUE}文件大小:${NC}"
+echo -e "${BLUE}文件大小:${NC}"
 echo -e "   .app:  ${APP_SIZE}"
 echo -e "   DMG:   ${DMG_SIZE}"
 echo ""
-echo -e "🔐 ${BLUE}校验和:${NC}"
+echo -e "${BLUE}校验和:${NC}"
 cat "${DMG_NAME}.sha256"
 echo ""
-echo -e "📝 ${BLUE}下一步操作:${NC}"
+echo -e "${BLUE}下一步操作:${NC}"
 echo -e "   1. 双击 ${DMG_NAME} 安装"
 echo -e "   2. 将 ${APP_NAME}.app 拖入 Applications 文件夹"
 echo -e "   3. 首次运行需右键点击应用选择'打开'"

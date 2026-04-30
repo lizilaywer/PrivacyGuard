@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrivacyGuard v38 概念稿 - 保留逻辑版</title>
+  <style>
+    :root {
+      --bg: #eef3f8;
+      --bg-accent: #e6eef8;
+      --panel: rgba(255, 255, 255, 0.88);
+      --panel-strong: #ffffff;
+      --text: #18212f;
+      --muted: #657288;
+      --line: rgba(103, 120, 145, 0.22);
+      --blue: #2163ff;
+      --blue-deep: #1446bd;
+      --blue-soft: rgba(33, 99, 255, 0.10);
+      --green: #17a36b;
+      --green-soft: rgba(23, 163, 107, 0.12);
+      --orange: #ff9f1a;
+      --orange-soft: rgba(255, 159, 26, 0.12);
+      --red: #e24c4b;
+      --red-soft: rgba(226, 76, 75, 0.12);
+      --shadow-lg: 0 24px 60px rgba(20, 37, 63, 0.12);
+      --shadow-md: 0 12px 24px rgba(31, 49, 79, 0.08);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --font-ui: "Segoe UI Variable", "Segoe UI", "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font-ui);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(33, 99, 255, 0.08), transparent 28%),
+        radial-gradient(circle at top right, rgba(23, 163, 107, 0.07), transparent 22%),
+        linear-gradient(180deg, #f4f8fc 0%, #eaf0f6 100%);
+    }
+
+    body {
+      padding: 30px;
+    }
+
+    .page-shell {
+      max-width: 1540px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .hero {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.80));
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      border-radius: 30px;
+      box-shadow: var(--shadow-lg);
+      padding: 28px 30px;
+      backdrop-filter: blur(18px);
+      display: grid;
+      grid-template-columns: 1.2fr 0.9fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: var(--blue-soft);
+      color: var(--blue-deep);
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.02em;
+    }
+
+    h1, h2, h3, h4, p {
+      margin: 0;
+    }
+
+    .hero h1 {
+      margin-top: 14px;
+      font-size: 38px;
+      line-height: 1.15;
+      letter-spacing: -0.03em;
+    }
+
+    .hero p {
+      margin-top: 16px;
+      font-size: 16px;
+      line-height: 1.8;
+      color: var(--muted);
+    }
+
+    .hero-notes {
+      display: grid;
+      gap: 12px;
+    }
+
+    .note-card {
+      padding: 16px 18px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-md);
+    }
+
+    .note-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .note-card span {
+      display: block;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .tab-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(18px);
+      position: sticky;
+      top: 18px;
+      z-index: 10;
+    }
+
+    .tab-btn {
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: 180ms ease;
+    }
+
+    .tab-btn:hover {
+      background: rgba(20, 70, 189, 0.07);
+      color: var(--text);
+    }
+
+    .tab-btn.active {
+      background: linear-gradient(135deg, #2264ff, #3f88ff);
+      color: white;
+      box-shadow: 0 12px 24px rgba(34, 100, 255, 0.22);
+    }
+
+    .scene {
+      display: none;
+      gap: 20px;
+    }
+
+    .scene.active {
+      display: grid;
+    }
+
+    .scene-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: end;
+    }
+
+    .scene-header h2 {
+      font-size: 28px;
+      letter-spacing: -0.02em;
+    }
+
+    .scene-header p {
+      margin-top: 10px;
+      color: var(--muted);
+      line-height: 1.8;
+      max-width: 900px;
+    }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+
+    .tag {
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid var(--line);
+      color: var(--muted);
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1.3fr 0.9fr;
+      gap: 20px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: var(--radius-xl);
+      border: 1px solid rgba(255, 255, 255, 0.82);
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(16px);
+      padding: 22px;
+    }
+
+    .panel h3 {
+      font-size: 20px;
+      margin-bottom: 12px;
+    }
+
+    .panel p {
+      color: var(--muted);
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .step-lane {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .step {
+      position: relative;
+      padding: 16px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid var(--line);
+      min-height: 122px;
+    }
+
+    .step::after {
+      content: "";
+      position: absolute;
+      top: 29px;
+      right: -10px;
+      width: 20px;
+      height: 2px;
+      background: rgba(100, 120, 150, 0.28);
+    }
+
+    .step:last-child::after {
+      display: none;
+    }
+
+    .step-num {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: white;
+      background: linear-gradient(135deg, #2163ff, #47a2ff);
+      font-weight: 800;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .step strong,
+    .route-card strong,
+    .mini-card strong,
+    .info-block strong,
+    .insight-card strong,
+    .mode-card strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 8px;
+    }
+
+    .step span,
+    .route-card span,
+    .mini-card span,
+    .info-block span,
+    .insight-card span,
+    .mode-card span {
+      display: block;
+      color: var(--muted);
+      line-height: 1.7;
+      font-size: 13px;
+    }
+
+    .route-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .route-card,
+    .mini-card,
+    .info-block,
+    .insight-card,
+    .mode-card {
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .route-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .pill.blue {
+      background: var(--blue-soft);
+      color: var(--blue-deep);
+    }
+
+    .pill.green {
+      background: var(--green-soft);
+      color: #0c7f53;
+    }
+
+    .pill.orange {
+      background: var(--orange-soft);
+      color: #c26b00;
+    }
+
+    .pill.red {
+      background: var(--red-soft);
+      color: #b53635;
+    }
+
+    .drop-surface {
+      margin-top: 16px;
+      border: 2px dashed rgba(33, 99, 255, 0.26);
+      border-radius: 24px;
+      padding: 28px;
+      background:
+        linear-gradient(180deg, rgba(33, 99, 255, 0.05), rgba(255, 255, 255, 0.55)),
+        repeating-linear-gradient(
+          90deg,
+          rgba(33, 99, 255, 0.03),
+          rgba(33, 99, 255, 0.03) 24px,
+          transparent 24px,
+          transparent 48px
+        );
+      display: grid;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .drop-title {
+      font-size: 26px;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+    }
+
+    .drop-sub {
+      max-width: 760px;
+      margin: 0 auto;
+      color: var(--muted);
+      line-height: 1.8;
+    }
+
+    .drop-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .ghost-chip,
+    .primary-chip,
+    .soft-chip {
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .primary-chip {
+      background: linear-gradient(135deg, #2163ff, #3d86ff);
+      color: white;
+      box-shadow: 0 14px 26px rgba(33, 99, 255, 0.24);
+    }
+
+    .soft-chip {
+      background: rgba(255, 255, 255, 0.82);
+      border-color: var(--line);
+      color: var(--text);
+    }
+
+    .ghost-chip {
+      background: transparent;
+      border-color: rgba(33, 99, 255, 0.18);
+      color: var(--blue-deep);
+    }
+
+    .window-shell {
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 253, 0.90));
+      border-radius: 34px;
+      border: 1px solid rgba(255, 255, 255, 0.86);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .window-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: linear-gradient(180deg, rgba(243, 247, 252, 0.98), rgba(238, 243, 249, 0.94));
+      border-bottom: 1px solid rgba(101, 114, 136, 0.16);
+    }
+
+    .window-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .traffic {
+      display: flex;
+      gap: 8px;
+    }
+
+    .traffic i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: block;
+      background: #d0d8e5;
+    }
+
+    .traffic i:first-child {
+      background: #ff665c;
+    }
+
+    .traffic i:last-child {
+      background: #2fc76d;
+    }
+
+    .window-title {
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .window-subtitle {
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .title-stack {
+      min-width: 0;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 18px 20px;
+      background: rgba(255, 255, 255, 0.86);
+      border-bottom: 1px solid rgba(101, 114, 136, 0.12);
+    }
+
+    .tool-btn,
+    .tool-segment button,
+    .tool-toggle,
+    .mini-toggle {
+      border: 1px solid transparent;
+      background: white;
+      border-radius: 14px;
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text);
+      cursor: pointer;
+      transition: 160ms ease;
+    }
+
+    .tool-btn.primary {
+      background: linear-gradient(135deg, #2163ff, #3e89ff);
+      color: white;
+      box-shadow: 0 14px 22px rgba(33, 99, 255, 0.20);
+    }
+
+    .tool-btn.secondary,
+    .tool-toggle,
+    .mini-toggle,
+    .tool-segment button {
+      border-color: rgba(103, 120, 145, 0.22);
+      background: rgba(255, 255, 255, 0.95);
+    }
+
+    .tool-btn.ghost {
+      background: transparent;
+      border-color: rgba(33, 99, 255, 0.18);
+      color: var(--blue-deep);
+    }
+
+    .tool-btn.warning {
+      background: white;
+      border-color: rgba(255, 159, 26, 0.25);
+      color: #ca7200;
+    }
+
+    .tool-btn.success {
+      background: linear-gradient(135deg, #18a66d, #3aca91);
+      color: white;
+      box-shadow: 0 14px 22px rgba(23, 163, 107, 0.18);
+    }
+
+    .tool-segment {
+      display: inline-flex;
+      border-radius: 16px;
+      padding: 4px;
+      background: rgba(103, 120, 145, 0.08);
+      gap: 4px;
+    }
+
+    .tool-segment button.active,
+    .tool-toggle.active,
+    .mini-toggle.active {
+      background: var(--text);
+      color: white;
+      border-color: var(--text);
+    }
+
+    .toolbar .spacer {
+      flex: 1;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 0;
+      min-height: 760px;
+      background: linear-gradient(180deg, #f4f7fb, #edf2f7);
+    }
+
+    .workspace-body {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .workspace-side {
+      border-left: 1px solid rgba(101, 114, 136, 0.12);
+      background: rgba(255, 255, 255, 0.76);
+      padding: 18px;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+    }
+
+    .pdf-canvas-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+
+    .paper {
+      position: relative;
+      min-height: 620px;
+      background: white;
+      border-radius: 20px;
+      border: 1px solid rgba(103, 120, 145, 0.18);
+      box-shadow: 0 14px 28px rgba(43, 61, 93, 0.08);
+      overflow: hidden;
+      padding: 26px 24px;
+    }
+
+    .paper-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .text-line {
+      height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, rgba(24, 33, 47, 0.12), rgba(24, 33, 47, 0.06));
+      margin-bottom: 11px;
+    }
+
+    .text-line.short { width: 38%; }
+    .text-line.mid { width: 61%; }
+    .text-line.long { width: 84%; }
+
+    .mask {
+      position: absolute;
+      border-radius: 4px;
+      opacity: 0.95;
+    }
+
+    .window-shell[data-mask="black"] .mask {
+      background: rgba(10, 14, 18, 0.95);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    .window-shell[data-mask="white"] .mask {
+      background: rgba(245, 247, 252, 0.98);
+      box-shadow: inset 0 0 0 1px rgba(18, 28, 45, 0.12);
+    }
+
+    .hint-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 18px;
+      border: 1px dashed rgba(103, 120, 145, 0.26);
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .hint-bar span {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .panel-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel-item {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.84);
+      border: 1px solid var(--line);
+    }
+
+    .panel-item .top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .panel-item .bottom {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .word-workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      min-height: 760px;
+      background: linear-gradient(180deg, #f6f8fb, #eef3f8);
+    }
+
+    .word-main {
+      padding: 20px;
+      display: grid;
+      gap: 16px;
+      min-width: 0;
+    }
+
+    .compare-shell {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      min-height: 620px;
+      transition: 180ms ease;
+    }
+
+    .compare-pane {
+      background: white;
+      border: 1px solid rgba(103, 120, 145, 0.18);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 14px 28px rgba(43, 61, 93, 0.08);
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .compare-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 16px;
+      background: rgba(242, 246, 251, 0.95);
+      border-bottom: 1px solid rgba(103, 120, 145, 0.14);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .doc-surface {
+      padding: 22px;
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      background: linear-gradient(180deg, #ffffff, #fbfcfe);
+    }
+
+    .doc-card {
+      padding: 15px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(103, 120, 145, 0.13);
+      background: rgba(250, 251, 254, 0.96);
+      line-height: 1.9;
+      font-size: 14px;
+    }
+
+    mark.rule {
+      background: rgba(255, 214, 102, 0.74);
+      padding: 0 5px;
+      border-radius: 6px;
+      color: #3b2a00;
+    }
+
+    mark.manual {
+      background: rgba(255, 109, 109, 0.20);
+      color: #b22020;
+      padding: 0 5px;
+      border-radius: 6px;
+      box-shadow: inset 0 0 0 1px rgba(226, 76, 75, 0.35);
+    }
+
+    mark.smart {
+      background: rgba(65, 142, 255, 0.14);
+      color: #154dba;
+      padding: 0 5px;
+      border-radius: 6px;
+      box-shadow: inset 0 0 0 1px rgba(33, 99, 255, 0.16);
+    }
+
+    .word-workspace[data-compare="off"] .compare-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .word-workspace[data-compare="off"] .compare-pane.replaced {
+      display: none;
+    }
+
+    .mode-strip {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .batch-layout {
+      display: grid;
+      grid-template-columns: 290px 1fr 320px;
+      gap: 16px;
+      min-height: 760px;
+      background: linear-gradient(180deg, #f6f8fb, #edf2f7);
+      padding: 20px;
+    }
+
+    .queue-list,
+    .rule-table,
+    .progress-board,
+    .settings-nav,
+    .settings-stack {
+      display: grid;
+      gap: 10px;
+    }
+
+    .queue-item,
+    .rule-row,
+    .progress-row,
+    .settings-link {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--line);
+    }
+
+    .queue-item.active,
+    .settings-link.active {
+      border-color: rgba(33, 99, 255, 0.34);
+      background: rgba(33, 99, 255, 0.08);
+    }
+
+    .progress-bar {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(103, 120, 145, 0.14);
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-bar i {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #2163ff, #38c4ff);
+    }
+
+    .rule-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 1fr 110px;
+      align-items: center;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .rule-row.header {
+      background: rgba(20, 70, 189, 0.06);
+      color: var(--blue-deep);
+      font-weight: 800;
+    }
+
+    .rule-row .cell {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .split-caption {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .split-caption small {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 18px;
+      min-height: 760px;
+      background: linear-gradient(180deg, #f5f8fb, #eef3f8);
+      padding: 20px;
+    }
+
+    .settings-panel {
+      background: rgba(255, 255, 255, 0.90);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: var(--shadow-md);
+      padding: 20px;
+    }
+
+    .settings-block {
+      padding: 18px;
+      border-radius: 18px;
+      background: rgba(248, 250, 253, 0.92);
+      border: 1px solid var(--line);
+    }
+
+    .field-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .field {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: white;
+      border: 1px solid rgba(103, 120, 145, 0.16);
+    }
+
+    .field label {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .field span {
+      display: block;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .insight-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .insight-card {
+      min-height: 176px;
+    }
+
+    .insight-card ul {
+      margin: 12px 0 0;
+      padding-left: 18px;
+      color: var(--muted);
+      line-height: 1.9;
+      font-size: 14px;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .legend .tag {
+      justify-content: center;
+    }
+
+    .muted-title {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      line-height: 1.9;
+      font-size: 14px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px dashed rgba(103, 120, 145, 0.22);
+      border-radius: 18px;
+      padding: 16px 18px;
+    }
+
+    @media (max-width: 1300px) {
+      .hero,
+      .grid-2,
+      .settings-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .workspace,
+      .word-workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .batch-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .step-lane,
+      .mode-strip,
+      .grid-3,
+      .field-grid,
+      .insight-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .route-grid,
+      .pdf-canvas-grid,
+      .compare-shell {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 860px) {
+      body {
+        padding: 18px;
+      }
+
+      .hero h1 {
+        font-size: 30px;
+      }
+
+      .step-lane,
+      .mode-strip,
+      .grid-3,
+      .field-grid,
+      .insight-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">PrivacyGuard v38 概念稿 B · 保留现有逻辑版</div>
+        <h1>先让人一眼看懂，再让每条真实处理链都保留下来</h1>
+        <p>
+          这版不是为了“看起来高级就把功能砍薄”，而是按当前代码里的真实行为重新排布界面：
+          单个 PDF 走涂抹工作台，单个 Word 走替换与对比预览，多 Word 直接进入批量文档替换规则模式，多图片继续支持合并成 PDF。
+          第一眼更简洁，但底层逻辑不混、不藏、不误导。
+        </p>
+      </div>
+      <div class="hero-notes">
+        <div class="note-card">
+          <strong>你这套软件的真实模式，我已经按代码重新对齐</strong>
+          <span>PDF 主要是定位后涂黑/涂白导出。Word 主要是规则替换、智能匹配、手动替换，再导出替换后的文档。两条链分开设计，不再混成一个页面逻辑。</span>
+        </div>
+        <div class="note-card">
+          <strong>这版重点保留 4 个能力</strong>
+          <span>批量 Word 入口、可隐藏的对比预览、PDF 的黑/白即时切换、多图合并 PDF 与 .doc 转换链路，都会在原型里明确体现。</span>
+        </div>
+        <div class="note-card">
+          <strong>类比一句话</strong>
+          <span>不是让用户先研究软件，再自己猜该走哪条路；而是像医院前台分诊，文件一进来，软件先把人带到正确窗口。</span>
+        </div>
+      </div>
+    </section>
+
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-target="scene-routing">导入分流</button>
+      <button class="tab-btn" data-target="scene-pdf">PDF 工作台</button>
+      <button class="tab-btn" data-target="scene-word">Word 工作台</button>
+      <button class="tab-btn" data-target="scene-batch">批量 Word</button>
+      <button class="tab-btn" data-target="scene-settings">设置中心</button>
+      <button class="tab-btn" data-target="scene-why">通俗解释</button>
+    </nav>
+
+    <section class="scene active" id="scene-routing">
+      <div class="scene-header">
+        <div>
+          <h2>一上来先“分流”，不先把所有按钮堆满</h2>
+          <p>
+            这一步像医院分诊台，也像打印店前台。用户只要把文件拖进来，系统先判断“这是 PDF 涂抹、Word 替换、批量 Word，还是多图合并”。
+            这样第一眼看上去会很简洁，但并没有删除功能，只是把复杂度放到正确时机再出现。
+          </p>
+        </div>
+        <div class="tag-row">
+          <div class="tag">离线本地</div>
+          <div class="tag">Windows 优先</div>
+          <div class="tag">不砍功能</div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="drop-surface">
+          <div class="drop-title">把文件拖进来，软件先替你判断该走哪条业务线</div>
+          <div class="drop-sub">
+            这里不急着让用户先选黑白、单双页、OCR 微调、替换规则。先识别文件类型，再进入对应工作台。
+            这样小白第一次打开，也能大概理解“下一步该做什么”。
+          </div>
+          <div class="drop-row">
+            <div class="primary-chip">拖入单个 PDF</div>
+            <div class="soft-chip">拖入单个 Word</div>
+            <div class="soft-chip">拖入多个 Word</div>
+            <div class="soft-chip">拖入多张图片</div>
+            <div class="ghost-chip">支持 .pdf / .docx / .doc / 图片</div>
+          </div>
+        </div>
+
+        <div class="step-lane">
+          <div class="step">
+            <div class="step-num">1</div>
+            <strong>拖入或打开文件</strong>
+            <span>用户只做一个动作：把文件交给软件。</span>
+          </div>
+          <div class="step">
+            <div class="step-num">2</div>
+            <strong>自动识别类型</strong>
+            <span>判断是 PDF、单个 Word、多 Word，还是多图片。</span>
+          </div>
+          <div class="step">
+            <div class="step-num">3</div>
+            <strong>进入正确模式</strong>
+            <span>不同模式只显示当前需要的工具，不把逻辑混在一起。</span>
+          </div>
+          <div class="step">
+            <div class="step-num">4</div>
+            <strong>处理与复核</strong>
+            <span>PDF 用涂抹，Word 用替换，批量 Word 先规则后执行。</span>
+          </div>
+          <div class="step">
+            <div class="step-num">5</div>
+            <strong>导出结果</strong>
+            <span>PDF 输出永久脱敏文件，Word 输出替换后的新文档。</span>
+          </div>
+        </div>
+
+        <div class="route-grid">
+          <div class="route-card">
+            <div class="route-head">
+              <strong>单个 PDF</strong>
+              <div class="pill blue">进入 PDF 涂抹工作台</div>
+            </div>
+            <span>显示黑/白切换、单双页、缩放、翻页、手动画框、导出 PDF。逻辑像在复印件上盖黑条或白条。</span>
+          </div>
+
+          <div class="route-card">
+            <div class="route-head">
+              <strong>单个 Word</strong>
+              <div class="pill green">进入 Word 替换工作台</div>
+            </div>
+            <span>显示规则入口、智能匹配、原文/替换后对比预览、手动替换与导出 Word。逻辑像修订稿，不是涂抹稿。</span>
+          </div>
+
+          <div class="route-card">
+            <div class="route-head">
+              <strong>多个 Word</strong>
+              <div class="pill orange">直接进入批量文档替换规则模式</div>
+            </div>
+            <span>这点严格按现在代码逻辑强化表达：拖入多个 Word，不绕去主界面再点别的，而是直接弹到“先确认规则，再开始批量替换”的专用流程。</span>
+          </div>
+
+          <div class="route-card">
+            <div class="route-head">
+              <strong>多张图片</strong>
+              <div class="pill blue">排序后自动合并 PDF</div>
+            </div>
+            <span>保留当前的图片转 PDF 链路。用户先确认顺序，生成 PDF 后再自动进入 PDF 脱敏工作台。</span>
+          </div>
+
+          <div class="route-card">
+            <div class="route-head">
+              <strong>旧版 .doc</strong>
+              <div class="pill red">先转换，再进入 Word 模式</div>
+            </div>
+            <span>保留现有 `.doc -> .docx` 转换逻辑，优先 LibreOffice，必要时走 antiword 兜底，并在界面上给用户清楚提示。</span>
+          </div>
+
+          <div class="route-card">
+            <div class="route-head">
+              <strong>混合拖拽</strong>
+              <div class="pill red">明确拦截并提示</div>
+            </div>
+            <span>如果一次拖入的既不是“全图片”也不是“全 Word”，就清楚告诉用户当前不支持这种混合批处理，避免误会。</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="panel">
+          <h3>为什么这样排，第一眼会更简洁</h3>
+          <p>
+            因为用户第一次并不关心“高级设置里 OCR 框收缩要不要调 3%”，也不关心“PDF 双页按钮在哪”。
+            用户关心的是：我把文件放进来后，软件带我走哪条路。先分流，后出现相关工具，界面自然就干净了。
+          </p>
+        </div>
+        <div class="panel">
+          <h3>和中国办公软件习惯更贴近</h3>
+          <p>
+            中文办公场景更接受“先选文件，再处理，再导出”的顺序，而不是一上来给一排技术控件。
+            这种做法也更适合政务、律所、法务、行政人员的使用习惯。
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="scene-pdf">
+      <div class="scene-header">
+        <div>
+          <h2>PDF 工作台：核心是“涂抹”，不是替换</h2>
+          <p>
+            这里保留现有主工具栏逻辑，但把层级做清楚：打开、智能扫描、黑/白切换、单双页、缩放翻页、导出。
+            黑/白切换放在工具栏中段，随时可切，不进入设置。
+          </p>
+        </div>
+        <div class="tag-row">
+          <div class="tag">黑/白即时切换</div>
+          <div class="tag">单双页</div>
+          <div class="tag">手动画框</div>
+        </div>
+      </div>
+
+      <div class="window-shell" data-mask="black" id="pdfShell">
+        <div class="window-bar">
+          <div class="window-left">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="title-stack">
+              <div class="window-title">PrivacyGuard - PDF 脱敏工作台</div>
+              <div class="window-subtitle">像在复印件上做遮挡：先定位，再涂抹，再导出不可逆结果</div>
+            </div>
+          </div>
+          <div class="pill blue">当前模式：PDF 涂抹</div>
+        </div>
+
+        <div class="toolbar">
+          <button class="tool-btn primary">打开文件</button>
+          <button class="tool-btn secondary">高级设置</button>
+          <button class="tool-btn success">智能脱敏</button>
+          <div class="tool-segment" id="maskSwitch">
+            <button class="active" data-mask-value="black">黑</button>
+            <button data-mask-value="white">白</button>
+          </div>
+          <button class="tool-btn secondary">双页</button>
+          <button class="tool-btn ghost">适应</button>
+          <div class="spacer"></div>
+          <button class="tool-btn secondary">-</button>
+          <button class="tool-btn secondary">100%</button>
+          <button class="tool-btn secondary">+</button>
+          <button class="tool-btn secondary">上一页</button>
+          <button class="tool-btn secondary">2 / 12</button>
+          <button class="tool-btn secondary">下一页</button>
+          <button class="tool-btn primary">导出 PDF</button>
+        </div>
+
+        <div class="workspace">
+          <div class="workspace-body">
+            <div class="mode-strip">
+              <div class="mode-card">
+                <strong>智能扫描</strong>
+                <span>文本型 PDF 走文本层搜索，扫描型和混合型页面走图片区域 OCR，结果回到页面坐标里。</span>
+              </div>
+              <div class="mode-card">
+                <strong>手动画框</strong>
+                <span>像拿荧光笔框位置，但导出时不是高亮，是最终真正的遮挡块；右键可撤销。</span>
+              </div>
+              <div class="mode-card">
+                <strong>黑 / 白可切换</strong>
+                <span>黑色适合法律文书和公开展示，白色适合内部留版。这个是即时控制，不放在设置里。</span>
+              </div>
+            </div>
+
+            <div class="pdf-canvas-grid">
+              <div class="paper">
+                <div class="paper-header">
+                  <span>左页预览</span>
+                  <span>可手动画框</span>
+                </div>
+                <div class="text-line long"></div>
+                <div class="text-line mid"></div>
+                <div class="text-line long"></div>
+                <div class="text-line short"></div>
+                <div class="text-line long"></div>
+                <div class="text-line mid"></div>
+                <div class="text-line long"></div>
+                <div class="text-line short"></div>
+                <div class="mask" style="left: 120px; top: 168px; width: 168px; height: 18px;"></div>
+                <div class="mask" style="left: 182px; top: 242px; width: 132px; height: 20px;"></div>
+                <div class="mask" style="left: 78px; top: 362px; width: 216px; height: 28px;"></div>
+              </div>
+
+              <div class="paper">
+                <div class="paper-header">
+                  <span>右页预览</span>
+                  <span>双页开启时出现</span>
+                </div>
+                <div class="text-line long"></div>
+                <div class="text-line long"></div>
+                <div class="text-line mid"></div>
+                <div class="text-line short"></div>
+                <div class="text-line long"></div>
+                <div class="text-line mid"></div>
+                <div class="text-line long"></div>
+                <div class="mask" style="left: 94px; top: 204px; width: 188px; height: 18px;"></div>
+                <div class="mask" style="left: 228px; top: 432px; width: 92px; height: 18px;"></div>
+              </div>
+            </div>
+
+            <div class="hint-bar">
+              <div class="pill blue">操作顺序</div>
+              <span>智能脱敏找到大部分位置</span>
+              <span>不准的地方用手动画框补</span>
+              <span>黑 / 白即时切换</span>
+              <span>导出后生成永久脱敏 PDF</span>
+            </div>
+          </div>
+
+          <aside class="workspace-side">
+            <div class="muted-title">当前文档状态</div>
+            <div class="panel-list">
+              <div class="panel-item">
+                <div class="top"><span>文档类型</span><span>混合型 PDF</span></div>
+                <div class="bottom">既有可搜索文本，也有嵌入图片区域，需要两套定位结果合并。</div>
+              </div>
+              <div class="panel-item">
+                <div class="top"><span>遮挡颜色</span><span id="maskLabel">黑色</span></div>
+                <div class="bottom">这个开关应该在眼前，不应该埋进设置。用户做 PDF 时会频繁切换。</div>
+              </div>
+              <div class="panel-item">
+                <div class="top"><span>识别结果</span><span>13 处</span></div>
+                <div class="bottom">智能扫描 9 处，手动补充 4 处，导出时统一应用到页面中。</div>
+              </div>
+              <div class="panel-item">
+                <div class="top"><span>用户类比</span><span>复印件遮挡</span></div>
+                <div class="bottom">像把要公开的材料复印出来，再用黑条或白条盖住敏感内容。</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="scene-word">
+      <div class="scene-header">
+        <div>
+          <h2>Word 工作台：核心是“替换”，并且保留对比预览</h2>
+          <p>
+            这里不再展示 PDF 的黑/白、单双页工具，因为 Word 不是涂抹页面，而是替换文本并尽量保留格式。
+            原文预览和替换后预览默认可双栏对照，但右侧可一键隐藏，满足“对比有、又不强迫一直展开”的要求。
+          </p>
+        </div>
+        <div class="tag-row">
+          <div class="tag">规则替换</div>
+          <div class="tag">可隐藏对比预览</div>
+          <div class="tag">优先级：规则 > 手动 > 智能</div>
+        </div>
+      </div>
+
+      <div class="window-shell">
+        <div class="window-bar">
+          <div class="window-left">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="title-stack">
+              <div class="window-title">PrivacyGuard - Word 脱敏工作台</div>
+              <div class="window-subtitle">像改稿而不是涂稿：原文在左，替换结果在右，可随时收起右侧</div>
+            </div>
+          </div>
+          <div class="pill green">当前模式：Word 替换</div>
+        </div>
+
+        <div class="toolbar">
+          <button class="tool-btn primary">打开 Word</button>
+          <button class="tool-btn secondary">高级设置</button>
+          <button class="tool-btn secondary">替换规则</button>
+          <button class="tool-btn success">智能脱敏</button>
+          <button class="tool-toggle active" id="compareToggle">对比预览：已开启</button>
+          <button class="tool-btn secondary">来源筛选</button>
+          <div class="spacer"></div>
+          <button class="tool-btn primary">导出 Word</button>
+        </div>
+
+        <div class="word-workspace" data-compare="on" id="wordWorkspace">
+          <div class="word-main">
+            <div class="mode-strip">
+              <div class="mode-card">
+                <strong>规则替换</strong>
+                <span>支持 exact / regex，多字段规则保持会话级管理，适合规范化脱敏。</span>
+              </div>
+              <div class="mode-card">
+                <strong>智能匹配</strong>
+                <span>对段落和表格单元格做扫描，把命中位置写回预览模型里，便于继续人工修正。</span>
+              </div>
+              <div class="mode-card">
+                <strong>手动精修</strong>
+                <span>规则没覆盖到的内容，可以人工指定，再立即同步到右侧替换预览。</span>
+              </div>
+            </div>
+
+            <div class="compare-shell">
+              <div class="compare-pane">
+                <div class="compare-head">
+                  <span>原文预览</span>
+                  <div class="pill blue">可点选高亮</div>
+                </div>
+                <div class="doc-surface">
+                  <div class="doc-card">甲方联系人：<mark class="manual">张三</mark>，联系电话：<mark class="smart">13812345678</mark></div>
+                  <div class="doc-card">电子邮箱：<mark class="smart">test@example.com</mark></div>
+                  <div class="doc-card">委托人身份证号：<mark class="smart">110101199001011234</mark></div>
+                  <div class="doc-card">附注：本页原文保持不变，右侧只展示替换后的结果。</div>
+                </div>
+              </div>
+
+              <div class="compare-pane replaced">
+                <div class="compare-head">
+                  <span>替换后预览</span>
+                  <div class="pill green">可隐藏</div>
+                </div>
+                <div class="doc-surface">
+                  <div class="doc-card">甲方联系人：<mark class="rule">[姓名]</mark>，联系电话：<mark class="rule">[手机号]</mark></div>
+                  <div class="doc-card">电子邮箱：<mark class="rule">[邮箱]</mark></div>
+                  <div class="doc-card">委托人身份证号：<mark class="rule">[证件号]</mark></div>
+                  <div class="doc-card">这里不是给 PDF 那样盖黑块，而是把最终替换文本直接展示出来，方便核对导出结果。</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hint-bar">
+              <div class="pill green">对比逻辑</div>
+              <span>左边看原文命中位置</span>
+              <span>右边看最终替换后的文字</span>
+              <span>右侧可隐藏，回到单栏阅读</span>
+            </div>
+          </div>
+
+          <aside class="workspace-side">
+            <div class="muted-title">右侧说明</div>
+            <div class="panel-list">
+              <div class="panel-item">
+                <div class="top"><span>优先级</span><span>规则 > 手动 > 智能</span></div>
+                <div class="bottom">这和当前代码一致，避免同一区域被多来源重复覆盖时产生混乱。</div>
+              </div>
+              <div class="panel-item">
+                <div class="top"><span>对比预览</span><span>可开可关</span></div>
+                <div class="bottom">需要复核时就展开双栏；只想快速浏览文档时，可以隐藏右栏。</div>
+              </div>
+              <div class="panel-item">
+                <div class="top"><span>为什么不放黑/白</span><span>Word 不需要</span></div>
+                <div class="bottom">Word 导出是文本替换，不是页面涂抹，所以不要把 PDF 工具带进来干扰用户。</div>
+              </div>
+              <div class="panel-item">
+                <div class="top"><span>用户类比</span><span>批改修订稿</span></div>
+                <div class="bottom">像老师左边看原稿，右边看改后的版本，而不是拿马克笔把整页盖黑。</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="scene-batch">
+      <div class="scene-header">
+        <div>
+          <h2>批量 Word：先进入“文档替换规则模式”，再执行批量替换</h2>
+          <p>
+            这里明确体现你提的重点：如果用户直接拖入多个 Word，不应该先落回普通界面再自己找按钮，
+            而是直接进入这个批量工作台。并且这个工作台要有两个阶段感：先确认规则，再开始跑批处理。
+          </p>
+        </div>
+        <div class="tag-row">
+          <div class="tag">直接承接多 Word 拖拽</div>
+          <div class="tag">规则模式 + 执行模式</div>
+          <div class="tag">支持 .docx / .doc</div>
+        </div>
+      </div>
+
+      <div class="window-shell">
+        <div class="window-bar">
+          <div class="window-left">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="title-stack">
+              <div class="window-title">PrivacyGuard - 批量 Word 替换工作台</div>
+              <div class="window-subtitle">拖入 2 个及以上 Word 后直接到这里：先配规则，再批量执行</div>
+            </div>
+          </div>
+          <div class="pill orange">当前模式：批量 Word</div>
+        </div>
+
+        <div class="toolbar">
+          <button class="tool-btn primary">重新选择文件</button>
+          <button class="tool-btn secondary">导入规则 JSON</button>
+          <button class="tool-btn secondary">导出规则 JSON</button>
+          <button class="tool-btn success">开始批量替换</button>
+          <button class="tool-btn warning">停止任务</button>
+          <div class="spacer"></div>
+          <button class="tool-btn secondary">共 12 个文件</button>
+          <button class="tool-btn primary">查看输出目录</button>
+        </div>
+
+        <div class="batch-layout">
+          <div class="panel">
+            <div class="split-caption">
+              <strong>文件队列</strong>
+              <small>多 Word 拖拽后自动进入，不要求用户先回高级设置。</small>
+            </div>
+            <div class="queue-list">
+              <div class="queue-item active">
+                <strong>起诉状_01.docx</strong>
+                <span>状态：待处理</span>
+              </div>
+              <div class="queue-item">
+                <strong>证据目录_02.docx</strong>
+                <span>状态：待处理</span>
+              </div>
+              <div class="queue-item">
+                <strong>笔录_03.doc</strong>
+                <span>状态：将先转换为 .docx</span>
+              </div>
+              <div class="queue-item">
+                <strong>附录_04.docx</strong>
+                <span>状态：待处理</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="split-caption">
+              <strong>文档替换规则模式</strong>
+              <small>先让用户确认规则，再开始执行；这一步就是你强调要保留的“批量文档替换规则模式”。</small>
+            </div>
+            <div class="rule-table">
+              <div class="rule-row header">
+                <div class="cell">启用</div>
+                <div class="cell">模式</div>
+                <div class="cell">查找内容</div>
+                <div class="cell">替换为</div>
+              </div>
+              <div class="rule-row">
+                <div class="cell">开启</div>
+                <div class="cell">exact</div>
+                <div class="cell">张三</div>
+                <div class="cell">[姓名]</div>
+              </div>
+              <div class="rule-row">
+                <div class="cell">开启</div>
+                <div class="cell">regex</div>
+                <div class="cell">1[3-9]\d{9}</div>
+                <div class="cell">[手机号]</div>
+              </div>
+              <div class="rule-row">
+                <div class="cell">开启</div>
+                <div class="cell">regex</div>
+                <div class="cell">\d{17}[\dXx]</div>
+                <div class="cell">[证件号]</div>
+              </div>
+            </div>
+
+            <div class="footer-note">
+              这一块的通俗类比是“打印店先套版”。老板不会让你一上来就直接开印，而是先把统一替换规则确认好：
+              哪些名字替成什么、哪些手机号一律替成什么，然后再批量跑完整套文档。
+            </div>
+
+            <div class="split-caption" style="margin-top: 16px;">
+              <strong>批量替换执行模式</strong>
+              <small>规则确认后切换到执行进度。出错时保留“跳过继续 / 停止任务”的决策。</small>
+            </div>
+            <div class="progress-board">
+              <div class="progress-row">
+                <strong>总体进度</strong>
+                <span>8 / 12 已完成</span>
+                <div class="progress-bar"><i style="width: 68%;"></i></div>
+              </div>
+              <div class="progress-row">
+                <strong>当前文件</strong>
+                <span>证据目录_02.docx</span>
+                <div class="progress-bar"><i style="width: 54%;"></i></div>
+              </div>
+              <div class="progress-row">
+                <strong>输出命名</strong>
+                <span>原文件名 + <code>__replaced_时间戳.docx</code></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="split-caption">
+              <strong>处理结果与决策</strong>
+              <small>保留当前代码里的真实运行反馈。</small>
+            </div>
+            <div class="panel-list">
+              <div class="panel-item">
+                <div class="top"><span>成功</span><span>7 个</span></div>
+                <div class="bottom">已输出新文档，可继续处理剩余文件。</div>
+              </div>
+              <div class="panel-item">
+                <div class="top"><span>失败</span><span>1 个</span></div>
+                <div class="bottom">当前文件被占用，可让用户“跳过继续”或“停止任务”。</div>
+              </div>
+              <div class="panel-item">
+                <div class="top"><span>中断控制</span><span>随时可停</span></div>
+                <div class="bottom">停止时已完成的输出文件保留，不需要全盘回滚。</div>
+              </div>
+              <div class="panel-item">
+                <div class="top"><span>用户类比</span><span>批量套模板</span></div>
+                <div class="bottom">像行政一次处理 20 份合同，先确定统一替换规则，再跑整批文件。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="scene-settings">
+      <div class="scene-header">
+        <div>
+          <h2>设置中心：保留能力，但只放“需要长期记住”的内容</h2>
+          <p>
+            高级设置不应该再像一张又长又散的表。保留现有能力，但按用户能理解的分组重构。
+            这里放通用规则、自定义关键词、统一替换文本、Word 替换规则入口、扫描微调和 OCR 框调节；
+            PDF 的黑/白和单双页不放这里，因为那是工作台即时控制。
+          </p>
+        </div>
+        <div class="tag-row">
+          <div class="tag">保留高级设置</div>
+          <div class="tag">即时控件不塞进来</div>
+          <div class="tag">更像专业设置中心</div>
+        </div>
+      </div>
+
+      <div class="window-shell">
+        <div class="window-bar">
+          <div class="window-left">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="title-stack">
+              <div class="window-title">PrivacyGuard - 设置中心</div>
+              <div class="window-subtitle">只放“应该被记住”的配置，不把工作台即时工具塞进来</div>
+            </div>
+          </div>
+          <div class="pill blue">全局设置</div>
+        </div>
+
+        <div class="settings-layout">
+          <aside class="settings-panel">
+            <div class="muted-title">设置导航</div>
+            <div class="settings-nav">
+              <div class="settings-link active">
+                <strong>通用规则</strong>
+                <span>身份证、手机号、日期、邮箱、银行卡</span>
+              </div>
+              <div class="settings-link">
+                <strong>自定义关键词</strong>
+                <span>补充行业词、姓名、机构名</span>
+              </div>
+              <div class="settings-link">
+                <strong>Word 替换规则</strong>
+                <span>exact / regex、多字段、导入导出</span>
+              </div>
+              <div class="settings-link">
+                <strong>扫描与微调</strong>
+                <span>扫描倍数、偏移校准、图像增强</span>
+              </div>
+              <div class="settings-link">
+                <strong>OCR 检测框</strong>
+                <span>检测框扩大 / 收缩比例</span>
+              </div>
+            </div>
+          </aside>
+
+          <div class="settings-stack">
+            <div class="settings-panel">
+              <div class="settings-block">
+                <strong>通用规则与自定义关键词</strong>
+                <span>这些配置会影响 PDF 智能扫描和 Word 智能匹配，是“长期记住”的内容，适合放在设置中心。</span>
+                <div class="field-grid">
+                  <div class="field">
+                    <label>默认启用规则</label>
+                    <span>身份证号、手机号码、日期时间、电子邮箱、银行卡号</span>
+                  </div>
+                  <div class="field">
+                    <label>自定义关键词</label>
+                    <span>法院、甲方、被申请人、张三、案号关键字段</span>
+                  </div>
+                  <div class="field">
+                    <label>统一替换文本</label>
+                    <span>[已脱敏]</span>
+                  </div>
+                  <div class="field">
+                    <label>Word 替换规则入口</label>
+                    <span>保持原有弹窗逻辑，可新增、导入、导出、排序</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-panel">
+              <div class="settings-block">
+                <strong>精度与 OCR 微调</strong>
+                <span>这些参数更偏“系统校准”，适合放在设置，不适合每次摆在主工作台正中央。</span>
+                <div class="field-grid">
+                  <div class="field">
+                    <label>扫描模式</label>
+                    <span>标准 1.5x / 高精 2.0x / 超精 3.0x</span>
+                  </div>
+                  <div class="field">
+                    <label>向左修正</label>
+                    <span>0 px</span>
+                  </div>
+                  <div class="field">
+                    <label>宽度收缩</label>
+                    <span>0 px</span>
+                  </div>
+                  <div class="field">
+                    <label>OCR 检测框调节</label>
+                    <span>默认 0%，支持负值扩大、正值收缩</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="footer-note">
+              通俗类比：设置中心像汽车的“长期设定”，例如座椅记忆、后视镜角度；但方向盘、刹车、档位这些即时操作，应该留在驾驶时眼前。
+              所以 PDF 的黑 / 白、单双页、缩放，不应该被塞进高级设置。
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene" id="scene-why">
+      <div class="scene-header">
+        <div>
+          <h2>通俗解释：为什么这版会更像“现代产品”，但又不偏离你的软件</h2>
+          <p>
+            下面这部分专门用通俗类比讲给小白和产品视角听，不谈术语堆砌，只谈“用户一眼能不能懂、会不会走错、会不会觉得专业顺手”。
+          </p>
+        </div>
+        <div class="tag-row">
+          <div class="tag">通俗类比</div>
+          <div class="tag">按真实逻辑解释</div>
+          <div class="tag">Windows 友好</div>
+        </div>
+      </div>
+
+      <div class="insight-grid">
+        <div class="insight-card">
+          <strong>1. 为什么先做导入分流</strong>
+          <span>像医院前台分诊。病人一进来，不是让他自己研究 CT、抽血、挂哪个科，而是先问“你是什么情况”，然后带去正确窗口。</span>
+          <ul>
+            <li>单个 PDF 去“涂抹窗口”</li>
+            <li>单个 Word 去“替换窗口”</li>
+            <li>多个 Word 直接去“批量规则窗口”</li>
+            <li>多图片去“合并成 PDF 窗口”</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <strong>2. 为什么 PDF 和 Word 要分成两套工作台</strong>
+          <span>因为它们处理的不是同一类对象。PDF 更像一张已经排好的纸，Word 更像可编辑稿件。</span>
+          <ul>
+            <li>PDF 是页面级，重点是遮挡位置和导出不可逆</li>
+            <li>Word 是文本级，重点是替换内容和格式尽量保留</li>
+            <li>把它们混在一个操作区里，用户会反而更糊涂</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <strong>3. 为什么对比预览必须保留而且能隐藏</strong>
+          <span>像老师批作业。批改时你想看“原句”和“修改后”的区别；看完了，又希望桌面收干净，只保留主稿。</span>
+          <ul>
+            <li>需要复核时，打开双栏</li>
+            <li>只想浏览时，收起右栏</li>
+            <li>这比永远双栏或永远单栏都更灵活</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <strong>4. 为什么黑 / 白一定要在 PDF 工具栏里</strong>
+          <span>像复印时切黑白模式，不会有人把这个按钮藏进“高级设置”。这是当前任务的即时决定，必须眼前可见。</span>
+          <ul>
+            <li>法律文书公开常用黑色</li>
+            <li>内部留白版常用白色</li>
+            <li>用户处理过程中可能反复切换</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <strong>5. 为什么批量 Word 先规则后执行</strong>
+          <span>像打印店批量套模板。先把规则看清楚，再一键套到整批文件上，出了错还能选择跳过还是停止。</span>
+          <ul>
+            <li>用户看到多个 Word，就知道自己进了批量模式</li>
+            <li>不会误以为还在处理单个文档</li>
+            <li>规则模式和执行模式视觉上分明</li>
+          </ul>
+        </div>
+
+        <div class="insight-card">
+          <strong>6. 为什么这版更适合 Windows 用户</strong>
+          <span>因为它不走花哨但不稳的桌面特效路线，而是更强调清晰边界、鼠标命中区、白底高对比、流程直接、标题明确。</span>
+          <ul>
+            <li>更像现代办公工具，而不是网页拼装工具</li>
+            <li>更适合 125% / 150% 缩放下的阅读和操作</li>
+            <li>保留系统窗口习惯，对 Win 用户更友好</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>这一版具体满足了你这次点名的 3 个修改要求</h3>
+        <div class="legend">
+          <div class="tag">1. 批量 Word 拖入后直接进入文档替换规则模式</div>
+          <div class="tag">2. 对比预览保留，并可隐藏</div>
+          <div class="tag">3. PDF 与 Word 两套逻辑彻底分开</div>
+        </div>
+        <p style="margin-top: 14px;">
+          另外我还顺手把当前代码里真实存在的链路也保留进去了：多图片合并 PDF、旧版 .doc 转换、Word 规则导入导出、批量任务停止/跳过、PDF 黑白与单双页可见控制。
+          也就是说，这版的“简洁”不是减功能，而是减误解、减混乱、减第一次上手的负担。
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const tabButtons = document.querySelectorAll(".tab-btn");
+    const scenes = document.querySelectorAll(".scene");
+
+    tabButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = button.dataset.target;
+        tabButtons.forEach((btn) => btn.classList.toggle("active", btn === button));
+        scenes.forEach((scene) => scene.classList.toggle("active", scene.id === target));
+      });
+    });
+
+    const compareToggle = document.getElementById("compareToggle");
+    const wordWorkspace = document.getElementById("wordWorkspace");
+
+    compareToggle.addEventListener("click", () => {
+      const enabled = wordWorkspace.dataset.compare !== "off";
+      wordWorkspace.dataset.compare = enabled ? "off" : "on";
+      compareToggle.classList.toggle("active", !enabled);
+      compareToggle.textContent = enabled ? "对比预览：已隐藏" : "对比预览：已开启";
+    });
+
+    const pdfShell = document.getElementById("pdfShell");
+    const maskLabel = document.getElementById("maskLabel");
+    const maskButtons = document.querySelectorAll("#maskSwitch button");
+
+    maskButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        maskButtons.forEach((item) => item.classList.remove("active"));
+        btn.classList.add("active");
+        const mode = btn.dataset.maskValue;
+        pdfShell.dataset.mask = mode;
+        maskLabel.textContent = mode === "black" ? "黑色" : "白色";
+      });
+    });
+  </script>
+</body>
+</html>

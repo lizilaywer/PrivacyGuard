@@ -1,12 +1,12 @@
 #!/bin/bash
 # PrivacyGuard 完整打包脚本 (macOS)
-# 包含清理、构建、清理打包目录、创建 DMG
+# 包含清理、构建、清理打包目录、签名、创建 DMG
 
-set -e
+set -euo pipefail
 
 echo "======================================"
 echo "  PrivacyGuard 完整打包脚本 (macOS)"
-echo "  版本: v37.5.0 (Seal Detection)"
+echo "  版本: from version.txt"
 echo "======================================"
 echo ""
 
@@ -15,10 +15,35 @@ PROJECT_DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
 cd "$PROJECT_DIR"
 
 APP_NAME="PrivacyGuard"
-VERSION=$(cat "$PROJECT_DIR/version.txt")
+VERSION=$(tr -d '[:space:]' < "$PROJECT_DIR/version.txt")
 DIST_DIR="$PROJECT_DIR/dist"
+BUILD_DIR="$PROJECT_DIR/build"
 RELEASE_DIR="$PROJECT_DIR/releases/macos"
 CONFIG_DIR="$PROJECT_DIR/packaging/macos/config"
+APP_PATH="$DIST_DIR/$APP_NAME.app"
+DMG_NAME="${APP_NAME}-${VERSION}-macOS.dmg"
+DMG_PATH="$RELEASE_DIR/$DMG_NAME"
+CODESIGN_IDENTITY="${PRIVACYGUARD_CODESIGN_IDENTITY:--}"
+PYINSTALLER_CONFIG_DIR="$BUILD_DIR/.pyinstaller-cache"
+
+create_plain_dmg() {
+    local temp_dir
+    temp_dir="$(mktemp -d "${TMPDIR:-/tmp}/privacyguard_dmg.XXXXXX")"
+    rm -f "$DMG_PATH"
+    cp -R "$APP_PATH" "$temp_dir/"
+    ln -s /Applications "$temp_dir/Applications"
+    if hdiutil create \
+        -volname "$APP_NAME" \
+        -srcfolder "$temp_dir" \
+        -ov \
+        -format UDZO \
+        "$DMG_PATH" >/dev/null; then
+        rm -rf "$temp_dir"
+        return 0
+    fi
+    rm -rf "$temp_dir"
+    return 1
+}
 
 echo "[INFO] 应用名称: $APP_NAME"
 echo "[INFO] 版本: $VERSION"
@@ -27,8 +52,14 @@ echo ""
 
 # ========== 阶段 1: 环境检查 ==========
 echo "[阶段 1/7] 环境检查..."
-if [ ! -d "$PROJECT_DIR/venv" ]; then
-    echo "[ERROR] 虚拟环境不存在!"
+VENV_PATH=""
+if [ -f "$PROJECT_DIR/venvmac/bin/activate" ]; then
+    VENV_PATH="$PROJECT_DIR/venvmac"
+elif [ -f "$PROJECT_DIR/venv/bin/activate" ]; then
+    VENV_PATH="$PROJECT_DIR/venv"
+fi
+if [ -z "$VENV_PATH" ]; then
+    echo "[ERROR] 虚拟环境不存在! (期望 venvmac 或 venv)"
     exit 1
 fi
 if [ ! -f "$CONFIG_DIR/PrivacyGuard.spec" ]; then
@@ -37,7 +68,7 @@ if [ ! -f "$CONFIG_DIR/PrivacyGuard.spec" ]; then
 fi
 # 检查 create-dmg 是否安装
 if ! command -v create-dmg &> /dev/null; then
-    echo "[WARN] create-dmg 未安装，将只生成 .app 而不生成 DMG"
+    echo "[WARN] create-dmg 未安装，将回退到 hdiutil 创建标准 DMG"
     echo "       安装: brew install create-dmg"
     CREATE_DMG_AVAILABLE=false
 else
@@ -52,11 +83,11 @@ if [ -d "$DIST_DIR" ]; then
     rm -rf "$DIST_DIR"
     echo "[OK] 已删除旧 dist/"
 fi
-if [ -d "$PROJECT_DIR/build" ]; then
-    rm -rf "$PROJECT_DIR/build"
+if [ -d "$BUILD_DIR" ]; then
+    rm -rf "$BUILD_DIR"
     echo "[OK] 已删除旧 build/"
 fi
-mkdir -p "$RELEASE_DIR"
+mkdir -p "$BUILD_DIR" "$PYINSTALLER_CONFIG_DIR" "$RELEASE_DIR"
 echo ""
 
 # ========== 阶段 3: 构建应用 ==========
@@ -64,8 +95,16 @@ echo "[阶段 3/7] 构建应用..."
 echo "[INFO] 这可能需要 5-15 分钟，请等待..."
 echo ""
 
-source "$PROJECT_DIR/venv/bin/activate"
-pyinstaller --clean --noconfirm "$CONFIG_DIR/PrivacyGuard.spec"
+source "$VENV_PATH/bin/activate"
+
+if ! python3 -c "import PyInstaller" 2>/dev/null; then
+    echo "[INFO] 当前环境未安装 PyInstaller，正在安装..."
+    python3 -m pip install pyinstaller
+fi
+
+export PYINSTALLER_CONFIG_DIR
+echo "[INFO] 使用本地 PyInstaller 缓存: $PYINSTALLER_CONFIG_DIR"
+python3 -m PyInstaller --clean --noconfirm "$CONFIG_DIR/PrivacyGuard.spec"
 
 if [ $? -ne 0 ]; then
     echo ""
@@ -77,7 +116,6 @@ echo ""
 
 # ========== 阶段 4: 验证应用 ==========
 echo "[阶段 4/7] 验证应用..."
-APP_PATH="$DIST_DIR/$APP_NAME.app"
 
 if [ ! -d "$APP_PATH" ]; then
     echo "[ERROR] 应用构建失败: $APP_PATH 不存在"
@@ -136,12 +174,13 @@ xattr -cr "$APP_PATH" 2>/dev/null || true
 echo "  [OK] 移除 quarantine 属性"
 
 # 验证签名（如果存在开发者证书）
-if security find-identity -v -p codesigning 2>/dev/null | grep -q "Developer"; then
-    echo "  [INFO] 检测到开发者证书，尝试签名..."
-    codesign --force --deep --sign - "$APP_PATH" 2>/dev/null || true
-    echo "  [OK] 已使用临时签名"
+if [ "$CODESIGN_IDENTITY" != "-" ]; then
+    echo "  [INFO] 使用开发者证书签名: $CODESIGN_IDENTITY"
+    codesign --force --deep --options runtime --sign "$CODESIGN_IDENTITY" \
+        --entitlements "$CONFIG_DIR/entitlements.plist" "$APP_PATH"
+    echo "  [OK] 已完成开发者签名"
 else
-    echo "  [INFO] 无开发者证书，使用临时签名"
+    echo "  [INFO] 未设置 PRIVACYGUARD_CODESIGN_IDENTITY，使用临时签名"
     codesign --force --deep --sign - "$APP_PATH" 2>/dev/null || true
 fi
 
@@ -152,12 +191,11 @@ echo ""
 
 # ========== 阶段 7: 创建 DMG ==========
 echo "[阶段 7/7] 创建发布文件..."
+rm -f "$DMG_PATH" "$DMG_PATH.sha256"
 
 if [ "$CREATE_DMG_AVAILABLE" = true ]; then
-    DMG_NAME="${APP_NAME}-v${VERSION}-macOS.dmg"
     echo "[INFO] 创建 DMG 文件..."
-
-    create-dmg \
+    if create-dmg \
         --volname "$APP_NAME" \
         --window-pos 200 120 \
         --window-size 800 400 \
@@ -166,26 +204,30 @@ if [ "$CREATE_DMG_AVAILABLE" = true ]; then
         --icon "$APP_NAME.app" 200 185 \
         --hide-extension "$APP_NAME.app" \
         "$RELEASE_DIR/$DMG_NAME" \
-        "$APP_PATH" \
-        2>/dev/null || true
-
-    if [ -f "$RELEASE_DIR/$DMG_NAME" ]; then
+        "$APP_PATH"; then
         echo "[OK] DMG 创建成功: releases/macos/$DMG_NAME"
-        DMG_SIZE=$(du -sh "$RELEASE_DIR/$DMG_NAME" | cut -f1)
-        echo "[INFO] DMG 大小: $DMG_SIZE"
-
-        # 生成校验和
-        echo "[INFO] 生成 SHA256 校验和..."
-        shasum -a 256 "$RELEASE_DIR/$DMG_NAME" > "$RELEASE_DIR/$DMG_NAME.sha256"
-        echo "[OK] 校验和已保存"
     else
-        echo "[WARN] DMG 创建失败，将复制 .app 到 release 目录"
-        cp -R "$APP_PATH" "$RELEASE_DIR/"
+        echo "[WARN] create-dmg 失败，回退到 hdiutil 方案"
+        create_plain_dmg || true
     fi
 else
-    echo "[INFO] create-dmg 不可用，复制 .app 到 release 目录"
+    echo "[INFO] create-dmg 不可用，使用 hdiutil 创建标准 DMG"
+    create_plain_dmg || true
+fi
+
+if [ -f "$DMG_PATH" ]; then
+    DMG_SIZE=$(du -sh "$DMG_PATH" | cut -f1)
+    echo "[INFO] DMG 大小: $DMG_SIZE"
+
+    # 生成校验和
+    echo "[INFO] 生成 SHA256 校验和..."
+    shasum -a 256 "$DMG_PATH" > "$DMG_PATH.sha256"
+    echo "[OK] 校验和已保存"
+else
+    echo "[WARN] DMG 创建失败，将复制 .app 到 release 目录"
+    rm -rf "$RELEASE_DIR/$APP_NAME.app"
     cp -R "$APP_PATH" "$RELEASE_DIR/"
-    echo "[OK] 应用已复制到 releases/macos/"
+    echo "[OK] 应用已复制到 releases/macos/$APP_NAME.app"
 fi
 
 echo ""
@@ -196,25 +238,18 @@ echo "  [OK] 打包完成!"
 echo "======================================"
 echo ""
 echo "输出文件:"
-if [ "$CREATE_DMG_AVAILABLE" = true ] && [ -f "$RELEASE_DIR/$DMG_NAME" ]; then
+if [ -f "$DMG_PATH" ]; then
     echo "  - DMG 安装包: releases/macos/$DMG_NAME"
     echo "  - 校验和: releases/macos/$DMG_NAME.sha256"
+    echo ""
+    echo "使用说明:"
+    echo "  1. 双击挂载，拖拽到 Applications 文件夹"
+    echo "  2. 如需外发，建议继续做签名和公证"
 else
     echo "  - 应用包: releases/macos/$APP_NAME.app"
-fi
-echo ""
-echo "使用说明:"
-echo "  1. DMG: 双击挂载，拖拽到 Applications 文件夹"
-echo "  2. APP: 直接双击运行"
-echo "  3. 首次运行需在系统偏好设置中允许"
-echo ""
-
-# 询问是否测试
-read -p "是否立即测试运行? (y/n): " TEST_NOW
-if [[ $TEST_NOW == "y" || $TEST_NOW == "Y" ]]; then
     echo ""
-    echo "[TEST] 启动测试..."
-    open "$APP_PATH"
+    echo "使用说明:"
+    echo "  1. 直接双击运行 .app"
+    echo "  2. 首次运行需在系统偏好设置中允许"
 fi
-
 echo ""

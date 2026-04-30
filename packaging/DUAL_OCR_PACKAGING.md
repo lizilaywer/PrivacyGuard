@@ -1,115 +1,79 @@
-# PrivacyGuard v37.4.1 单 OCR 引擎打包说明
+# PrivacyGuard OCR 打包说明（RapidOCR 单引擎）
 
 ## 概述
 
-v37.4.1 已完全移除 PaddleOCR，只保留 RapidOCR 单引擎架构。打包配置已相应简化。
+历史文件名沿用 `DUAL_OCR_PACKAGING.md`，但当前项目已固定为 **RapidOCR 单引擎**。  
+Windows 与 macOS 的 active 打包配置都按单 OCR 路径维护，不再包含 PaddleOCR 依赖。
 
-## 变更记录
+当前发布基线：`v37.7.4`  
+版本来源：项目根目录 `version.txt`
 
-### v37.4.1 - 单引擎架构
-- 移除 PaddleOCR 引擎及相关代码
-- 移除 PaddleOCR 模型文件（约 100MB）
-- 简化打包配置
-- 修复 Windows 11 深色模式对话框显示问题
-
-### v37.2.0 (历史) - 双 OCR 引擎
-- 曾支持 RapidOCR + PaddleOCR 双引擎
-- 因 PaddleOCR 3.4 Y 轴偏移问题无法解决，已完全移除
+---
 
 ## 当前 OCR 架构
 
-```
+```text
 privacyguard/ocr/
-├── __init__.py      # 模块导出
-├── base.py          # 基类和数据结构
-├── rapidocr.py      # RapidOCR 引擎（唯一引擎）
-└── manager.py       # 引擎管理器（简化）
+├── __init__.py
+├── base.py
+├── manager.py
+├── mixed_pdf.py
+├── rapidocr.py
+└── text_pdf.py
 ```
 
-## PyInstaller 配置
+说明：
+- `text_pdf.py` 处理文本型 PDF 命中
+- `mixed_pdf.py` 处理混合型 PDF 中的图片块 OCR
+- 当前不存在双引擎切换发布路径
+
+---
+
+## 关键打包文件
 
 ### Windows
 
-spec 文件: `packaging/windows/config/PrivacyGuard_windows.spec`
-
-关键配置:
-- 收集 `rapidocr_onnxruntime` 模块
-- 排除 `paddleocr` 和 `paddlepaddle`
-- 包含 VC++ 运行时 DLL
-
-### macOS
-
-spec 文件: `packaging/macos/config/PrivacyGuard.spec`
-
-关键配置:
-- 收集 `rapidocr_onnxruntime` 模块
-- 排除 `paddleocr` 和 `paddlepaddle`
-- 应用版本号: 37.4.1
-
-## 打包步骤
+- spec: `packaging/windows/config/PrivacyGuard_windows.spec`
+- 历史增强 spec: `packaging/windows/config/PrivacyGuard_windows_v2.spec`（保留归档，不作为当前正式主链）
+- 版本资源生成：`packaging/windows/scripts/generate_version_info.py`
+- 推荐脚本：
+  - 便携版：`packaging/windows/scripts/build_complete.bat`
+  - 安装版：`packaging/windows/scripts/3_build_with_setup.bat`
+- 产物：
+  - `releases/windows/PrivacyGuard-v<version>-Windows-Portable.zip`
+  - `releases/windows/PrivacyGuard-<version>-Setup.exe`
 
 ### macOS
+
+- spec: `packaging/macos/config/PrivacyGuard.spec`
+- 推荐脚本：`packaging/macos/scripts/build_complete.sh`
+- 产物：
+  - `releases/macos/PrivacyGuard-<version>-macOS.dmg`
+  - `releases/macos/PrivacyGuard-<version>-macOS.dmg.sha256`
+
+---
+
+## 打包前检查
 
 ```bash
-# 运行打包脚本
-./packaging/macos/scripts/build_complete.sh
-
-# 输出位置
-# - 应用包: dist/PrivacyGuard.app
-# - DMG 安装包: releases/macos/PrivacyGuard-v37.4.1-macOS.dmg
+python3 -c "import rapidocr_onnxruntime; print('rapidocr ok')"
 ```
 
-### Windows
-
-```batch
-# 完整打包（推荐）
-packaging\windows\scripts\build_complete.bat
-
-# 输出位置
-# - 便携版: dist/PrivacyGuard/
-# - 安装程序: releases/windows/PrivacyGuard-v37.4.1-Windows-Setup.exe
+```bash
+python3 -c "import paddleocr" 2>&1 | grep -E "No module named|ModuleNotFoundError"
 ```
 
-## 验证打包
+第二条命令应显示未安装 PaddleOCR，说明当前环境仍然是单 OCR 打包基线。
 
-启动应用后，检查日志输出：
-
-```
-[OCR] RapidOCR 已初始化
-```
-
-如果 OCR 未初始化，检查：
-1. `rapidocr_onnxruntime` 是否正确安装
-2. PyInstaller 是否正确收集模块
-
-## 文件大小预估
-
-- RapidOCR 模型: ~20MB
-- 应用本身: ~150MB
-- **总计**: ~170MB（压缩后约 80MB）
-
-相比双引擎版本减少约 100MB（PaddleOCR 模型）。
+---
 
 ## 注意事项
 
-1. 确保 `requirements.txt` 中不包含 `paddleocr` 或 `paddlepaddle`
-2. 打包前运行 `pip install -r requirements.txt` 安装最新依赖
-3. Windows 打包需要安装 VC++ Redistributable 2015-2022
+1. 依赖安装请以 `requirements.txt` 为准。
+2. Windows 发布建议同时验证 `launcher_wrapper.bat` 启动路径。
+3. macOS 若需要签名与公证，请使用环境变量传入证书和 notary 凭据，避免手改脚本。
+4. 版本号统一维护在 `version.txt`，Windows EXE 版本资源由构建脚本自动同步。
+5. Windows / macOS 打包脚本已统一改为使用当前环境中的 PyInstaller，并使用项目内缓存目录，避免依赖全局缓存。
+6. PyInstaller 打包模块导入失败修复属于 Windows 打包可导入性修复，不改变 OCR 单引擎结构。
 
-## 依赖检查
-
-打包前请确认依赖：
-
-```bash
-# 检查 rapidocr 是否安装
-python -c "import rapidocr_onnxruntime; print('OK')"
-
-# 检查 paddleocr 是否已移除（应该报错）
-python -c "import paddleocr" 2>&1 | grep "No module"
-```
-
-## 相关文档
-
-- [Windows 打包指南](./windows/docs/WINDOWS_BUILD_GUIDE.md)
-- [macOS 打包指南](./macos/docs/MACOS_BUILD_GUIDE.md)
-- [项目 README](./README.md)
+最后更新：2026-03-18

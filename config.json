@@ -42,11 +42,17 @@
         "pattern": "(?<!\\d)([1-9]\\d{12,18})(?!\\d)",
         "enabled": true,
         "description": "匹配13-19位银行卡号"
+      },
+      "印章": {
+        "pattern": "__SEAL_DETECTION__",
+        "enabled": false,
+        "description": "使用 OpenCV 自动检测并脱敏红色印章区域（基于颜色和形状分析）"
       }
     },
-    "replacement_text": "[已脱敏]",
+    "replacement_text": "*",
+    "custom_keywords": "人",
     "scan": {
-      "default_level": 1.0,
+      "default_level": 1.5,
       "available_levels": [
         1.0,
         1.5,

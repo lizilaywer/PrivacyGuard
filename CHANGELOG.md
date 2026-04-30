@@ -4,6 +4,186 @@
 
 ---
 
+## [Unreleased]
+
+### 🔄 下一步
+
+- 真机截图驱动的最后一轮观感抛光
+- 正式发布前的 Windows / macOS 产物验收
+
+---
+
+## [37.7.4] - 2026-03-18
+
+### 🚀 发布审查与版本同步
+
+- 定义补丁版本：`v37.7.4`
+- 版本标识更新为：`37.7.4 - Release Audit and Final Polish`
+- 当前 active 文档、打包说明、恢复入口、项目索引已统一同步到 `v37.7.4`
+- Windows 版本资源已重新生成并同步到 `37.7.4.0`
+- Windows 安装器默认回退版本已同步到 `37.7.4`
+- 当前主回归基线已统一到 `52/52`
+
+### 🧹 运行时体验收口
+
+- 修复首次从空首页点击“选择文件”前先清理资源导致的首页抖动
+- 保留“已有文档时先清理”的原有逻辑，不影响后续再次打开文件的资源回收
+
+### 🖼️ Word 预览稳定性与性能
+
+- 修复带嵌入图片的 Word 文档可能空白、打不开的问题
+- 嵌入图片预览改为落地临时资源目录加载，避免双栏 HTML 内联超大 `base64 data URI`
+- 大文档首开性能得到改善，双栏预览资源重复膨胀问题已收口
+
+### 📝 批量 Word 结果摘要增强
+
+- 批量结果页左下角“本轮摘要”现在会展示：
+  - 本次替换规则
+  - 每条规则在各文档中的成功替换条数
+- 结果摘要不再只显示文档总数和成功/失败数量
+
+### ✅ 验证
+
+- `python3 -m compileall -q main.py privacyguard tests packaging`
+- 主回归：`52/52` 通过
+- `python3 packaging/windows/scripts/generate_version_info.py`
+
+---
+
+## [37.7.3] - 2026-03-11
+
+### 🐛 Bug 修复
+
+#### PyInstaller 打包模块导入失败修复
+
+**问题现象**：
+- Windows 打包完成后，打开应用出现错误弹窗：`ModuleNotFoundError: No module named 'privacyguard.utils.security'`
+
+**根因**：
+- `privacyguard/utils/security.py` 第 56 行存在 f-string 语法错误
+- Python 3.11 不允许在 f-string 的 `{}` 表达式中直接使用反斜杠
+- 语法错误导致模块无法被导入，PyInstaller 的 `collect_submodules()` 返回空列表
+
+**修复内容**：
+- 修复 `privacyguard/utils/security.py` 中的 f-string 语法错误
+- 将反斜杠先赋值给变量，再在 f-string 中使用
+- 将 `privacyguard/__init__.py`、`privacyguard/utils/__init__.py`、`privacyguard/ocr/__init__.py` 中的相对导入改为绝对导入
+- 优化 `packaging/windows/config/PrivacyGuard_windows.spec` 中的 hiddenimports 配置
+- 添加 `packaging/windows/config/hook-privacyguard.py` hook 文件
+- 添加 `packaging/windows/config/runtime_hook_privacyguard.py` 运行时 hook
+
+**经验教训**：
+- 仔细阅读打包日志，不要忽略任何 WARNING
+- Python 3.11 对 f-string 的语法检查更严格
+- 语法错误会导致模块无法导入，进而影响 PyInstaller 的模块检测
+
+---
+
+## [37.7.2] - 2026-03-10
+
+### 📦 版本/文档/打包方案同步
+- 定义补丁版本：`v37.7.2`
+- 版本标识更新为：`37.7.2 - Word Preview Refresh Fix`
+- active 文档、日志、恢复入口、快速上手文档已同步到当前基线
+- `packaging/` 与 `docs/packaging/` 当前打包方案已同步到 `v37.7.2`
+- Windows 默认安装器版本与 EXE 版本资源已同步到 `37.7.2`
+
+### 🪲 Word 预览增量刷新修复
+- **修复正文块误更新**：修复 Word 原文预览在“高级设置 -> 保存”后出现异常红色高亮的问题。
+- **根因修正**：增量更新脚本改为只更新正文块容器，不再误更新带 `data-key` 的高亮 `<mark>` 节点，避免嵌套高亮和串位。
+- **块标记补齐**：Word HTML 块映射统一增加 `data-word-block="1"` 标记，`BeautifulSoup` 和 regex fallback 两条路径都一致。
+- **测试补充**：新增针对增量刷新选择器和 regex fallback 块标记的回归测试。
+
+### ✅ 测试
+- `python3 packaging/windows/scripts/generate_version_info.py`：通过
+- `python3 -m compileall -q main.py privacyguard tests`：通过
+- 主回归：`28/28` 通过
+
+---
+
+## [37.7.1] - 2026-03-09
+
+### 📦 发布同步
+- 定义补丁版本：`v37.7.1`
+- 版本标识更新为：`37.7.1 - Mixed PDF OCR Hotfix`
+- active 文档、日志、快速入口、恢复指南已同步到当前基线
+- `packaging/` 与 `docs/packaging/` 当前打包方案已同步到 `v37.7.1`
+- Windows 默认安装器版本与 EXE 版本资源已同步
+
+### 🖼️ 混合型 PDF OCR 热修复
+
+- **修复混合页漏脱敏**：修复“同一页文本层能脱敏、嵌入图片 / 扫描区域漏脱敏”的问题。
+- **混合扫描链路**：PDF 页面改为统一执行：
+  - 文本层命中
+  - 图片块 OCR 命中
+  - 无文本层时回退整页 OCR
+- **共享图片块逻辑**：新增 `privacyguard/ocr/mixed_pdf.py`，统一图片块提取、裁剪渲染、OCR 命中与坐标偏移。
+- **双实现同步**：`main.py` 与 `privacyguard/workers/ocr_worker.py` 同步接入，避免主链和模块化 worker 再次漂移。
+
+### 🔒 运行时安全与导入稳定性整改
+- **路径校验统一**：`main.py` 不再保留旧版前缀判断，统一使用共享安全实现。
+- **包级懒导入**：`privacyguard` 与 `privacyguard.workers` 改为懒导入，避免 `import privacyguard` 时因 OCR 依赖缺失直接崩溃。
+- **OCR worker 延迟初始化**：RapidOCR 改为在真正执行 OCR 时初始化。
+
+### ⚡ 文本型 PDF 与 Word 预览性能整改
+- **文本 PDF 去重**：重复命中的同一字符串只搜索一次，避免重复追加相同矩形。
+- **共享文本页实现**：新增 `privacyguard/ocr/text_pdf.py`，主程序与模块化 worker 共用。
+- **Word 预览局部更新**：左右预览改为按 `data-key` 局部刷新，不再依赖整页重绘作为活动路径。
+- **原文高亮改造**：左侧高亮改为分块构建，降低重复文本串位风险。
+- **compare 空白热修复**：修复右侧“替换后预览”从空白页首次切入 compare 模式时不加载文档、导致整块空白的问题。
+
+### 💾 配置与版本一致性
+- **设置真正持久化**：`SimpleConfig` 新增 `save()`，设置对话框改为批量写入后统一落盘。
+- **新增持久化项**：`redaction.custom_keywords`
+- **版本来源统一**：应用主版本和包版本统一从 `version.txt` 读取。
+
+### ✅ 测试
+- 新增并通过：
+  - 混合型 PDF 图片块 OCR 测试
+  - 路径前缀绕过测试
+  - `privacyguard` 安全导入测试
+  - 文本型 PDF 去重测试
+  - 配置保存测试
+  - 原文高亮分段测试
+  - compare 模式空白页 reload 判定测试
+- 当前回归：`26/26` 通过
+
+---
+
+## [37.7.0] - 2026-03-02
+
+### 🆕 Word 多字段替换与批量替换（Phase 1 落地）
+
+#### 新增功能
+- **多字段替换规则引擎**：支持 `exact/regex`、多规则启用开关、顺序执行、JSON 导入导出。
+- **单文档替换规则弹窗**：保持原有规则弹窗交互，支持会话级规则编辑和应用。
+- **批量替换流程**：支持 `.docx + .doc`，`.doc` 优先 LibreOffice 转换，失败回退 antiword。
+- **批量进度与错误决策**：底部进度同步，失败可选“跳过继续/停止任务”。
+
+#### 交互与 UI 改进
+- **批量替换入口并入“打开/拖拽”**：
+  - 当选择或拖拽 `>=2` 个 Word 文件时，自动进入批量替换流程。
+  - 启动批量前会先弹出“替换规则设置”界面，避免强制先去高级设置。
+- **高级设置整合**：
+  - “统一替换文本”并入“2. 自定义关键词”右侧区域。
+  - 新增“打开替换规则设置”入口按钮（复用原规则弹窗）。
+- **Word 双栏预览优化**：
+  - 顶部“原文预览/替换后预览”标题区改为紧凑头部，降低视觉拥挤。
+
+#### 预览融合修复（关键）
+- **替换后预览改为融合渲染**：右侧预览统一展示三类处理结果：
+  - 规则替换
+  - 手动脱敏
+  - 智能脱敏
+- **统一优先级**：`规则替换 > 手动脱敏 > 智能脱敏`。
+- **统一高亮**：右侧预览对所有已替换字段使用一致高亮样式，且撤回后实时同步消失。
+
+#### 稳定性与测试
+- 新增规则分段融合单元测试，覆盖“规则+手动”组合替换分段输出。
+- 本轮回归：路径安全、OCR API、Word 规则、Word 批量等测试通过。
+
+---
+
 ## [37.6.0] - 2026-02-28
 
 ### 🎯 文件拖拽打开功能
@@ -755,5 +935,5 @@ self.zoom_level = min(zoom_w, zoom_h)  # 确保完整显示
 
 ---
 
-**最后更新**: 2026-02-16
-**当前版本**: v36.0 (正式发布版)
+**最后更新**: 2026-03-18
+**当前版本**: v37.7.4 (Release Audit and Final Polish)

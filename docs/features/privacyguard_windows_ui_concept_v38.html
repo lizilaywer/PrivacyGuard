@@ -1,0 +1,1890 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PrivacyGuard v38 Windows UI 概念稿</title>
+  <style>
+    :root {
+      --bg: #d8dde6;
+      --bg-deep: #c9d0db;
+      --surface: rgba(250, 252, 255, 0.86);
+      --surface-strong: #f7f9fc;
+      --surface-dark: #0f1720;
+      --panel: rgba(255, 255, 255, 0.78);
+      --panel-strong: #ffffff;
+      --panel-soft: #f2f5f9;
+      --line: rgba(24, 41, 62, 0.12);
+      --line-strong: rgba(24, 41, 62, 0.18);
+      --text: #152033;
+      --text-soft: #5a6980;
+      --text-faint: #8b96a6;
+      --accent: #1464f4;
+      --accent-strong: #0c52d8;
+      --accent-soft: rgba(20, 100, 244, 0.10);
+      --teal: #1f9f95;
+      --amber: #db8b18;
+      --red: #d84f57;
+      --green: #1d9962;
+      --shadow-xl: 0 34px 90px rgba(21, 32, 51, 0.18);
+      --shadow-lg: 0 18px 42px rgba(21, 32, 51, 0.14);
+      --shadow-md: 0 10px 24px rgba(21, 32, 51, 0.10);
+      --radius-xl: 30px;
+      --radius-lg: 22px;
+      --radius-md: 16px;
+      --radius-sm: 12px;
+      --font-display: "Bahnschrift", "Segoe UI Variable Display", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-sans: "Segoe UI Variable Text", "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      --font-mono: "Cascadia Code", "Consolas", "SFMono-Regular", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      min-height: 100%;
+      font-family: var(--font-sans);
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 32%),
+        radial-gradient(circle at top right, rgba(20, 100, 244, 0.10), rgba(20, 100, 244, 0) 28%),
+        linear-gradient(180deg, #e7ebf2 0%, var(--bg) 36%, var(--bg-deep) 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.20) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.20) 1px, transparent 1px);
+      background-size: 36px 36px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.45), transparent 70%);
+    }
+
+    .page {
+      width: min(1540px, calc(100vw - 48px));
+      margin: 28px auto 40px;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      background: linear-gradient(140deg, rgba(255, 255, 255, 0.90), rgba(243, 247, 252, 0.74));
+      border: 1px solid rgba(255, 255, 255, 0.60);
+      border-radius: 28px;
+      box-shadow: var(--shadow-lg);
+      padding: 28px 32px;
+      backdrop-filter: blur(18px);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      right: -90px;
+      top: -110px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(20, 100, 244, 0.22), rgba(20, 100, 244, 0));
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(20, 100, 244, 0.12);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero h1 {
+      margin: 16px 0 10px;
+      font-family: var(--font-display);
+      font-size: clamp(34px, 4vw, 58px);
+      line-height: 1.02;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      max-width: 880px;
+      margin: 0;
+      color: var(--text-soft);
+      font-size: 17px;
+      line-height: 1.7;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+      gap: 24px;
+      margin-top: 24px;
+      align-items: start;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.8);
+      border: 1px solid var(--line);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .hero-card {
+      padding: 18px 18px 20px;
+      border-radius: 22px;
+      background: rgba(11, 20, 32, 0.92);
+      color: rgba(242, 246, 252, 0.92);
+      box-shadow: var(--shadow-md);
+    }
+
+    .hero-card h3 {
+      margin: 0 0 12px;
+      font-size: 14px;
+      color: rgba(174, 192, 214, 0.92);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .hero-card ul {
+      margin: 0;
+      padding-left: 18px;
+      line-height: 1.8;
+      font-size: 14px;
+    }
+
+    .scene-switcher {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin: 24px 0 16px;
+    }
+
+    .scene-tabs {
+      display: inline-flex;
+      gap: 8px;
+      padding: 7px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.58);
+      border: 1px solid rgba(255, 255, 255, 0.70);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(12px);
+    }
+
+    .scene-tab {
+      border: 0;
+      background: transparent;
+      color: var(--text-soft);
+      padding: 12px 16px;
+      border-radius: 999px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 160ms ease;
+    }
+
+    .scene-tab.is-active {
+      background: var(--panel-strong);
+      color: var(--text);
+      box-shadow: 0 8px 18px rgba(17, 34, 58, 0.10);
+    }
+
+    .hint {
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .scene {
+      display: none;
+      animation: fade-up 240ms ease;
+    }
+
+    .scene.is-active {
+      display: block;
+    }
+
+    @keyframes fade-up {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .window {
+      position: relative;
+      overflow: hidden;
+      border-radius: 30px;
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      background: linear-gradient(180deg, rgba(251, 253, 255, 0.95), rgba(244, 247, 251, 0.92));
+      box-shadow: var(--shadow-xl);
+      backdrop-filter: blur(18px);
+    }
+
+    .window::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 22%);
+      pointer-events: none;
+    }
+
+    .titlebar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px 12px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .title-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .app-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: linear-gradient(145deg, #1b6bff, #0d4fd6);
+      color: white;
+      font-size: 19px;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 12px 20px rgba(13, 79, 214, 0.24);
+    }
+
+    .title-meta {
+      min-width: 0;
+    }
+
+    .title-meta h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 21px;
+      letter-spacing: -0.02em;
+    }
+
+    .title-meta p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .window-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #d5dae2;
+    }
+
+    .control:nth-child(2) {
+      background: #c7ced8;
+    }
+
+    .control:last-child {
+      background: #0f1720;
+      border-radius: 4px;
+      width: 34px;
+      height: 12px;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: 76px 250px minmax(0, 1fr) 326px;
+      min-height: 900px;
+    }
+
+    .rail {
+      padding: 18px 12px;
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(241, 245, 250, 0.96), rgba(235, 240, 246, 0.96));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .rail-top,
+    .rail-bottom {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .rail-bottom {
+      margin-top: auto;
+    }
+
+    .rail-btn {
+      width: 48px;
+      height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      background: transparent;
+      color: #526177;
+      border: 1px solid transparent;
+      font-size: 18px;
+    }
+
+    .rail-btn.is-active {
+      background: rgba(20, 100, 244, 0.12);
+      color: var(--accent);
+      border-color: rgba(20, 100, 244, 0.18);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.68);
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: rgba(246, 249, 252, 0.78);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar-card,
+    .inspector-card,
+    .settings-card,
+    .component-card {
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.86);
+      border: 1px solid rgba(17, 34, 58, 0.08);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    }
+
+    .sidebar-card {
+      padding: 16px;
+    }
+
+    .section-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      font-weight: 800;
+    }
+
+    .mini-input {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-radius: 14px;
+      background: var(--panel-soft);
+      border: 1px solid rgba(17, 34, 58, 0.06);
+      padding: 12px 14px;
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .file-tree {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .file-row {
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 12px;
+      border-radius: 14px;
+      color: var(--text-soft);
+      font-size: 14px;
+      background: transparent;
+    }
+
+    .file-row.is-active {
+      color: var(--text);
+      background: rgba(20, 100, 244, 0.10);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    }
+
+    .file-meta {
+      color: var(--text-faint);
+      font-size: 12px;
+    }
+
+    .sidebar-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .metric {
+      padding: 14px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #f8fbff, #f0f5fb);
+      border: 1px solid rgba(17, 34, 58, 0.06);
+    }
+
+    .metric strong {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .metric span {
+      display: block;
+      margin-top: 4px;
+      color: var(--text-soft);
+      font-size: 12px;
+    }
+
+    .center {
+      display: grid;
+      grid-template-rows: 78px minmax(0, 1fr) 42px;
+      min-width: 0;
+      background: rgba(244, 247, 251, 0.4);
+    }
+
+    .command-bar {
+      display: grid;
+      grid-template-columns: 1.4fr auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.50);
+    }
+
+    .command-search {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+      padding: 13px 16px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(17, 34, 58, 0.08);
+      color: var(--text-soft);
+      box-shadow: 0 10px 24px rgba(17, 34, 58, 0.06);
+    }
+
+    .cmd-kbd {
+      margin-left: auto;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      padding: 4px 8px;
+      border-radius: 10px;
+      background: var(--panel-soft);
+      color: var(--text-faint);
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      border: 0;
+      border-radius: 16px;
+      padding: 12px 16px;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(17, 34, 58, 0.08);
+      box-shadow: 0 10px 24px rgba(17, 34, 58, 0.06);
+    }
+
+    .btn.primary {
+      color: #ffffff;
+      background: linear-gradient(180deg, var(--accent), var(--accent-strong));
+      border-color: rgba(8, 64, 177, 0.32);
+    }
+
+    .btn.ghost {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .main-stage {
+      display: grid;
+      grid-template-columns: 140px minmax(0, 1fr);
+      gap: 18px;
+      padding: 18px;
+      min-height: 0;
+    }
+
+    .thumb-pane {
+      padding: 14px 10px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.64);
+      border: 1px solid rgba(17, 34, 58, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .thumb {
+      padding: 10px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid rgba(17, 34, 58, 0.08);
+      box-shadow: 0 6px 16px rgba(17, 34, 58, 0.06);
+    }
+
+    .thumb.is-active {
+      border-color: rgba(20, 100, 244, 0.26);
+      box-shadow: 0 12px 20px rgba(20, 100, 244, 0.10);
+    }
+
+    .thumb-page {
+      aspect-ratio: 0.72;
+      border-radius: 12px;
+      background:
+        linear-gradient(180deg, rgba(17, 34, 58, 0.05), rgba(17, 34, 58, 0.02)),
+        #ffffff;
+      border: 1px solid rgba(17, 34, 58, 0.06);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .thumb-page::before,
+    .doc-paper::before {
+      content: "";
+      position: absolute;
+      inset: 14px 16px auto 16px;
+      height: 8px;
+      background: linear-gradient(90deg, rgba(21, 32, 51, 0.14) 18%, transparent 18% 26%, rgba(21, 32, 51, 0.14) 26% 58%, transparent 58% 66%, rgba(21, 32, 51, 0.14) 66% 92%);
+      border-radius: 999px;
+    }
+
+    .thumb-page::after,
+    .doc-paper::after {
+      content: "";
+      position: absolute;
+      left: 16px;
+      right: 16px;
+      top: 34px;
+      bottom: 16px;
+      border-radius: 10px;
+      background:
+        repeating-linear-gradient(
+          180deg,
+          rgba(21, 32, 51, 0.08),
+          rgba(21, 32, 51, 0.08) 7px,
+          transparent 7px,
+          transparent 26px
+        );
+      opacity: 0.78;
+    }
+
+    .thumb-tag {
+      margin-top: 9px;
+      text-align: center;
+      color: var(--text-soft);
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .viewer {
+      display: grid;
+      grid-template-rows: 58px minmax(0, 1fr);
+      gap: 14px;
+      min-width: 0;
+    }
+
+    .viewer-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 0 8px;
+    }
+
+    .breadcrumbs {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      color: var(--text-soft);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .breadcrumbs strong {
+      color: var(--text);
+      font-size: 15px;
+    }
+
+    .mode-segment {
+      display: inline-flex;
+      gap: 8px;
+      padding: 6px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.72);
+      border: 1px solid rgba(17, 34, 58, 0.08);
+    }
+
+    .segment-pill {
+      padding: 9px 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      color: var(--text-soft);
+      font-weight: 700;
+    }
+
+    .segment-pill.is-active {
+      background: rgba(20, 100, 244, 0.10);
+      color: var(--accent);
+    }
+
+    .viewer-canvas {
+      position: relative;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border-radius: 28px;
+      background:
+        radial-gradient(circle at top, rgba(255, 255, 255, 0.56), rgba(255, 255, 255, 0)),
+        linear-gradient(180deg, rgba(230, 236, 245, 0.85), rgba(221, 229, 239, 0.95));
+      border: 1px solid rgba(17, 34, 58, 0.10);
+    }
+
+    .canvas-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.35) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.35) 1px, transparent 1px);
+      background-size: 34px 34px;
+      mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.65), transparent 80%);
+      pointer-events: none;
+    }
+
+    .doc-stage {
+      position: relative;
+      width: min(88%, 880px);
+      aspect-ratio: 0.74;
+      display: grid;
+      place-items: center;
+    }
+
+    .doc-paper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #ffffff;
+      border-radius: 24px;
+      border: 1px solid rgba(17, 34, 58, 0.08);
+      box-shadow: 0 26px 40px rgba(17, 34, 58, 0.14);
+      overflow: hidden;
+    }
+
+    .doc-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .redact-box,
+    .highlight-box {
+      position: absolute;
+      border-radius: 10px;
+      backdrop-filter: blur(2px);
+    }
+
+    .redact-box {
+      background: rgba(9, 14, 20, 0.92);
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12) inset;
+    }
+
+    .highlight-box {
+      background: rgba(255, 211, 87, 0.54);
+      border: 1px solid rgba(190, 130, 0, 0.34);
+    }
+
+    .selection-frame {
+      position: absolute;
+      border: 2px dashed rgba(216, 79, 87, 0.72);
+      border-radius: 12px;
+      box-shadow: 0 0 0 6px rgba(216, 79, 87, 0.08);
+    }
+
+    .zoom-bubble {
+      position: absolute;
+      right: 22px;
+      bottom: 18px;
+      padding: 10px 13px;
+      border-radius: 999px;
+      background: rgba(15, 23, 32, 0.88);
+      color: rgba(242, 246, 252, 0.92);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      box-shadow: 0 14px 24px rgba(15, 23, 32, 0.24);
+    }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: auto auto auto 1fr auto auto;
+      align-items: center;
+      gap: 14px;
+      padding: 0 18px;
+      border-top: 1px solid var(--line);
+      color: var(--text-soft);
+      font-size: 12px;
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .chip.blue {
+      background: rgba(20, 100, 244, 0.10);
+      color: var(--accent);
+      border-color: rgba(20, 100, 244, 0.18);
+    }
+
+    .chip.green {
+      background: rgba(29, 153, 98, 0.10);
+      color: var(--green);
+      border-color: rgba(29, 153, 98, 0.18);
+    }
+
+    .chip.dark {
+      background: rgba(15, 23, 32, 0.92);
+      color: rgba(242, 246, 252, 0.92);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .chip.amber {
+      background: rgba(219, 139, 24, 0.10);
+      color: var(--amber);
+      border-color: rgba(219, 139, 24, 0.18);
+    }
+
+    .inspector {
+      border-left: 1px solid var(--line);
+      background: rgba(244, 247, 251, 0.76);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .inspector-card {
+      padding: 16px;
+    }
+
+    .inspector h3,
+    .settings-card h3,
+    .component-card h3 {
+      margin: 0 0 14px;
+      font-size: 14px;
+      letter-spacing: 0.02em;
+    }
+
+    .rule-list,
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .rule-item,
+    .queue-item {
+      padding: 12px 13px;
+      border-radius: 14px;
+      background: var(--panel-soft);
+      border: 1px solid rgba(17, 34, 58, 0.06);
+    }
+
+    .row-line {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      font-size: 13px;
+    }
+
+    .row-line strong {
+      color: var(--text);
+    }
+
+    .subtle {
+      color: var(--text-soft);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .progress {
+      width: 100%;
+      height: 10px;
+      border-radius: 999px;
+      background: rgba(17, 34, 58, 0.07);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .progress > span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #1d9962, #1464f4);
+    }
+
+    .command-palette {
+      position: absolute;
+      left: 50%;
+      top: 118px;
+      transform: translateX(-50%);
+      width: min(760px, calc(100% - 48px));
+      border-radius: 24px;
+      overflow: hidden;
+      background: rgba(11, 20, 32, 0.94);
+      color: rgba(242, 246, 252, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 32px 80px rgba(11, 20, 32, 0.34);
+      backdrop-filter: blur(18px);
+      z-index: 6;
+    }
+
+    .palette-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 18px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 15px;
+      color: rgba(198, 213, 229, 0.92);
+    }
+
+    .palette-body {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 0;
+    }
+
+    .palette-list {
+      padding: 10px;
+    }
+
+    .palette-item {
+      display: grid;
+      grid-template-columns: 44px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 16px;
+      color: rgba(240, 245, 250, 0.92);
+      font-size: 14px;
+    }
+
+    .palette-item.is-active {
+      background: rgba(20, 100, 244, 0.16);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+    }
+
+    .palette-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.08);
+      font-size: 18px;
+    }
+
+    .palette-side {
+      padding: 14px;
+      border-left: 1px solid rgba(255, 255, 255, 0.08);
+      color: rgba(180, 194, 209, 0.88);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    .settings-layout {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr);
+      min-height: 980px;
+    }
+
+    .settings-nav {
+      padding: 20px 18px;
+      border-right: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(243, 247, 252, 0.96), rgba(235, 240, 246, 0.90));
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .settings-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 14px;
+      border-radius: 16px;
+      color: var(--text-soft);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .settings-nav-item.is-active {
+      color: var(--text);
+      background: rgba(20, 100, 244, 0.10);
+      border: 1px solid rgba(20, 100, 244, 0.14);
+    }
+
+    .settings-main {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-width: 0;
+    }
+
+    .settings-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.52);
+    }
+
+    .settings-title h2 {
+      margin: 0;
+      font-family: var(--font-display);
+      font-size: 32px;
+      letter-spacing: -0.03em;
+    }
+
+    .settings-title p {
+      margin: 7px 0 0;
+      color: var(--text-soft);
+      font-size: 14px;
+    }
+
+    .settings-scroll {
+      padding: 22px 24px 30px;
+      display: grid;
+      gap: 18px;
+      align-content: start;
+      background: rgba(244, 247, 251, 0.48);
+    }
+
+    .settings-card {
+      padding: 18px;
+    }
+
+    .settings-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 16px;
+    }
+
+    .tag-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 12px;
+      border-radius: 999px;
+      background: rgba(20, 100, 244, 0.10);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 6px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    .field label {
+      font-size: 12px;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 800;
+    }
+
+    .field-box {
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 15px;
+      border-radius: 16px;
+      background: var(--panel-soft);
+      border: 1px solid rgba(17, 34, 58, 0.06);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .field-box span:last-child {
+      color: var(--text-soft);
+      font-weight: 600;
+    }
+
+    .rule-table {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .rule-table-row {
+      display: grid;
+      grid-template-columns: 110px minmax(0, 1fr) minmax(0, 1fr) 70px;
+      gap: 12px;
+      align-items: center;
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: var(--panel-soft);
+      border: 1px solid rgba(17, 34, 58, 0.06);
+      font-size: 13px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 72px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .badge.exact {
+      background: rgba(20, 100, 244, 0.12);
+      color: var(--accent);
+    }
+
+    .badge.regex {
+      background: rgba(31, 159, 149, 0.12);
+      color: var(--teal);
+    }
+
+    .toggle {
+      width: 48px;
+      height: 28px;
+      border-radius: 999px;
+      background: rgba(20, 100, 244, 0.24);
+      position: relative;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+    }
+
+    .toggle::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 23px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #ffffff;
+      box-shadow: 0 4px 10px rgba(17, 34, 58, 0.16);
+    }
+
+    .preview-mini {
+      border-radius: 18px;
+      overflow: hidden;
+      background: linear-gradient(180deg, #eef2f8, #e1e7f0);
+      border: 1px solid rgba(17, 34, 58, 0.08);
+      min-height: 220px;
+      position: relative;
+      display: grid;
+      place-items: center;
+    }
+
+    .preview-mini .doc-stage {
+      width: 70%;
+      aspect-ratio: 0.72;
+    }
+
+    .settings-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 24px;
+      border-top: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.78);
+      position: sticky;
+      bottom: 0;
+    }
+
+    .footer-note {
+      color: var(--text-soft);
+      font-size: 13px;
+    }
+
+    .components {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .component-card {
+      padding: 18px;
+    }
+
+    .component-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .mini-card {
+      margin-top: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      background: var(--panel-soft);
+      border: 1px solid rgba(17, 34, 58, 0.06);
+      color: var(--text-soft);
+      font-size: 13px;
+      line-height: 1.7;
+    }
+
+    @media (max-width: 1360px) {
+      .workspace {
+        grid-template-columns: 76px 220px minmax(0, 1fr);
+      }
+
+      .inspector {
+        grid-column: 2 / span 2;
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+
+      .command-palette {
+        width: min(680px, calc(100% - 40px));
+      }
+    }
+
+    @media (max-width: 1100px) {
+      .page {
+        width: min(100vw - 22px, 100%);
+      }
+
+      .hero-grid,
+      .settings-grid,
+      .components,
+      .palette-body,
+      .settings-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .rail,
+      .sidebar,
+      .inspector {
+        display: none;
+      }
+
+      .main-stage {
+        grid-template-columns: 1fr;
+      }
+
+      .thumb-pane {
+        display: none;
+      }
+
+      .command-bar,
+      .status-strip,
+      .settings-top,
+      .settings-footer {
+        grid-template-columns: 1fr;
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .rule-table-row,
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <div class="eyebrow">Windows-first / Local Offline / Native Workflow</div>
+      <h1>PrivacyGuard v38 概念工作台</h1>
+      <p>
+        这是一份针对“本地离线文档脱敏工具”的 Windows 桌面化重设计概念稿。
+        整体方向参考了 VS Code、Codex、Windows 11 Fluent 的信息密度和工作区逻辑，
+        但保留了你这个产品最关键的原生能力：快速打开、原生 PDF 预览、Word 双栏预览、批处理与规则控制。
+      </p>
+      <div class="hero-grid">
+        <div class="pill-row">
+          <div class="pill">本地离线处理，不上传文档</div>
+          <div class="pill">Windows 11 / 10 视觉优先</div>
+          <div class="pill">原生 PDF 画布保留高性能</div>
+          <div class="pill">Word 双栏预览继续保留</div>
+          <div class="pill">支持批量任务与规则模板</div>
+          <div class="pill">更像专业工作台，而不是旧式工具栏</div>
+        </div>
+        <div class="hero-card">
+          <h3>本稿要展示的重点</h3>
+          <ul>
+            <li>主工作台如何重构成现代化桌面工作区</li>
+            <li>规则、队列、导出不再散落在旧工具栏里</li>
+            <li>高级设置如何从长滚动弹窗改为分组设置页</li>
+            <li>离线、安全、性能、Windows 适配如何在视觉上被表达</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <div class="scene-switcher">
+      <div class="scene-tabs">
+        <button class="scene-tab is-active" data-scene-target="workbench">主工作台</button>
+        <button class="scene-tab" data-scene-target="settings">设置中心</button>
+        <button class="scene-tab" data-scene-target="components">组件板</button>
+      </div>
+      <div class="hint">纯本地 HTML 原型，无外链资源，可直接双击预览</div>
+    </div>
+
+    <section class="scene is-active" id="scene-workbench">
+      <article class="window">
+        <div class="titlebar">
+          <div class="title-left">
+            <div class="app-badge">PG</div>
+            <div class="title-meta">
+              <h2>PrivacyGuard 脱敏工作台</h2>
+              <p>本地离线模式 / 文档不出端 / Windows 优先布局</p>
+            </div>
+          </div>
+          <div class="window-controls">
+            <div class="chip green">本地离线</div>
+            <div class="chip blue">GPU 预览已开启</div>
+            <div class="control"></div>
+            <div class="control"></div>
+            <div class="control"></div>
+          </div>
+        </div>
+
+        <div class="workspace">
+          <aside class="rail">
+            <div class="rail-top">
+              <div class="rail-btn is-active">⌂</div>
+              <div class="rail-btn">📄</div>
+              <div class="rail-btn">⌘</div>
+              <div class="rail-btn">🧪</div>
+              <div class="rail-btn">⇅</div>
+            </div>
+            <div class="rail-bottom">
+              <div class="rail-btn">🔔</div>
+              <div class="rail-btn">⚙</div>
+              <div class="rail-btn">❔</div>
+            </div>
+          </aside>
+
+          <aside class="sidebar">
+            <div class="sidebar-card">
+              <div class="section-label">
+                <span>工作区</span>
+                <span>3 项</span>
+              </div>
+              <div class="mini-input">🔎 搜索文件、规则、最近任务</div>
+            </div>
+
+            <div class="sidebar-card">
+              <div class="section-label">
+                <span>当前文件</span>
+                <span>批量可切换</span>
+              </div>
+              <div class="file-tree">
+                <div class="file-row is-active">
+                  <span>📄</span>
+                  <span>合同样本_第12版.pdf</span>
+                  <span class="file-meta">12 页</span>
+                </div>
+                <div class="file-row">
+                  <span>📝</span>
+                  <span>庭审记录_脱敏前.docx</span>
+                  <span class="file-meta">Word</span>
+                </div>
+                <div class="file-row">
+                  <span>🧾</span>
+                  <span>身份证样表扫描件.pdf</span>
+                  <span class="file-meta">OCR</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-card">
+              <div class="section-label">
+                <span>本次会话</span>
+                <span>即时概览</span>
+              </div>
+              <div class="sidebar-stats">
+                <div class="metric">
+                  <strong>126</strong>
+                  <span>已命中字段</span>
+                </div>
+                <div class="metric">
+                  <strong>18</strong>
+                  <span>手动框选</span>
+                </div>
+                <div class="metric">
+                  <strong>4</strong>
+                  <span>批量任务</span>
+                </div>
+                <div class="metric">
+                  <strong>2.0x</strong>
+                  <span>OCR 扫描级别</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="sidebar-card">
+              <div class="section-label">
+                <span>规则集</span>
+                <span>当前启用</span>
+              </div>
+              <div class="tag-cloud">
+                <div class="tag">身份证号</div>
+                <div class="tag">手机号</div>
+                <div class="tag">电子邮箱</div>
+                <div class="tag">张三</div>
+                <div class="tag">甲方</div>
+              </div>
+            </div>
+          </aside>
+
+          <main class="center">
+            <div class="command-bar">
+              <div class="command-search">
+                <span>⌘</span>
+                <span>输入命令、打开文件、切换规则、导出预设…</span>
+                <span class="cmd-kbd">Ctrl + P</span>
+              </div>
+              <div class="toolbar-actions">
+                <div class="btn primary">📂 打开文件</div>
+                <div class="btn">✨ 智能脱敏</div>
+                <div class="btn">🧷 手动框选</div>
+              </div>
+              <div class="toolbar-actions">
+                <div class="btn ghost">↶ 撤销</div>
+                <div class="btn ghost">↷ 重做</div>
+                <div class="btn">⤴ 导出</div>
+              </div>
+            </div>
+
+            <div class="main-stage">
+              <div class="thumb-pane">
+                <div class="thumb is-active">
+                  <div class="thumb-page"></div>
+                  <div class="thumb-tag">第 1 页</div>
+                </div>
+                <div class="thumb">
+                  <div class="thumb-page"></div>
+                  <div class="thumb-tag">第 2 页</div>
+                </div>
+                <div class="thumb">
+                  <div class="thumb-page"></div>
+                  <div class="thumb-tag">第 3 页</div>
+                </div>
+                <div class="thumb">
+                  <div class="thumb-page"></div>
+                  <div class="thumb-tag">第 4 页</div>
+                </div>
+              </div>
+
+              <div class="viewer">
+                <div class="viewer-top">
+                  <div class="breadcrumbs">
+                    <strong>合同样本_第12版.pdf</strong>
+                    <span>/</span>
+                    <span>文字层 + 嵌入图片混合页</span>
+                    <span>/</span>
+                    <span>第 1 - 2 页</span>
+                  </div>
+                  <div class="mode-segment">
+                    <div class="segment-pill is-active">单页</div>
+                    <div class="segment-pill">双页对照</div>
+                    <div class="segment-pill">适应宽度</div>
+                    <div class="segment-pill">100%</div>
+                  </div>
+                </div>
+
+                <div class="viewer-canvas">
+                  <div class="canvas-grid"></div>
+                  <div class="doc-stage">
+                    <div class="doc-paper"></div>
+                    <div class="doc-overlay">
+                      <div class="highlight-box" style="left: 18%; top: 21%; width: 24%; height: 2.7%;"></div>
+                      <div class="highlight-box" style="left: 53%; top: 21%; width: 18%; height: 2.7%;"></div>
+                      <div class="redact-box" style="left: 25%; top: 34%; width: 36%; height: 3.4%;"></div>
+                      <div class="redact-box" style="left: 20%; top: 41%; width: 28%; height: 3.4%;"></div>
+                      <div class="highlight-box" style="left: 48%; top: 56%; width: 22%; height: 2.7%;"></div>
+                      <div class="selection-frame" style="left: 54%; top: 55%; width: 24%; height: 6%;"></div>
+                    </div>
+                  </div>
+                  <div class="zoom-bubble">Fit / 124%</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="status-strip">
+              <div class="chip blue">离线会话</div>
+              <div>RapidOCR / 混合页检测已启用</div>
+              <div>Windows DPI 150% 适配</div>
+              <div></div>
+              <div>Ctrl+滚轮缩放</div>
+              <div>F2 打开规则模板</div>
+            </div>
+          </main>
+
+          <aside class="inspector">
+            <div class="inspector-card">
+              <div class="section-label">
+                <span>任务概览</span>
+                <span>实时</span>
+              </div>
+              <div class="row-line">
+                <strong>当前状态</strong>
+                <span class="chip green">就绪</span>
+              </div>
+              <div class="subtle">当前文件已经完成快速扫描，可直接进入导出或继续手动精修。所有操作仅在本地执行。</div>
+            </div>
+
+            <div class="inspector-card">
+              <h3>规则与来源</h3>
+              <div class="rule-list">
+                <div class="rule-item">
+                  <div class="row-line"><strong>规则集：标准司法模板</strong><span>8 条启用</span></div>
+                  <div class="subtle">身份证、手机号、姓名、地址、银行卡、邮箱、日期、关键词模板</div>
+                </div>
+                <div class="rule-item">
+                  <div class="row-line"><strong>高亮筛选</strong><span>规则 / 手动 / OCR</span></div>
+                  <div class="subtle">替换来源不再混在一起，便于复核与导出前检查。</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="inspector-card">
+              <h3>批量队列</h3>
+              <div class="queue-list">
+                <div class="queue-item">
+                  <div class="row-line"><strong>合同样本_第12版.pdf</strong><span>已完成</span></div>
+                  <div class="progress"><span style="width: 100%;"></span></div>
+                </div>
+                <div class="queue-item">
+                  <div class="row-line"><strong>庭审记录_脱敏前.docx</strong><span>处理中</span></div>
+                  <div class="progress"><span style="width: 66%;"></span></div>
+                </div>
+                <div class="queue-item">
+                  <div class="row-line"><strong>附表扫描件.pdf</strong><span>排队中</span></div>
+                  <div class="progress"><span style="width: 18%;"></span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="inspector-card">
+              <h3>导出预设</h3>
+              <div class="rule-list">
+                <div class="rule-item">
+                  <div class="row-line"><strong>PDF 安全导出</strong><span class="chip dark">默认</span></div>
+                  <div class="subtle">嵌入式永久脱敏、元数据清理、不可逆导出。</div>
+                </div>
+                <div class="rule-item">
+                  <div class="row-line"><strong>Word 合规导出</strong><span>批量</span></div>
+                  <div class="subtle">规则替换、手动脱敏、OCR 识别统一合并。</div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <div class="command-palette">
+          <div class="palette-head">
+            <span>⚡</span>
+            <span>命令中心</span>
+            <span style="margin-left:auto; font-family: var(--font-mono);">Ctrl + P</span>
+          </div>
+          <div class="palette-body">
+            <div class="palette-list">
+              <div class="palette-item is-active">
+                <div class="palette-icon">📂</div>
+                <div>
+                  <strong>打开本地文档</strong>
+                  <div class="subtle">PDF / DOCX / DOC / 图片</div>
+                </div>
+                <div class="chip blue">常用</div>
+              </div>
+              <div class="palette-item">
+                <div class="palette-icon">🧪</div>
+                <div>
+                  <strong>启动智能脱敏</strong>
+                  <div class="subtle">沿用当前规则集与 OCR 配置</div>
+                </div>
+                <div class="chip green">即时</div>
+              </div>
+              <div class="palette-item">
+                <div class="palette-icon">🧰</div>
+                <div>
+                  <strong>切换规则模板</strong>
+                  <div class="subtle">司法版 / 医疗版 / 金融版 / 自定义</div>
+                </div>
+                <div class="chip amber">模板</div>
+              </div>
+            </div>
+            <div class="palette-side">
+              当前设计方向把高频动作集中进“命令中心 + 工作区 + 右侧检查器”，
+              减少旧界面那种按钮全平铺的压迫感，也更适合 Windows 大量办公用户的键鼠操作习惯。
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <section class="scene" id="scene-settings">
+      <article class="window">
+        <div class="titlebar">
+          <div class="title-left">
+            <div class="app-badge">⚙</div>
+            <div class="title-meta">
+              <h2>设置中心</h2>
+              <p>从“长滚动弹窗”改为“分组导航 + 专业设置页”</p>
+            </div>
+          </div>
+          <div class="window-controls">
+            <div class="chip green">实时保存草稿</div>
+            <div class="chip blue">Windows 友好布局</div>
+            <div class="control"></div>
+            <div class="control"></div>
+            <div class="control"></div>
+          </div>
+        </div>
+
+        <div class="settings-layout">
+          <aside class="settings-nav">
+            <div class="settings-nav-item is-active">🧩 通用规则</div>
+            <div class="settings-nav-item">🏷 自定义关键词</div>
+            <div class="settings-nav-item">📝 Word 替换规则</div>
+            <div class="settings-nav-item">🧠 OCR 与校准</div>
+            <div class="settings-nav-item">📤 导出与安全</div>
+            <div class="settings-nav-item">🪟 Windows 体验</div>
+            <div class="settings-nav-item">🔬 高级与调试</div>
+          </aside>
+
+          <section class="settings-main">
+            <div class="settings-top">
+              <div class="settings-title">
+                <h2>通用规则与工作流</h2>
+                <p>把最常用的规则选择、模板管理、替换策略和 OCR 校准拆成清晰层级，减少认知负担。</p>
+              </div>
+              <div class="toolbar-actions">
+                <div class="chip dark">本地配置文件</div>
+                <div class="btn">↺ 恢复默认</div>
+                <div class="btn primary">保存并应用</div>
+              </div>
+            </div>
+
+            <div class="settings-scroll">
+              <div class="settings-grid">
+                <div class="settings-card">
+                  <div class="section-label">
+                    <span>规则模板</span>
+                    <span>Windows-first</span>
+                  </div>
+                  <h3>启用默认识别规则</h3>
+                  <div class="tag-cloud">
+                    <div class="tag">身份证号</div>
+                    <div class="tag">手机号</div>
+                    <div class="tag">日期时间</div>
+                    <div class="tag">电子邮箱</div>
+                    <div class="tag">银行卡号</div>
+                    <div class="tag">印章检测</div>
+                  </div>
+                  <div class="mini-card">
+                    左侧导航切换大类，右侧只展示当前上下文的关键设置。
+                    对大多数用户来说，“通用规则”和“Word 替换规则”是高频，其它高级选项不应该全部同时露出。
+                  </div>
+                </div>
+
+                <div class="settings-card">
+                  <div class="section-label">
+                    <span>应用策略</span>
+                    <span>会话级</span>
+                  </div>
+                  <h3>脱敏行为预设</h3>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label>扫描模式</label>
+                      <div class="field-box"><span>高精 2.0x</span><span>推荐</span></div>
+                    </div>
+                    <div class="field">
+                      <label>导出方式</label>
+                      <div class="field-box"><span>永久脱敏导出</span><span>安全</span></div>
+                    </div>
+                    <div class="field">
+                      <label>颜色模式</label>
+                      <div class="field-box"><span>黑色遮罩</span><span>默认</span></div>
+                    </div>
+                    <div class="field">
+                      <label>预览模式</label>
+                      <div class="field-box"><span>双栏对照</span><span>Word</span></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <div class="section-label">
+                  <span>自定义关键词</span>
+                  <span>按组管理</span>
+                </div>
+                <h3>关键词不再是一大块空文本框</h3>
+                <div class="settings-grid">
+                  <div>
+                    <div class="mini-input">+ 新建关键词组：案件主体 / 当事人 / 项目名 / 附加敏感词</div>
+                    <div class="tag-cloud" style="margin-top: 14px;">
+                      <div class="tag">甲方</div>
+                      <div class="tag">乙方</div>
+                      <div class="tag">李四</div>
+                      <div class="tag">某某律所</div>
+                      <div class="tag">案号</div>
+                      <div class="tag">统一社会信用代码</div>
+                    </div>
+                  </div>
+                  <div class="mini-card">
+                    将“统一替换文本”与“规则模板摘要”并列放在关键词区域右侧，
+                    保持信息集中，但不再像旧界面一样挤成一个大面板。
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <div class="section-label">
+                  <span>Word 替换规则</span>
+                  <span>精确 / 正则</span>
+                </div>
+                <h3>规则编辑改造成专业表格式编辑器</h3>
+                <div class="rule-table">
+                  <div class="rule-table-row">
+                    <span class="badge exact">精确</span>
+                    <strong>张三</strong>
+                    <span>[当事人A]</span>
+                    <span class="toggle"></span>
+                  </div>
+                  <div class="rule-table-row">
+                    <span class="badge regex">正则</span>
+                    <strong>(?&lt;!\d)(1[3-9]\d{9})(?!\d)</strong>
+                    <span>[手机号]</span>
+                    <span class="toggle"></span>
+                  </div>
+                  <div class="rule-table-row">
+                    <span class="badge exact">精确</span>
+                    <strong>北京市朝阳区...</strong>
+                    <span>[地址已脱敏]</span>
+                    <span class="toggle"></span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-grid">
+                <div class="settings-card">
+                  <div class="section-label">
+                    <span>OCR 校准</span>
+                    <span>可视化</span>
+                  </div>
+                  <h3>参数不再抽象，而是配合预览微调</h3>
+                  <div class="form-grid">
+                    <div class="field">
+                      <label>向左修正</label>
+                      <div class="field-box"><span>-2 px</span><span>微调</span></div>
+                    </div>
+                    <div class="field">
+                      <label>宽度收缩</label>
+                      <div class="field-box"><span>3 px</span><span>推荐</span></div>
+                    </div>
+                    <div class="field">
+                      <label>检测框调节</label>
+                      <div class="field-box"><span>+8%</span><span>平衡</span></div>
+                    </div>
+                    <div class="field">
+                      <label>图像增强</label>
+                      <div class="field-box"><span>仅手写体开启</span><span>节能</span></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="settings-card">
+                  <div class="section-label">
+                    <span>即时预览</span>
+                    <span>性能优先</span>
+                  </div>
+                  <h3>Windows 上也保持轻快</h3>
+                  <div class="preview-mini">
+                    <div class="doc-stage">
+                      <div class="doc-paper"></div>
+                      <div class="doc-overlay">
+                        <div class="highlight-box" style="left: 22%; top: 20%; width: 30%; height: 4%;"></div>
+                        <div class="redact-box" style="left: 36%; top: 42%; width: 26%; height: 5%;"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="settings-footer">
+              <div class="footer-note">建议把大多数设置改为“即时修改 + 显式保存”，并保留底部固定操作栏，避免用户滚动到底部才看到保存按钮。</div>
+              <div class="toolbar-actions">
+                <div class="btn">导出模板</div>
+                <div class="btn">新建规则集</div>
+                <div class="btn primary">保存并返回工作台</div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </article>
+    </section>
+
+    <section class="scene" id="scene-components">
+      <div class="components">
+        <div class="component-card">
+          <div class="section-label">
+            <span>交互原则</span>
+            <span>像工具，不像表单</span>
+          </div>
+          <h3>工作台优先</h3>
+          <div class="mini-card">
+            打开文件、扫描、手动框选、撤销、导出应该围绕文档工作区展开，
+            而不是做成一排密集按钮。高频任务走命令栏，低频任务进设置中心。
+          </div>
+        </div>
+
+        <div class="component-card">
+          <div class="section-label">
+            <span>视觉语言</span>
+            <span>Windows 专属</span>
+          </div>
+          <h3>配色与字体</h3>
+          <div class="component-row">
+            <div class="chip blue">强调蓝</div>
+            <div class="chip green">成功绿</div>
+            <div class="chip amber">警示橙</div>
+            <div class="chip dark">深色状态</div>
+          </div>
+          <div class="mini-card">
+            标题使用 Bahnschrift / Segoe UI Variable Display，
+            正文使用 Segoe UI Variable，保持 Windows 原生感和现代感，不再延续 macOS Big Sur 既视感。
+          </div>
+        </div>
+
+        <div class="component-card">
+          <div class="section-label">
+            <span>性能方向</span>
+            <span>本地原生</span>
+          </div>
+          <h3>不要把高性能预览网页化</h3>
+          <div class="mini-card">
+            PDF 继续用原生渲染画布，Word 保留 QWebEngine 双栏预览，但外壳和面板全部重构。
+            这样既能获得现代外观，也不会牺牲 Windows 上的启动速度和内存表现。
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function() {
+      const tabs = Array.from(document.querySelectorAll(".scene-tab"));
+      const scenes = {
+        workbench: document.getElementById("scene-workbench"),
+        settings: document.getElementById("scene-settings"),
+        components: document.getElementById("scene-components")
+      };
+
+      tabs.forEach((tab) => {
+        tab.addEventListener("click", () => {
+          const target = tab.getAttribute("data-scene-target");
+          tabs.forEach((item) => item.classList.toggle("is-active", item === tab));
+          Object.keys(scenes).forEach((key) => {
+            scenes[key].classList.toggle("is-active", key === target);
+          });
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

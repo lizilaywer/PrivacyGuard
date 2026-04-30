@@ -1,6 +1,0 @@
- Windows 打包命令
-
-  cd C:\Users\Admin\Desktop\claudecodehub\PrivacyApp
-  packaging\windows\scripts\build_complete.bat
-
-  输出文件：releases\windows\PrivacyGuard-v37.0.10-Windows-Portable.zip

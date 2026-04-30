@@ -1,10 +1,12 @@
 ; PrivacyGuard Windows 安装程序配置
 ; Inno Setup 脚本
-; 版本: v37.4.1
+; 版本来源: 命令行 /DMyAppVersion 或默认值
 
 #define MyAppName "PrivacyGuard"
 #define MyAppNameFull "PrivacyGuard 脱敏卫士"
-#define MyAppVersion "37.4.1"
+#ifndef MyAppVersion
+  #define MyAppVersion "37.7.4"
+#endif
 #define MyAppPublisher "PrivacyGuard Team"
 #define MyAppURL "https://github.com/privacyguard/privacyguard"
 #define MyAppExeName "PrivacyGuard.exe"
@@ -13,16 +15,20 @@
 ; AppId must be unique for each application
 AppId={{A1B2C3D4-E5F6-7890-ABCD-EF1234567890}
 AppName={#MyAppNameFull}
+AppVerName={#MyAppNameFull} {#MyAppVersion}
 AppVersion={#MyAppVersion}
 AppPublisher={#MyAppPublisher}
 AppPublisherURL={#MyAppURL}
 AppSupportURL={#MyAppURL}
 AppUpdatesURL={#MyAppURL}
 DefaultDirName={autopf}\{#MyAppName}
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 DisableProgramGroupPage=yes
 OutputDir=..\..\..\releases\windows
 OutputBaseFilename=PrivacyGuard-{#MyAppVersion}-Setup
-SetupIconFile=..\assets\icon.ico
+SetupIconFile=..\..\..\assets\logo\windows\app_icon.ico
+UninstallDisplayIcon={app}\{#MyAppExeName}
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern

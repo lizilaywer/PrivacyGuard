@@ -86,7 +86,7 @@ echo [Step 1/2] Creating installer...
 if not exist "%RELEASE_DIR%" mkdir "%RELEASE_DIR%"
 
 echo    Compiling...
-"%INNO_PATH%" "%CONFIG_DIR%\PrivacyGuard_Setup.iss" /Q
+"%INNO_PATH%" "%CONFIG_DIR%\PrivacyGuard_Setup.iss" /DMyAppVersion=%VERSION% /Q
 
 if errorlevel 1 (
     echo [ERROR] Failed to create installer

@@ -4,7 +4,7 @@
 # 说明: 将应用提交到 Apple 进行公证（Notarization）
 #
 
-set -e
+set -euo pipefail
 
 # 颜色定义
 RED='\033[0;31m'
@@ -24,6 +24,10 @@ if [ -z "$VERSION" ]; then
     exit 1
 fi
 RELEASE_DIR="${PROJECT_ROOT}/releases/macos"
+NOTARY_PROFILE="${PRIVACYGUARD_NOTARY_PROFILE:-${NOTARY_PROFILE:-}}"
+APPLE_ID="${PRIVACYGUARD_APPLE_ID:-${APPLE_ID:-}}"
+APP_SPECIFIC_PASSWORD="${PRIVACYGUARD_APP_SPECIFIC_PASSWORD:-${APP_SPECIFIC_PASSWORD:-}}"
+TEAM_ID="${PRIVACYGUARD_TEAM_ID:-${TEAM_ID:-}}"
 
 DMG_NAME="${APP_NAME}-${VERSION}-macOS.dmg"
 DMG_PATH="${RELEASE_DIR}/${DMG_NAME}"
@@ -35,17 +39,14 @@ if [ ! -f "${DMG_PATH}" ]; then
     exit 1
 fi
 
-# Apple ID 和临时密码（用户需要修改这里）
-APPLE_ID="your-email@example.com"
-APP_SPECIFIC_PASSWORD="xxxx-xxxx-xxxx-xxxx"
-TEAM_ID="XXXXXXXXXX"
-
 # 检查配置
-if [[ "$APPLE_ID" == *"your-email"* ]]; then
-    echo -e "${YELLOW}警告: 请修改脚本中的以下变量:${NC}"
-    echo "  - APPLE_ID: 你的 Apple ID 邮箱"
-    echo "  - APP_SPECIFIC_PASSWORD: 应用专用密码"
-    echo "  - TEAM_ID: 开发者团队 ID"
+if [ -z "${NOTARY_PROFILE}" ] && { [ -z "${APPLE_ID}" ] || [ -z "${APP_SPECIFIC_PASSWORD}" ] || [ -z "${TEAM_ID}" ]; }; then
+    echo -e "${YELLOW}警告: 未设置公证凭据${NC}"
+    echo "可选方式 1：export PRIVACYGUARD_NOTARY_PROFILE='your-profile'"
+    echo "可选方式 2：同时设置以下环境变量："
+    echo "  - PRIVACYGUARD_APPLE_ID"
+    echo "  - PRIVACYGUARD_APP_SPECIFIC_PASSWORD"
+    echo "  - PRIVACYGUARD_TEAM_ID"
     echo ""
     echo "应用专用密码可以在 https://appleid.apple.com 生成"
     exit 1
@@ -55,11 +56,17 @@ echo -e "${BLUE}开始公证 DMG...${NC}"
 echo "文件: ${DMG_PATH}"
 
 # 提交公证
-xcrun notarytool submit "${DMG_PATH}" \
-    --apple-id "${APPLE_ID}" \
-    --password "${APP_SPECIFIC_PASSWORD}" \
-    --team-id "${TEAM_ID}" \
-    --wait
+if [ -n "${NOTARY_PROFILE}" ]; then
+    xcrun notarytool submit "${DMG_PATH}" \
+        --keychain-profile "${NOTARY_PROFILE}" \
+        --wait
+else
+    xcrun notarytool submit "${DMG_PATH}" \
+        --apple-id "${APPLE_ID}" \
+        --password "${APP_SPECIFIC_PASSWORD}" \
+        --team-id "${TEAM_ID}" \
+        --wait
+fi
 
 # 将公证信息附加到 DMG
 echo -e "${BLUE}将公证信息附加到 DMG...${NC}"

@@ -2,20 +2,23 @@
 安全验证工具
 
 v36.5: 模块化拆分，从 main.py 提取
+v37.7.3: 修复 f-string 中的反斜杠语法错误
 """
 
 import os
 import sys
 import tempfile
+import platform
 
 
 def validate_safe_path(path, allowed_extensions=None):
-    """验证文件路径安全（v36.5: 防止命令注入和路径遍历）
+    """验证文件路径安全（v37.6: 跨平台兼容 + 路径范围校验）
 
     安全特性:
-    - 命令注入防护: 过滤危险字符 (; | & $ ` $( > < \n \r \ %00)
+    - 命令注入防护: 过滤危险字符 (; | & $ ` $( > < \\n \\r)
     - 路径遍历防护: 规范化路径并限制允许范围
     - 扩展名验证: 支持白名单机制
+    - 跨平台兼容: Windows 允许反斜杠路径分隔符
 
     Args:
         path: 要验证的路径
@@ -36,11 +39,26 @@ def validate_safe_path(path, allowed_extensions=None):
     if len(path) > 4096:
         return False, "路径过长"
 
-    # 检查危险字符 (v36.5: 添加反斜杠和空字节检查)
-    dangerous_chars = [';', '|', '&', '$', '`', '$(', '>', '<', '\n', '\r', '\\', '%00', '%0a', '%0d']
-    for char in dangerous_chars:
+    is_windows = platform.system() == "Windows"
+
+    # shell 元字符（命令注入）
+    shell_metacharacters = [';', '|', '&', '$', '`', '$(', '>', '<', '\n', '\r']
+    for char in shell_metacharacters:
         if char in path:
-            return False, f"路径包含危险字符: {repr(char)}"
+            char_repr = repr(char)
+            return False, f"路径包含危险字符: {char_repr}"
+
+    # URL 编码危险序列
+    for seq in ['%00', '%0a', '%0d']:
+        if seq.lower() in path.lower():
+            return False, f"路径包含危险序列: {seq}"
+
+    # 非 Windows 下拒绝反斜杠（可疑转义）
+    # v37.7.3: 修复 f-string 中不能使用反斜杠的语法错误
+    backslash_char = '\\'
+    if not is_windows and backslash_char in path:
+        backslash_repr = repr(backslash_char)
+        return False, f"路径包含危险字符: {backslash_repr}"
 
     # 检查空字节注入 (v36.5: 防止空字节绕过)
     if '\x00' in path:
@@ -52,16 +70,26 @@ def validate_safe_path(path, allowed_extensions=None):
     except (TypeError, ValueError, OSError) as e:
         return False, f"路径格式错误: {e}"
 
-    # 检查路径遍历攻击
-    # 获取系统临时目录和用户主目录作为允许范围
-    temp_dir = os.path.normpath(os.path.abspath(os.path.expanduser("~")))
-    if not normalized.startswith(temp_dir) and not any(
-        normalized.startswith(os.path.normpath(os.path.abspath(p)))
-        for p in [os.path.expanduser("~"), '/tmp', '/var/tmp', tempfile.gettempdir()]
-    ):
-        # 允许当前工作目录下的文件
+    # 路径遍历攻击防护：限制在允许目录内
+    allowed_base_dirs = [
+        os.path.normpath(os.path.abspath(os.path.expanduser("~"))),
+        os.path.normpath(os.path.abspath(tempfile.gettempdir())),
+    ]
+    if not is_windows:
+        for unix_tmp in ['/tmp', '/var/tmp']:
+            if os.path.isdir(unix_tmp):
+                allowed_base_dirs.append(os.path.normpath(os.path.abspath(unix_tmp)))
+
+    def _is_under(base_dir):
+        try:
+            return os.path.commonpath([normalized, base_dir]) == base_dir
+        except ValueError:
+            return False
+
+    path_in_allowed = any(_is_under(base) for base in allowed_base_dirs)
+    if not path_in_allowed:
         cwd = os.path.normpath(os.path.abspath('.'))
-        if not normalized.startswith(cwd):
+        if not _is_under(cwd):
             return False, f"路径不在允许范围内: {normalized}"
 
     # 检查文件名部分
@@ -71,8 +99,9 @@ def validate_safe_path(path, allowed_extensions=None):
 
     # 检查扩展名
     if allowed_extensions:
+        allowed_exts = {ext.lower() for ext in allowed_extensions}
         ext = os.path.splitext(basename)[1].lower()
-        if ext not in allowed_extensions:
+        if ext not in allowed_exts:
             return False, f"不支持的文件类型: {ext}"
 
     return True, None

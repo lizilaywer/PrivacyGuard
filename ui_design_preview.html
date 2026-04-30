@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrivacyGuard UI 设计方案</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* 主色调 - 深邃蓝 */
+            --primary: #2563EB;
+            --primary-light: #3B82F6;
+            --primary-dark: #1D4ED8;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+            /* 辅助色 */
+            --accent: #10B981;
+            --warning: #F59E0B;
+            --danger: #EF4444;
+
+            /* 背景色 */
+            --bg-primary: #0F172A;
+            --bg-secondary: #1E293B;
+            --bg-card: #1E293B;
+            --bg-elevated: #334155;
+
+            /* 文字色 */
+            --text-primary: #F8FAFC;
+            --text-secondary: #94A3B8;
+            --text-muted: #64748B;
+
+            /* 边框 */
+            --border: rgba(255, 255, 255, 0.1);
+            --border-light: rgba(255, 255, 255, 0.05);
+
+            /* 阴影 */
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+            --shadow-glow: 0 0 40px rgba(102, 126, 234, 0.3);
+
+            /* 圆角 */
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+
+            /* 过渡 */
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        /* 页面容器 */
+        .page-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* 标题区域 */
+        .page-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .page-header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+        }
+
+        .page-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* 设计说明卡片 */
+        .design-notes {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            margin-bottom: 60px;
+        }
+
+        .design-notes h3 {
+            color: var(--primary-light);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .design-notes ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 12px;
+        }
+
+        .design-notes li {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-secondary);
+        }
+
+        .design-notes li::before {
+            content: "✓";
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        /* 界面预览区 */
+        .preview-section {
+            margin-bottom: 80px;
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .section-title h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .section-title .badge {
+            background: var(--primary-gradient);
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* ============ 主界面设计 ============ */
+        .main-window {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
+            border: 1px solid var(--border);
+        }
+
+        /* 标题栏 */
+        .title-bar {
+            background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, transparent 100%);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-light);
+        }
+
+        .app-branding {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .app-logo {
+            width: 36px;
+            height: 36px;
+            background: var(--primary-gradient);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .app-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .app-version {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .window-btn {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: none;
+        }
+
+        .window-btn.close { background: #EF4444; }
+        .window-btn.minimize { background: #F59E0B; }
+        .window-btn.maximize { background: #10B981; }
+
+        /* 工具栏 */
+        .toolbar {
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-light);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .toolbar-divider {
+            width: 1px;
+            height: 32px;
+            background: var(--border);
+            margin: 0 8px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 18px;
+            border-radius: var(--radius-md);
+            border: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-secondary {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            border-color: var(--primary-light);
+        }
+
+        .btn-icon {
+            padding: 10px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+        }
+
+        .btn-icon:hover {
+            border-color: var(--primary-light);
+        }
+
+        /* 主内容区 */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            height: 600px;
+        }
+
+        /* 预览区域 */
+        .preview-area {
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-light);
+        }
+
+        .preview-header {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-light);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .preview-title {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .zoom-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .zoom-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: var(--radius-sm);
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .zoom-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .preview-canvas {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background:
+                linear-gradient(45deg, #1a1a2e 25%, transparent 25%),
+                linear-gradient(-45deg, #1a1a2e 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #1a1a2e 75%),
+                linear-gradient(-45deg, transparent 75%, #1a1a2e 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            background-color: #12121a;
+        }
+
+        .document-preview {
+            width: 400px;
+            height: 520px;
+            background: white;
+            border-radius: var(--radius-sm);
+            box-shadow: var(--shadow-xl);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .doc-header {
+            padding: 20px 30px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .doc-title {
+            font-size: 1rem;
+            color: #1e293b;
+            font-weight: 600;
+        }
+
+        .doc-content {
+            flex: 1;
+            padding: 20px 30px;
+            background: white;
+        }
+
+        .doc-line {
+            height: 8px;
+            background: #e2e8f0;
+            border-radius: 4px;
+            margin-bottom: 12px;
+        }
+
+        .doc-line:nth-child(odd) { width: 100%; }
+        .doc-line:nth-child(even) { width: 85%; }
+        .doc-line:nth-child(3n) { width: 70%; }
+
+        .doc-line.redacted {
+            background: #1e293b;
+            position: relative;
+        }
+
+        .doc-line.redacted::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                -45deg,
+                transparent,
+                transparent 2px,
+                rgba(255,255,255,0.1) 2px,
+                rgba(255,255,255,0.1) 4px
+            );
+        }
+
+        /* 侧边栏 */
+        .sidebar {
+            background: var(--bg-secondary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-light);
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .thumbnail-list {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .thumbnail-item {
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            padding: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .thumbnail-item:hover {
+            border-color: var(--primary-light);
+        }
+
+        .thumbnail-item.active {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+        }
+
+        .thumbnail-preview {
+            width: 100%;
+            height: 100px;
+            background: white;
+            border-radius: var(--radius-sm);
+            margin-bottom: 8px;
+        }
+
+        .thumbnail-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            padding: 10px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(0, 0, 0, 0.3);
+            border-top: 1px solid var(--border-light);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        /* ============ 设置对话框设计 ============ */
+        .dialog-preview {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-xl);
+            overflow: hidden;
+            box-shadow: var(--shadow-xl), var(--shadow-glow);
+            border: 1px solid var(--border);
+            max-width: 580px;
+            margin: 0 auto;
+        }
+
+        .dialog-header {
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border-light);
+            background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+        }
+
+        .dialog-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .dialog-close {
+            width: 32px;
+            height: 32px;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: var(--transition);
+        }
+
+        .dialog-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+        }
+
+        .dialog-content {
+            padding: 24px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        /* 设置分组卡片 */
+        .settings-group {
+            background: var(--bg-primary);
+            border-radius: var(--radius-lg);
+            margin-bottom: 20px;
+            overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+
+        .settings-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .group-header {
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-bottom: 1px solid var(--border-light);
+            background: rgba(102, 126, 234, 0.05);
+        }
+
+        .group-icon {
+            width: 32px;
+            height: 32px;
+            background: var(--primary-gradient);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        .group-title {
+            font-size: 0.95rem;
+            font-weight: 600;
+        }
+
+        .group-content {
+            padding: 20px;
+        }
+
+        /* 复选框样式 */
+        .checkbox-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-light);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .checkbox-item:hover {
+            border-color: var(--primary-light);
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-item.checked {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.15);
+        }
+
+        .custom-checkbox {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+        }
+
+        .checkbox-item.checked .custom-checkbox {
+            background: var(--primary-gradient);
+            border-color: transparent;
+        }
+
+        .checkbox-item.checked .custom-checkbox::after {
+            content: "✓";
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+        }
+
+        .checkbox-label {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        /* 文本输入区 */
+        .text-input-area {
+            width: 100%;
+            min-height: 80px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            resize: vertical;
+            transition: var(--transition);
+        }
+
+        .text-input-area:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+        }
+
+        .text-input-area::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* 下拉选择 */
+        .select-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .select-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            min-width: 80px;
+        }
+
+        .custom-select {
+            flex: 1;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .custom-select:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        /* 数值输入行 */
+        .number-inputs {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .number-input-group {
+            flex: 1;
+        }
+
+        .number-input-label {
+            display: block;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .number-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            text-align: center;
+        }
+
+        .number-input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .hint-text {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* 滑块样式 */
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .slider-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            min-width: 90px;
+        }
+
+        .custom-slider {
+            flex: 1;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: var(--bg-elevated);
+            border-radius: 3px;
+            outline: none;
+        }
+
+        .custom-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+            transition: var(--transition);
+        }
+
+        .custom-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+        }
+
+        .slider-value {
+            min-width: 50px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--primary-light);
+        }
+
+        /* 信息提示 */
+        .info-box {
+            background: rgba(102, 126, 234, 0.1);
+            border: 1px solid rgba(102, 126, 234, 0.2);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .info-box ul {
+            margin-left: 16px;
+            margin-top: 8px;
+        }
+
+        .info-box li {
+            margin-bottom: 4px;
+        }
+
+        /* 对话框底部 */
+        .dialog-footer {
+            padding: 20px 24px;
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            border-top: 1px solid var(--border-light);
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-save {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 12px 32px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+
+        /* ============ 颜色配置展示 ============ */
+        .color-palette {
+            margin-top: 60px;
+        }
+
+        .palette-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+        }
+
+        .color-card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        .color-preview {
+            height: 80px;
+        }
+
+        .color-info {
+            padding: 14px 16px;
+        }
+
+        .color-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .color-value {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        /* ============ 响应式 ============ */
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                display: none;
+            }
+
+            .page-header h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <!-- 页面标题 -->
+        <header class="page-header">
+            <h1>PrivacyGuard UI 设计方案</h1>
+            <p>现代化 · 高端大气 · 专业级界面设计</p>
+        </header>
+
+        <!-- 设计说明 -->
+        <div class="design-notes">
+            <h3>设计理念与特点</h3>
+            <ul>
+                <li>深色主题 - 护眼舒适，专业感强</li>
+                <li>渐变色彩 - 现代时尚，视觉层次丰富</li>
+                <li>圆角卡片 - 柔和精致，减少视觉疲劳</li>
+                <li>微动效 - 流畅过渡，提升交互体验</li>
+                <li>清晰层级 - 信息组织有序，易于理解</li>
+                <li>保持功能 - 不改变原有功能布局</li>
+                <li>性能优化 - CSS动效轻量，不影响性能</li>
+                <li>高对比度 - 确保文字清晰可读</li>
+            </ul>
+        </div>
+
+        <!-- 主界面预览 -->
+        <section class="preview-section">
+            <div class="section-title">
+                <h2>主界面设计</h2>
+                <span class="badge">MainWindow</span>
+            </div>
+
+            <div class="main-window">
+                <!-- 标题栏 -->
+                <div class="title-bar">
+                    <div class="app-branding">
+                        <div class="app-logo">🛡️</div>
+                        <span class="app-name">PrivacyGuard 脱敏卫士</span>
+                        <span class="app-version">v37.4.2</span>
+                    </div>
+                    <div class="window-controls">
+                        <button class="window-btn minimize"></button>
+                        <button class="window-btn maximize"></button>
+                        <button class="window-btn close"></button>
+                    </div>
+                </div>
+
+                <!-- 工具栏 -->
+                <div class="toolbar">
+                    <div class="toolbar-group">
+                        <button class="btn btn-secondary">📂 打开PDF</button>
+                        <button class="btn btn-secondary">📄 打开Word</button>
+                    </div>
+                    <div class="toolbar-divider"></div>
+                    <div class="toolbar-group">
+                        <button class="btn btn-primary">🔒 智能脱敏</button>
+                        <button class="btn btn-secondary">💾 保存</button>
+                    </div>
+                    <div class="toolbar-divider"></div>
+                    <div class="toolbar-group">
+                        <button class="btn btn-icon">↶</button>
+                        <button class="btn btn-icon">↷</button>
+                    </div>
+                    <div style="flex: 1;"></div>
+                    <div class="toolbar-group">
+                        <button class="btn btn-secondary">⚙️ 高级设置</button>
+                        <button class="btn btn-icon">❓</button>
+                    </div>
+                </div>
+
+                <!-- 主内容区 -->
+                <div class="main-content">
+                    <!-- 预览区 -->
+                    <div class="preview-area">
+                        <div class="preview-header">
+                            <span class="preview-title">📄 示例文档.pdf</span>
+                            <div class="zoom-controls">
+                                <button class="zoom-btn">−</button>
+                                <span class="zoom-label">100%</span>
+                                <button class="zoom-btn">+</button>
+                            </div>
+                        </div>
+                        <div class="preview-canvas">
+                            <div class="document-preview">
+                                <div class="doc-header">
+                                    <div class="doc-title">民事判决书</div>
+                                </div>
+                                <div class="doc-content">
+                                    <div class="doc-line" style="width: 90%"></div>
+                                    <div class="doc-line redacted" style="width: 60%"></div>
+                                    <div class="doc-line" style="width: 100%"></div>
+                                    <div class="doc-line" style="width: 85%"></div>
+                                    <div class="doc-line redacted" style="width: 45%"></div>
+                                    <div class="doc-line" style="width: 70%"></div>
+                                    <div class="doc-line" style="width: 95%"></div>
+                                    <div class="doc-line redacted" style="width: 50%"></div>
+                                    <div class="doc-line" style="width: 80%"></div>
+                                    <div class="doc-line" style="width: 60%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 侧边栏 -->
+                    <div class="sidebar">
+                        <div class="sidebar-header">📑 页面缩略图</div>
+                        <div class="thumbnail-list">
+                            <div class="thumbnail-item active">
+                                <div class="thumbnail-preview"></div>
+                                <div class="thumbnail-label">第 1 页</div>
+                            </div>
+                            <div class="thumbnail-item">
+                                <div class="thumbnail-preview"></div>
+                                <div class="thumbnail-label">第 2 页</div>
+                            </div>
+                            <div class="thumbnail-item">
+                                <div class="thumbnail-preview"></div>
+                                <div class="thumbnail-label">第 3 页</div>
+                            </div>
+                            <div class="thumbnail-item">
+                                <div class="thumbnail-preview"></div>
+                                <div class="thumbnail-label">第 4 页</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 状态栏 -->
+                <div class="status-bar">
+                    <div class="status-item">
+                        <span class="status-dot"></span>
+                        <span>就绪</span>
+                    </div>
+                    <div class="status-item">
+                        <span>共 4 页</span>
+                    </div>
+                    <div class="status-item">
+                        <span>已脱敏: 3 处</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 设置对话框预览 -->
+        <section class="preview-section">
+            <div class="section-title">
+                <h2>高级设置对话框</h2>
+                <span class="badge">SettingsDialog</span>
+            </div>
+
+            <div class="dialog-preview">
+                <div class="dialog-header">
+                    <span class="dialog-title">⚙️ 高级设置</span>
+                    <button class="dialog-close">×</button>
+                </div>
+
+                <div class="dialog-content">
+                    <!-- 1. 通用规则 -->
+                    <div class="settings-group">
+                        <div class="group-header">
+                            <div class="group-icon">📋</div>
+                            <span class="group-title">1. 通用规则</span>
+                        </div>
+                        <div class="group-content">
+                            <div class="checkbox-grid">
+                                <div class="checkbox-item checked">
+                                    <div class="custom-checkbox"></div>
+                                    <span class="checkbox-label">身份证号</span>
+                                </div>
+                                <div class="checkbox-item checked">
+                                    <div class="custom-checkbox"></div>
+                                    <span class="checkbox-label">手机号码</span>
+                                </div>
+                                <div class="checkbox-item">
+                                    <div class="custom-checkbox"></div>
+                                    <span class="checkbox-label">银行卡号</span>
+                                </div>
+                                <div class="checkbox-item">
+                                    <div class="custom-checkbox"></div>
+                                    <span class="checkbox-label">电子邮箱</span>
+                                </div>
+                                <div class="checkbox-item">
+                                    <div class="custom-checkbox"></div>
+                                    <span class="checkbox-label">日期时间</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. 自定义关键词 -->
+                    <div class="settings-group">
+                        <div class="group-header">
+                            <div class="group-icon">✏️</div>
+                            <span class="group-title">2. 自定义关键词</span>
+                        </div>
+                        <div class="group-content">
+                            <textarea class="text-input-area" placeholder="例如：法院 张三 (支持多行)">张三
+李四
+律师事务所</textarea>
+                        </div>
+                    </div>
+
+                    <!-- 3. 精度与微调 -->
+                    <div class="settings-group">
+                        <div class="group-header">
+                            <div class="group-icon">🎯</div>
+                            <span class="group-title">3. 精度与微调</span>
+                        </div>
+                        <div class="group-content">
+                            <div class="select-row">
+                                <span class="select-label">扫描模式:</span>
+                                <select class="custom-select">
+                                    <option>普通 (1.0x)</option>
+                                    <option selected>标准 (1.5x)</option>
+                                    <option>高精 (2.0x)</option>
+                                </select>
+                            </div>
+                            <div class="number-inputs">
+                                <div class="number-input-group">
+                                    <label class="number-input-label">向左修正 (px)</label>
+                                    <input type="number" class="number-input" value="0">
+                                </div>
+                                <div class="number-input-group">
+                                    <label class="number-input-label">宽度收缩 (px)</label>
+                                    <input type="number" class="number-input" value="0">
+                                </div>
+                            </div>
+                            <div class="hint-text">💡 提示：仅对纯图片PDF生效</div>
+                        </div>
+                    </div>
+
+                    <!-- 4. OCR 检测框调节 -->
+                    <div class="settings-group">
+                        <div class="group-header">
+                            <div class="group-icon">🔧</div>
+                            <span class="group-title">4. OCR 检测框调节</span>
+                        </div>
+                        <div class="group-content">
+                            <div class="slider-row">
+                                <span class="slider-label">检测框调节:</span>
+                                <input type="range" class="custom-slider" min="-30" max="50" value="0">
+                                <span class="slider-value">0%</span>
+                            </div>
+                            <div class="hint-text">📊 负值扩大，正值收缩，0保持原样（默认0%）</div>
+                            <div class="info-box" style="margin-top: 16px;">
+                                <strong>引擎说明：</strong>
+                                <ul>
+                                    <li>RapidOCR：默认 OCR 引擎，速度快，适合大文档批量处理</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dialog-footer">
+                    <button class="btn-save">💾 保存设置</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 颜色配置 -->
+        <section class="color-palette">
+            <div class="section-title">
+                <h2>配色方案</h2>
+                <span class="badge">Color Palette</span>
+            </div>
+
+            <div class="palette-grid">
+                <div class="color-card">
+                    <div class="color-preview" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+                    <div class="color-info">
+                        <div class="color-name">主色调</div>
+                        <div class="color-value">#667eea → #764ba2</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-preview" style="background: #0F172A;"></div>
+                    <div class="color-info">
+                        <div class="color-name">主背景</div>
+                        <div class="color-value">#0F172A</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-preview" style="background: #1E293B;"></div>
+                    <div class="color-info">
+                        <div class="color-name">次背景/卡片</div>
+                        <div class="color-value">#1E293B</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-preview" style="background: #334155;"></div>
+                    <div class="color-info">
+                        <div class="color-name">提升背景</div>
+                        <div class="color-value">#334155</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-preview" style="background: #F8FAFC;"></div>
+                    <div class="color-info">
+                        <div class="color-name">主文字</div>
+                        <div class="color-value">#F8FAFC</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-preview" style="background: #94A3B8;"></div>
+                    <div class="color-info">
+                        <div class="color-name">次文字</div>
+                        <div class="color-value">#94A3B8</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-preview" style="background: #10B981;"></div>
+                    <div class="color-info">
+                        <div class="color-name">成功/强调</div>
+                        <div class="color-value">#10B981</div>
+                    </div>
+                </div>
+                <div class="color-card">
+                    <div class="color-preview" style="background: #EF4444;"></div>
+                    <div class="color-info">
+                        <div class="color-name">危险/警告</div>
+                        <div class="color-value">#EF4444</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer style="text-align: center; margin-top: 60px; padding: 40px; color: var(--text-muted); border-top: 1px solid var(--border);">
+            <p>PrivacyGuard 脱敏卫士 · UI 设计方案 v1.0</p>
+            <p style="margin-top: 8px; font-size: 0.85rem;">此为设计预览，实际效果将在 Python/PyQt6 中实现</p>
+        </footer>
+    </div>
+</body>
+</html>

@@ -8,7 +8,7 @@ title PrivacyGuard Build
 echo.
 echo ========================================
 echo   PrivacyGuard Windows Build Script
-echo   Version: v37.5.0 (Seal Detection)
+echo   Version: from version.txt
 echo ========================================
 echo.
 
@@ -36,6 +36,7 @@ for %%i in ("%SCRIPT_DIR%..\config") do set "CONFIG_DIR=%%~fi"
 for %%i in ("%SCRIPT_DIR%..\assets") do set "ASSETS_DIR=%%~fi"
 set "DIST_DIR=%PROJECT_DIR%\dist"
 set "RELEASE_DIR=%PROJECT_DIR%\releases\windows"
+set "PYINSTALLER_CONFIG_DIR=%PROJECT_DIR%\build\.pyinstaller-cache"
 
 :: ========== Phase 1: Environment Check ==========
 echo [Phase 1/7] Environment check...
@@ -77,6 +78,11 @@ set "VERSION="
 for /f "usebackq tokens=*" %%a in ("%PROJECT_DIR%\version.txt") do (
     set "VERSION=%%a"
 )
+if not defined VERSION (
+    echo [ERROR] version.txt is empty
+    pause
+    exit /b 1
+)
 
 :: Check spec file
 echo [DEBUG] Checking: %CONFIG_DIR%\PrivacyGuard_windows.spec
@@ -89,10 +95,11 @@ if not exist "%CONFIG_DIR%\PrivacyGuard_windows.spec" (
 echo [OK] spec file found
 
 :: Check icon file
-echo [DEBUG] Checking: %ASSETS_DIR%\icon.ico
-if not exist "%ASSETS_DIR%\icon.ico" (
+set "ICON_PATH=%PROJECT_DIR%\assets\logo\windows\app_icon.ico"
+echo [DEBUG] Checking: %ICON_PATH%
+if not exist "%ICON_PATH%" (
     echo [ERROR] Application icon not found
-    echo [PATH] %ASSETS_DIR%\icon.ico
+    echo [PATH] %ICON_PATH%
     pause
     exit /b 1
 )
@@ -125,10 +132,12 @@ if exist "%DIST_DIR%" (
     rmdir /s /q "%DIST_DIR%" 2>nul
     echo [OK] Deleted old dist/
 )
-if exist "build\build" (
-    rmdir /s /q "build\build" 2>nul
+if exist "build" (
+    rmdir /s /q "build" 2>nul
     echo [OK] Deleted old build/
 )
+if not exist "%PROJECT_DIR%\build" mkdir "%PROJECT_DIR%\build"
+if not exist "%PYINSTALLER_CONFIG_DIR%" mkdir "%PYINSTALLER_CONFIG_DIR%"
 if not exist "%RELEASE_DIR%" mkdir "%RELEASE_DIR%"
 popd
 echo.
@@ -147,6 +156,17 @@ if errorlevel 1 (
 echo [OK] All dependencies verified
 echo.
 
+echo [Phase 3.5/8] Generating version resource...
+python "%SCRIPT_DIR%generate_version_info.py"
+if errorlevel 1 (
+    echo.
+    echo [ERROR] Failed to generate version_info.txt
+    pause
+    exit /b 1
+)
+echo [OK] version_info.txt updated
+echo.
+
 :: ========== Phase 3: Build executable ==========
 echo [Phase 4/8] Building executable...
 echo [INFO] This may take 5-15 minutes, please wait...
@@ -154,7 +174,7 @@ echo.
 
 pushd "%PROJECT_DIR%"
 call "%VENV_PATH%\Scripts\activate.bat"
-pyinstaller --clean --noconfirm "%CONFIG_DIR%\PrivacyGuard_windows.spec"
+python -m PyInstaller --clean --noconfirm "%CONFIG_DIR%\PrivacyGuard_windows.spec"
 popd
 
 if errorlevel 1 (
@@ -275,7 +295,10 @@ if exist "%ZIP_NAME%" (
     move /y "%ZIP_NAME%" "%RELEASE_DIR%\" >nul 2>&1
     echo [OK] ZIP created: releases\windows\%ZIP_NAME%
 ) else (
-    echo [WARN] ZIP creation may have failed
+    echo [ERROR] ZIP creation failed
+    popd
+    pause
+    exit /b 1
 )
 
 popd
@@ -283,7 +306,12 @@ echo.
 
 :: Generate checksum
 echo [INFO] Generating SHA256 checksum...
-certutil -hashfile "%RELEASE_DIR%\%ZIP_NAME%" SHA256 2>nul | findstr /v "CertUtil" > "%RELEASE_DIR%\%ZIP_NAME%.sha256"
+if not exist "%RELEASE_DIR%\%ZIP_NAME%" (
+    echo [ERROR] ZIP file not found: %RELEASE_DIR%\%ZIP_NAME%
+    pause
+    exit /b 1
+)
+certutil -hashfile "%RELEASE_DIR%\%ZIP_NAME%" SHA256 2>nul | findstr /v "CertUtil" | findstr /v "SHA256" > "%RELEASE_DIR%\%ZIP_NAME%.sha256"
 echo [OK] Checksum saved
 echo.
 
