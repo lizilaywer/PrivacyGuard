@@ -1,5 +1,5 @@
 # PrivacyGuard 脱敏卫士
-我这个比较懒，不会搞github，多多理解，哪天有空了 再好好研究，先传上去，有空可以关注公众号联系：池州汪律的AI进化论
+我这个比较懒，不会搞github，多多理解，哪天有空了 再好好研究，先传上去，有空可以关注公众号联系：池州汪律的AI进化论 ，或者抖音搜索：池州有个汪律师
 <img width="2422" height="1510" alt="软件截图预览_主页" src="https://github.com/user-attachments/assets/c93df112-8e24-4fb2-b236-3584a82d2e1f" />
 
 > 基于 Python + PyQt6 的 PDF / Word 文档智能脱敏工具
@@ -149,5 +149,6 @@ python3 -m unittest \
 - `ROLLBACK_GUIDE.md`
 - `restore_checkpoint.sh`
 
+关注与我这边比较不懂又懒的小律师交流吧！
 ![关注公众号](./assets/wx_qrcode.png)
-
+！[打赏](./assets/donate_qrcode.png.png)
