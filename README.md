@@ -1,4 +1,5 @@
 # PrivacyGuard 脱敏卫士
+<img width="2422" height="1510" alt="软件截图预览_主页" src="https://github.com/user-attachments/assets/c93df112-8e24-4fb2-b236-3584a82d2e1f" />
 
 > 基于 Python + PyQt6 的 PDF / Word 文档智能脱敏工具
 
