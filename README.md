@@ -152,6 +152,3 @@ python3 -m unittest \
 关注与我这边比较不懂又懒的小律师交流吧！
 ![关注公众号](./assets/wx_qrcode.png)  
 
-![打赏](./assets/donate_qrcode.png)
-
-
