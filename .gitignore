@@ -67,3 +67,6 @@ releases/macos/PrivacyGuard.app/
 # Windows build
 venv_win/
 nul
+
+# WorkBuddy workspace data
+.workbuddy/

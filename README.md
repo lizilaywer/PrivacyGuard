@@ -11,10 +11,10 @@ https://www.bilibili.com/video/BV1NPDYB4EP1?vd_source=53f4c6f7c7329987c843aa17df
 
 > 基于 Python + PyQt6 的 PDF / Word 文档智能脱敏工具
 
-**当前版本**: v37.7.4
-**版本标识**: `37.7.4 - Release Audit and Final Polish`
-**最后更新**: 2026-03-18
-**当前状态**: 可发布，`v37.7.4` 运行基线稳定；v38 UI 改造代码层已完成，当前默认进入真机截图驱动的细节抛光阶段
+**当前版本**: v37.7.6
+**版本标识**: `37.7.6 - Full Convergence Remediation`
+**最后更新**: 2026-05-16
+**当前状态**: 全面修复完成，P1-P4 修复全部收口，基线测试 79/79 通过
 
 [English](README_EN.md) | [License: GPL v3](LICENSE)
 

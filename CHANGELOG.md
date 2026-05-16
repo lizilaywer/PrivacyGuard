@@ -13,6 +13,91 @@
 
 ---
 
+## [37.7.6] - 2026-05-16
+
+### 🛠️ 全面重复实现收敛
+
+#### Worker 层收敛
+
+- **OCRWorker**：将 main.py 中 ~500 行内联实现替换为继承自 `privacyguard.workers.ocr_worker.OCRWorker` 的 14 行兼容层
+  - 模块版已全面上行高级特性：印章检测、像素级文本边界检测、CJK 智能字符权重、检测框收缩、error_signal、box_adjust_ratio
+  - 坐标转换逻辑统一（在 calculate_sub_rect 内除以 scan_scale，clip_to_page_rect_fn 直接加偏移）
+- **WordWorker**：将 main.py 中 ~118 行内联实现替换为继承自 `privacyguard.workers.word_worker.WordWorker` 的 7 行兼容层
+  - 自动注入 `DEFAULT_RULES` 到 `default_rules` 参数
+- **ImageMergeWorker**：将 main.py 中 ~50 行完全相同的内联实现替换为从 `privacyguard.workers.image_merge` 导入
+
+#### DOC 转换逻辑提取
+
+- 新增 `privacyguard/utils/doc_converter.py`：共享 DOC→DOCX 转换模块
+  - `convert_doc_to_docx()`: 自动尝试 LibreOffice → antiword
+  - `convert_with_libreoffice()`: 跨平台 LibreOffice 调用（含安全验证、重试）
+  - `convert_with_antiword()`: antiword 回退路径
+  - `resolve_soffice_cmd()`: 跨平台 LibreOffice 路径检测
+- main.py 中 `WordBatchReplaceWorker` 和 `MainWindow` 的两套内联转换方法均已委托给共享模块
+- 删除约 220 行 MainWindow 中的重复 `_convert_with_libreoffice` + `_convert_with_antiword`
+
+#### 版本回退值对齐
+
+- 修复 `main.py` 的 `read_app_version()` 回退值：`"37.7.4"` → `"37.7.5"`
+- 修复 `privacyguard/__init__.py` 的 `_read_version()` 回退值：`"37.7.0"` → `"37.7.5"`
+- 两处回退值现已统一
+
+#### 代码量变化
+
+- main.py 从 ~13,530 行减至 12,611 行，净减少约 920 行重复代码
+- 模块化代码增加 852 行（OCRWorker 474 + doc_converter 183 + 其余 195）
+
+#### 测试增强
+
+- 新增收敛回归测试（`test_convergence.py`，10 项）
+  - ImageMergeWorker 收敛验证
+  - WordWorker 兼容层验证
+  - DOC 转换模块存在性与导出验证
+  - 版本回退值一致性验证
+- 测试总数从 59 提升至 69
+
+### ✅ 验证
+
+- `python3 -m compileall -q main.py privacyguard tests`
+- 全量回归：`69/69` 通过
+
+---
+
+## [37.7.5] - 2026-05-16
+
+### 🛠️ 工程保障修复
+
+#### 配置系统统一
+
+- 修复 `ConfigManager.DEFAULT_CONFIG` 与 `config.json` 之间的 5 处关键值不一致
+- 统一 `replacement_text`（`*`）、`scan.default_level`（`1.5`）、`scan.available_levels`（`[1.0, 1.5, 2.0]`）、`custom_keywords`（`人`）、`offset.x_range`（`[-20, 50]`）
+- 补齐 `DEFAULT_CONFIG` 中缺失的 `ocr.box_adjust_ratio`、`ocr.box_adjust_range`、`redaction.precise_locator`、印章规则
+- 将 `ConfigManager.set()` 和 `update_redaction_rules()` 的 `persist` 参数默认值从 `False` 改为 `True`，防止配置静默丢失
+
+#### 代码去重
+
+- 删除 main.py 中与 `privacyguard/utils/` 重复的 3 个实现
+  - `PrivacyAppError` + 子类（5 个异常类）→ 改为从 `privacyguard.utils.exceptions` 导入
+  - `TempFileManager` → 改为从 `privacyguard.utils.temp_manager` 导入
+  - `resource_path()` → 改为从 `privacyguard.utils.security` 导入
+- main.py 净减少约 156 行重复代码
+- `SecurityError` 异常类随模块化导入自动补全
+
+#### 测试增强
+
+- 新增配置系统跨系统一致性测试（`test_config_alignment.py`，11 项）
+- 新增路径校验唯一来源测试（`test_path_validation.py`，2 项）
+- 新增 f-string CSS 花括号安全回归测试（`test_fstring_safety.py`，1 项）
+- 扩充 `test_app_config.py`（2 项）
+- 测试总数从 52 提升至 59
+
+### ✅ 验证
+
+- `python3 -m compileall -q main.py privacyguard tests`
+- 全量回归：`59/59` 通过
+
+---
+
 ## [37.7.4] - 2026-03-18
 
 ### 🚀 发布审查与版本同步

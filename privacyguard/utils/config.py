@@ -71,31 +71,41 @@ DEFAULT_CONFIG = {
                 "pattern": r"(?<!\d)([1-9]\d{12,18})(?!\d)",
                 "enabled": True,
                 "description": "匹配13-19位银行卡号"
+            },
+            "印章": {
+                "pattern": "__SEAL_DETECTION__",
+                "enabled": False,
+                "description": "使用 OpenCV 自动检测并脱敏红色印章区域"
             }
         },
-        "replacement_text": "[已脱敏]",
-        "custom_keywords": "",
+        "replacement_text": "*",
+        "custom_keywords": "人",
         "scan": {
-            "default_level": 2.0,
-            "available_levels": [1.5, 2.0, 3.0],
+            "default_level": 1.5,
+            "available_levels": [1.0, 1.5, 2.0],
             "level_labels": {
-                "1.5": "标准 (1.5x)",
-                "2.0": "高精 (2.0x 推荐)",
-                "3.0": "超精 (3.0x 最慢)"
+                "1.0": "普通 (1.0x)",
+                "1.5": "标准 (1.5x 推荐)",
+                "2.0": "高精 (2.0x)"
             }
         },
         "offset": {
-            "x_range": [-20, 20],
+            "x_range": [-20, 50],
             "w_range": [-20, 20],
             "default_x": 0,
             "default_w": 0
+        },
+        "precise_locator": {
+            "enabled": True
         }
     },
     "ocr": {
         "min_rect_width": 5,
         "progress_update_interval": 0.05,
         "zoom_min": 0.5,
-        "zoom_max": 4.0
+        "zoom_max": 4.0,
+        "box_adjust_ratio": 0.0,
+        "box_adjust_range": [-0.3, 0.5]
     },
     "security": {
         "validate_paths": True,
@@ -259,7 +269,7 @@ class ConfigManager:
             except KeyError:
                 return default
 
-    def set(self, path: str, value: Any, persist: bool = False) -> bool:
+    def set(self, path: str, value: Any, persist: bool = True) -> bool:
         """
         设置配置值
 
@@ -455,7 +465,7 @@ class ConfigManager:
             return rule
         return None
 
-    def update_redaction_rules(self, rules: Dict[str, Any], persist: bool = False) -> bool:
+    def update_redaction_rules(self, rules: Dict[str, Any], persist: bool = True) -> bool:
         """
         更新脱敏规则
 

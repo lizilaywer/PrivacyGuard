@@ -7,9 +7,9 @@ This file is the primary development guide for Codex and other coding agents wor
 ## Project Overview
 
 **Project**: PrivacyGuard 脱敏卫士  
-**Current Version**: v37.7.4 (`37.7.4 - Release Audit and Final Polish`)  
-**Last Updated**: 2026-03-18  
-**Status**: Release-ready on the `v37.7.4` runtime baseline; the v38 UI refactor code layer is complete and current work has shifted to screenshot-driven polish
+**Current Version**: v37.7.6 (`37.7.6 - Full Convergence Remediation`)  
+**Last Updated**: 2026-05-16  
+**Status**: v37.7.6 全面重复实现收敛完成；P1-P4 修复全部完成；基线测试 79/79 通过
 
 PrivacyGuard is a Python + PyQt6 desktop application for intelligent redaction of PDF and Word documents.
 
@@ -126,6 +126,13 @@ Important:
 - `privacyguard/ocr/text_pdf.py` - shared text-PDF hit collection
 - `privacyguard/ocr/mixed_pdf.py` - shared mixed-PDF image-block OCR helper
 - `privacyguard/workers/ocr_worker.py` - modular OCR worker
+- `privacyguard/workers/word_worker.py` - modular Word worker
+- `privacyguard/workers/image_merge.py` - modular image merge worker
+- `privacyguard/utils/doc_converter.py` - shared DOC→DOCX converter
+- `privacyguard/utils/config.py` - modular config manager
+- `privacyguard/utils/exceptions.py` - shared exception classes
+- `privacyguard/utils/temp_manager.py` - shared temp file manager
+- `privacyguard/utils/security.py` - shared path validation & resource_path
 
 ---
 
@@ -156,10 +163,13 @@ python3 -m unittest \
   tests.unit.test_app_config \
   tests.unit.test_word_replace_rules \
   tests.unit.test_batch_word_replace \
+  tests.unit.test_config_alignment \
+  tests.unit.test_fstring_safety \
+  tests.unit.test_convergence \
   -v
 ```
 
-Current verified baseline: `52/52`.
+Current verified baseline: `79/79`.
 
 ### Version check
 

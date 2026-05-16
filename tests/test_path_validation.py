@@ -62,6 +62,26 @@ class TestPathValidation(unittest.TestCase):
             self.assertFalse(ok)
             self.assertIn("不在允许范围", msg)
 
+    def test_main_py_uses_shared_validate_safe_path(self):
+        """main.py 应直接使用共享实现，不保留本地副本。"""
+        with open(os.path.join(ROOT, "main.py"), "r", encoding="utf-8") as f:
+            source = f.read()
+        self.assertIn("from privacyguard.utils.security import validate_safe_path", source,
+            "main.py 应从共享模块导入 validate_safe_path")
+        self.assertNotRegex(source, r'def validate_safe_path\s*\(',
+            "main.py 不应包含 validate_safe_path 的本地定义")
+
+    def test_main_py_uses_shared_resource_path(self):
+        """main.py 应使用共享 resource_path，不保留本地副本。"""
+        with open(os.path.join(ROOT, "main.py"), "r", encoding="utf-8") as f:
+            source = f.read()
+        self.assertIn("resource_path", source,
+            "main.py 应引用 resource_path")
+        lines = source.split('\n')
+        local_defs = [l for l in lines if l.strip().startswith('def resource_path')]
+        self.assertEqual(len(local_defs), 0,
+            f"main.py 不应包含 resource_path 的本地定义，发现: {local_defs}")
+
 
 if __name__ == "__main__":
     unittest.main()

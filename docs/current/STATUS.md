@@ -1,11 +1,38 @@
 # PrivacyGuard 当前状态（Single Source）
 
-- **日期**: 2026-03-18
-- **当前版本基线**: v37.7.4
-- **版本标识**: `37.7.4 - Release Audit and Final Polish`
-- **当前状态**: ✅ 发布准备完成（代码、文档、打包方案与版本资源已同步）
-- **最后更新**: 2026-03-18
+- **日期**: 2026-05-16
+- **当前版本基线**: v37.7.6
+- **版本标识**: `37.7.6 - Full Convergence Remediation`
+- **当前状态**: ✅ 全面重复实现收敛完成
+- **最后更新**: 2026-05-16
 - **当前工作轨道**: 正式发布前的真机截图驱动抛光
+
+---
+
+## 2026-05-16 全面重复实现收敛
+
+### 已完成
+
+- **OCRWorker**：main.py ~500 行内联实现 → 继承自模块版的 14 行兼容层
+  - 模块版已上行：印章检测、像素级文本边界、CJK 智能字符权重、检测框收缩、error_signal、box_adjust_ratio
+- **WordWorker**：main.py ~118 行内联实现 → 继承自模块版的 7 行兼容层
+- **ImageMergeWorker**：main.py ~50 行完全相同的内联实现 → 模块导入
+- **DOC 转换**：新增 `privacyguard/utils/doc_converter.py`，WordBatchReplaceWorker 和 MainWindow 均委托给共享模块
+- **版本回退**：main.py 和 privacyguard/__init__.py 的版本回退值统一为 "37.7.6"
+- 新增收敛回归测试 (`test_convergence.py`，10 项)
+- main.py 从 ~13,530 行减至 12,611 行，净减少约 920 行重复代码
+
+### 累计完成（v37.7.5 + v37.7.6）
+
+- 配置漂移修复（5 处 DEFAULT_CONFIG 与 config.json 值不一致 + 4 个缺失键）
+- persist 默认值统一为 True
+- 代码去重：PrivacyAppError + 子类、TempFileManager、resource_path、ImageMergeWorker、WordWorker、OCRWorker、DOC 转换
+- 新增测试：test_config_alignment.py、test_fstring_safety.py、test_convergence.py + 扩充 test_path_validation.py、test_app_config.py
+
+### 当前验证
+
+- `python3 -m compileall -q main.py privacyguard tests` ✅
+- 全量回归：`69/69` 通过 ✅
 
 ---
 

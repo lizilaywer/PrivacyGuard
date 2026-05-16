@@ -14,7 +14,7 @@ def _read_version():
     try:
         return version_file.read_text(encoding="utf-8").strip()
     except OSError:
-        return "37.7.0"
+        return "37.7.6"
 
 
 __version__ = _read_version()

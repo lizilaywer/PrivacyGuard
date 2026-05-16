@@ -2,10 +2,10 @@
 
 > Intelligent document redaction tool for PDF and Word files, built with Python + PyQt6
 
-**Current Version**: v37.7.4
-**Version Tag**: `37.7.4 - Release Audit and Final Polish`
-**Last Updated**: 2026-03-18
-**Status**: Release-ready on `v37.7.4` runtime baseline; v38 UI refactor code layer is complete, current work focuses on screenshot-driven visual polish
+**Current Version**: v37.7.6
+**Version Tag**: `37.7.6 - Full Convergence Remediation`
+**Last Updated**: 2026-05-16
+**Status**: Full remediation complete (P1-P4 all done); baseline tests 79/79 passing
 
 [中文文档](README.md)
 
