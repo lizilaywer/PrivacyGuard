@@ -1,0 +1,59 @@
+{
+  "phone_segment": {
+    "personal_prefix_3": [
+      "130","131","132","133","134","135","136","137","138","139",
+      "150","151","152","153","155","156","157","158","159",
+      "162","165","166","167",
+      "170","171","172","173","175","176","177","178",
+      "180","181","182","183","184","185","186","187","188","189",
+      "190","191","192","193","195","196","197","198","199"
+    ],
+    "excluded_prefix_3": ["140","141","144","145","146","147","148","149"],
+    "excluded_prefix_4": ["1349","1440","1740","1741"],
+    "source": "MIIT 2017-08 / 2019-12 号段核发公告 + 工信部公开物联网号段清单",
+    "last_verified": "2026-Q1",
+    "next_review": "2026-Q3",
+    "_comment": "[ASSUMED] Phase 1 ship 前需用户 sign-off (D-11 NUM-03)"
+  },
+  "id_card": {
+    "weights": [7, 9, 10, 5, 8, 4, 2, 1, 6, 3, 7, 9, 10, 5, 8, 4, 2],
+    "mapping": ["1","0","X","9","8","7","6","5","4","3","2"],
+    "standard": "GB 11643-1999"
+  },
+  "bank_card": {
+    "bin_dictionary_path": "privacyguard/pii/data/bin_prefixes.json",
+    "luhn_required": true,
+    "context_anchors": ["卡号", "账号", "银行", "支付", "debit", "credit"],
+    "context_window": 20,
+    "length_range": [13, 19],
+    "source": "ISO/IEC 7812 + 维基百科 Bank card number (CC BY-SA 4.0)",
+    "last_verified": "2026-Q3",
+    "next_review": "2026-Q4",
+    "_comment": "Phase 2 NUM-04；02-03 注入真实 BIN 词典（1 万-1.5 万条）"
+  },
+  "uscc": {
+    "weights": [1, 3, 9, 27, 19, 26, 16, 17, 20, 29, 25, 13, 8, 24, 10, 30, 28],
+    "charset": "0123456789ABCDEFGHJKLMNPQRTUWXY",
+    "category_codes": ["1", "5", "9", "Y", "A", "N"],
+    "standard": "GB 32100-2015",
+    "_comment": "Phase 2 FIN-01；6 字符类别码白名单（D-06 锁定）"
+  },
+  "vat_invoice": {
+    "context_anchors": ["发票", "号码", "票号", "invoice", "INVOICE", "Invoice", "增值税", "电子发票", "全电发票"],
+    "context_window": 20,
+    "length_8_required_anchor": true,
+    "length_20_required_anchor": true,
+    "source": "国家税务总局公告 2022 年第 1 号 + 传统 8 位票号",
+    "last_verified": "2026-Q3",
+    "_comment": "Phase 2 FIN-02；8 位传统号 + 20 位全电发票双格式"
+  },
+  "bank_account": {
+    "context_anchors": ["账号", "账户", "银行账号", "银行账户", "招行", "中行", "建行", "工商银行", "农行", "邮储", "交通银行"],
+    "context_window": 20,
+    "context_required": true,
+    "length_range": [9, 21],
+    "source": "银行公开账户命名约定",
+    "last_verified": "2026-Q3",
+    "_comment": "Phase 2 FIN-04；必加上下文锥点（D-08 锁定）"
+  }
+}

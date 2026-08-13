@@ -30,6 +30,9 @@ class WordWorker(QThread):
         self.custom_keywords = [re.escape(k.strip()) for k in raw_keywords if k.strip()]
         self.replacement_text = replacement_text
         self.default_rules = default_rules or {}
+        # [NEW D-12] PIIEngine 缓存 — 避免每段循环 import (Pitfall 8 性能纪律)
+        from privacyguard.pii.engine import PIIEngine
+        self._pii_engine = PIIEngine()
 
     def run(self):
         """主处理流程 - 支持取消并保存进度（v36.3）"""
@@ -53,6 +56,9 @@ class WordWorker(QThread):
                     text = self.word_data[key]['text']
                     matches = self._find_matches(text)
                     self.word_data[key]['ocr'] = matches
+                    # [NEW D-12] PII 扫描 — 复用 PIIEngine, 写入 "pii" 键
+                    from privacyguard.pii import collect_pii_word_hits
+                    self.word_data[key]['pii'] = collect_pii_word_hits(text, self._pii_engine)
 
                 processed += 1
                 self._emit_progress(processed, total, last_emit_time)
@@ -71,6 +77,9 @@ class WordWorker(QThread):
                                 text = self.word_data[key]['text']
                                 matches = self._find_matches(text)
                                 self.word_data[key]['ocr'] = matches
+                                # [NEW D-12] PII 扫描 — 表格 cell 走同一 PIIEngine 实例
+                                from privacyguard.pii import collect_pii_word_hits
+                                self.word_data[key]['pii'] = collect_pii_word_hits(text, self._pii_engine)
 
                             processed += 1
                             self._emit_progress(processed, total, last_emit_time)

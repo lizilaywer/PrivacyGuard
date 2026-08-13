@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "app": {
-    "name": "PrivacyGuard 脱敏卫士",
+    "name": "敏感数据脱敏助手",
     "window": {
       "default_width": 1300,
       "default_height": 900,
@@ -79,6 +79,34 @@
     "precise_locator": {
       "enabled": true
     }
+  },
+  "pii_settings": {
+    "engine_enabled": true,
+    "auto_redact": true,
+    "require_confirmation": false,
+    "scan_scope": [
+      "CN_ID_CARD",
+      "CN_PHONE",
+      "CN_BANK_CARD",
+      "CN_EMAIL",
+      "CN_USCC",
+      "CN_TAXPAYER_ID",
+      "CN_TAXPAYER_ID_15",
+      "CN_VAT_INVOICE",
+      "CN_BANK_ACCOUNT"
+    ],
+    "per_entity_default": {
+      "CN_ID_CARD": "partial",
+      "CN_PHONE": "partial",
+      "CN_BANK_CARD": "partial",
+      "CN_EMAIL": "partial",
+      "CN_USCC": "partial",
+      "CN_TAXPAYER_ID": "partial",
+      "CN_TAXPAYER_ID_15": "partial",
+      "CN_VAT_INVOICE": "partial",
+      "CN_BANK_ACCOUNT": "partial"
+    },
+    "_comment": "Phase 2 隐私识别引擎设置；D-13 锁定 per_entity_default 字段名"
   },
   "ocr": {
     "min_rect_width": 5,

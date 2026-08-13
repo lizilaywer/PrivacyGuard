@@ -66,7 +66,11 @@ if [ ! -f "$CONFIG_DIR/PrivacyGuard.spec" ]; then
     echo "[ERROR] PyInstaller spec 文件不存在!"
     exit 1
 fi
-# 检查 create-dmg 是否安装
+# Phase 3 (03-word): privacyguard.pii.word_adapter hiddenimport 由
+# packaging/macos/config/PrivacyGuard.spec 显式声明。
+# 与 Windows spec 保持 parity，避免 lazy-loader 在 frozen 包中漏收集。
+# Phase 3 (03-G2 Gap 4): privacyguard.utils.word_props (Word core_properties 清除
+# helper) hiddenimport 由 PrivacyGuard.spec 显式声明; 与 Windows spec 保持 parity。
 if ! command -v create-dmg &> /dev/null; then
     echo "[WARN] create-dmg 未安装，将回退到 hdiutil 创建标准 DMG"
     echo "       安装: brew install create-dmg"
@@ -135,6 +139,35 @@ if [ -f "$APP_PATH/Contents/Resources/assets/donate_qrcode.png" ]; then
     echo "  [OK] assets/donate_qrcode.png 存在"
 else
     echo "  [WARN] assets/donate_qrcode.png 不存在 (打赏功能将不可用)"
+fi
+
+# v38.x: Phase 1 PII 引擎数据文件校验（cp30 防回归）
+# PyInstaller spec 必须包含 privacyguard/pii/data 目录，否则 frozen 启动报 FileNotFoundError
+if [ -f "$APP_PATH/Contents/Resources/privacyguard/pii/data/rules.json" ]; then
+    echo "  [OK] privacyguard/pii/data/rules.json 存在"
+else
+    echo "  [FAIL] privacyguard/pii/data/rules.json 缺失（cp30 回归）"
+    echo "  [FAIL] PII 引擎在 frozen 包中无法加载规则，手机号检测将静默失败"
+    exit 1
+fi
+
+# Phase 2 (02-03): bin_prefixes.json 数据文件校验（D-26 + D-27）
+# 银行卡 validator 必须在 frozen 包能找到 BIN 词典，否则 BIN 词典缺失导致 safe-fail 全 False
+if [ -f "$APP_PATH/Contents/Resources/privacyguard/pii/data/bin_prefixes.json" ]; then
+    echo "  [OK] privacyguard/pii/data/bin_prefixes.json 存在"
+else
+    echo "  [FAIL] privacyguard/pii/data/bin_prefixes.json 缺失（02-03 回归）"
+    echo "  [FAIL] 银行卡 validator 在 frozen 包中无法加载 BIN 词典，命中将静默失败"
+    exit 1
+fi
+
+# Phase 2 (02-03): bin_prefixes.json.LICENSE CC BY-SA 4.0 归属声明校验（D-27）
+if [ -f "$APP_PATH/Contents/Resources/privacyguard/pii/data/bin_prefixes.json.LICENSE" ]; then
+    echo "  [OK] privacyguard/pii/data/bin_prefixes.json.LICENSE 存在"
+else
+    echo "  [FAIL] privacyguard/pii/data/bin_prefixes.json.LICENSE 缺失（CC BY-SA 4.0 违规）"
+    echo "  [FAIL] Wikipedia 来源归属声明未随 frozen 包发布"
+    exit 1
 fi
 
 echo "[OK] 验证通过"

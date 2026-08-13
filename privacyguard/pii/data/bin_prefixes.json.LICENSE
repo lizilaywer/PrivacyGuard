@@ -1,0 +1,7 @@
+PrivacyGuard 银行卡 BIN 词典
+基于 Wikipedia "Payment card number" 词条整理
+
+Source: https://en.wikipedia.org/wiki/Payment_card_number
+License: CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0/)
+
+Modifications: 整合中国银联公开 BIN 公告，移除过期条目，按 6 位前缀去重

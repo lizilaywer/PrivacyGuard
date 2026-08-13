@@ -3,8 +3,8 @@
 
 VSVersionInfo(
   ffi=FixedFileInfo(
-    filevers=(37, 7, 4, 0),
-    prodvers=(37, 7, 4, 0),
+    filevers=(1, 0, 0, 0),
+    prodvers=(1, 0, 0, 0),
     mask=0x3F,
     flags=0x0,
     OS=0x40004,
@@ -19,12 +19,12 @@ VSVersionInfo(
         [
           StringStruct(u'CompanyName', u'PrivacyGuard Team'),
           StringStruct(u'FileDescription', u'PrivacyGuard 脱敏卫士'),
-          StringStruct(u'FileVersion', u'37.7.4.0'),
+          StringStruct(u'FileVersion', u'1.0.0.0'),
           StringStruct(u'InternalName', u'PrivacyGuard'),
           StringStruct(u'LegalCopyright', u'Copyright (C) 2026 PrivacyGuard Team'),
           StringStruct(u'OriginalFilename', u'PrivacyGuard.exe'),
           StringStruct(u'ProductName', u'PrivacyGuard 脱敏卫士'),
-          StringStruct(u'ProductVersion', u'37.7.4.0')
+          StringStruct(u'ProductVersion', u'1.0.0.0')
         ]
       )
     ]),

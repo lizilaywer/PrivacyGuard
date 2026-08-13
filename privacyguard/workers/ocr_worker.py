@@ -11,11 +11,20 @@ v37.7.6: 全面上行 main.py 的高级特性：
   - error_signal
   - RapidOCREngine 统一引擎接口
   - 坐标转换统一（在 calculate_sub_rect 内除以 scan_scale）
+v38.x: Plan 01-03 接入 PII 引擎：
+  - pii_signal 信号（page_idx, [PIIHit.asdict, ...]）
+  - pii_engine_enabled / pii_settings __init__ 参数
+  - _get_pii_engine 懒加载
+  - _detect_pii_for_page 单页检测
+  - run() 循环在 page_result_signal.emit 之后发射 pii_signal（D-04）
+  - **W-B：** run() 不直接调用 collect_full_page_ocr_hits；整页 fallback
+    仍走 line 397-398 promotion through collect_image_block_ocr_hits（W2）
 """
 
 import time
 import traceback
 import gc
+import dataclasses
 import numpy as np
 import cv2
 import fitz
@@ -38,15 +47,20 @@ class OCRWorker(QThread):
     v36.4: 使用信号槽机制替代共享字典，解决线程安全问题
     v36.5: 模块化拆分
     v37.7.6: 全面上行高级特性
+    v38.x: Phase 1 接入 PII 自动识别（pii_signal + pii_engine_enabled / pii_settings）
     """
     finished_signal = pyqtSignal(dict)
     progress_signal = pyqtSignal(int)
     page_result_signal = pyqtSignal(int, list)  # v36.4: 逐页发送结果 (页码, 矩形列表)
     error_signal = pyqtSignal(str)  # v37.0.5: 错误信号
+    # Phase 1: PII 引擎命中信号（page_idx, [PIIHit.asdict, ...]）
+    pii_signal = pyqtSignal(int, list)
 
     def __init__(self, pdf_path, rules, use_enhance, custom_keywords, scan_scale, off_x, off_w,
                  use_char_level_ocr: bool = False, seal_detection_enabled: bool = False,
-                 box_adjust_ratio: float = 0.0):
+                 box_adjust_ratio: float = 0.0,
+                 pii_engine_enabled: bool = False,
+                 pii_settings: dict = None):
         super().__init__()
         self.pdf_path = pdf_path
         self.rules = rules
@@ -67,6 +81,11 @@ class OCRWorker(QThread):
         self.seal_detection_enabled = seal_detection_enabled
         self._seal_detector = None  # 延迟加载
         print(f"[OCRWorker] 初始化, seal_detection_enabled={seal_detection_enabled}")
+
+        # Phase 1: PII 引擎接入（懒加载 + settings）
+        self.pii_engine_enabled = pii_engine_enabled
+        self._pii_settings = pii_settings or {}
+        self._pii_engine = None  # 延迟初始化（cp30 教训）
 
     def preprocess_image(self, img_np):
         """图像预处理"""
@@ -174,6 +193,45 @@ class OCRWorker(QThread):
             print(f"[Seal Detection] 检测失败: {type(e).__name__}: {e}")
 
         return seal_rects
+
+    def _get_pii_engine(self):
+        """Phase 1: 懒加载 PIIEngine（cp30 教训）。失败时返回 None。"""
+        if self._pii_engine is not None:
+            return self._pii_engine
+        try:
+            from privacyguard.pii.engine import PIIEngine
+            self._pii_engine = PIIEngine(rules_data=self._pii_settings.get("rules_data"))
+        except Exception as exc:
+            print(f"[PII ENGINE] 初始化失败: {type(exc).__name__}: {exc}")
+            self._pii_engine = None
+        return self._pii_engine
+
+    def _detect_pii_for_page(self, page, page_idx, page_text, page_rects):
+        """Phase 1: 单页 PII 检测。
+
+        Args:
+            page: fitz Page 对象（提供 page.search_for 真实坐标）
+            page_idx: 页码
+            page_text: 整页文本（page.get_text()）
+            page_rects: 本页 OCR 命中矩形（用于诊断；不影响 detect 输入）
+
+        Returns:
+            List[dict]（asdict 后 PIIHit 列表）—— 空列表表示无命中或跳过
+        """
+        if not getattr(self, 'pii_engine_enabled', False):
+            return []
+        engine = self._get_pii_engine()
+        if engine is None:
+            return []
+        try:
+            from privacyguard.pii.hits import TextUnit
+            source = "text" if (page_text or '').strip() else "image_block"
+            unit = TextUnit(page_index=page_idx, text=page_text or "", source=source)
+            hits = engine.detect(unit, page=page)
+            return [dataclasses.asdict(h) for h in hits]
+        except Exception as exc:
+            print(f"[PII ERROR] 页面 {page_idx}: {type(exc).__name__}: {exc}")
+            return []
 
     def _shrink_box(self, box, x_ratio=0.15, y_ratio=0.1):
         """v37.3.3: 收缩检测框边距
@@ -445,6 +503,13 @@ class OCRWorker(QThread):
 
                     # 逐页发送结果
                     self.page_result_signal.emit(i, rects)
+
+                    # Phase 1: PII 自动识别（D-04 wire）— text/image_block 三路径
+                    # 收敛到同一个 PIIEngine.detect。page=None 退化路径仍可用；
+                    # 但我们传 page 让引擎通过 page.search_for 拿真实坐标。
+                    pii_hits = self._detect_pii_for_page(page, i, page_text, rects)
+                    if pii_hits:
+                        self.pii_signal.emit(i, pii_hits)
 
                     # 背压控制
                     current_progress = int((i+1)/total * 100)

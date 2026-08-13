@@ -5,7 +5,7 @@
 #define MyAppName "PrivacyGuard"
 #define MyAppNameFull "PrivacyGuard 脱敏卫士"
 #ifndef MyAppVersion
-  #define MyAppVersion "37.7.4"
+  #define MyAppVersion "1.0.0"
 #endif
 #define MyAppPublisher "PrivacyGuard Team"
 #define MyAppURL "https://github.com/privacyguard/privacyguard"

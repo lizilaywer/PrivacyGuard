@@ -13,6 +13,69 @@
 
 ---
 
+## [1.0.0] - 2026-08-11
+
+### 🎉 v38.x milestone — Pure-local Chinese PII Recognition + Excel/Image Support
+
+#### Phase 1: PDF 自动识别身份证号与手机号并真脱敏 (2026-08-11)
+
+- **PII 引擎核心** (`privacyguard/pii/`):
+  - `PIIHit` / `TextUnit` 数据契约（frozen dataclass + Literal type）
+  - `PIIEngine.detect(unit, page=...)` 接受可选 page 参数；通过 `page.search_for()` 取真实坐标
+  - 校验位：GB 11643 mod-11-2 (18位身份证) + 15位身份证降级 MEDIUM
+  - 手机号：MIIT 号段白名单 + 排除 14X 物联网 / 卫星段
+  - 一致掩码：`_mask_cache` 保证同一 (entity_type, normalized) 多次出现结果相同
+  - 防 DoS：单页文本超过 200KB 自动截断（ENGINE-07）
+  - 零网络：`socket.socket` monkey-patch 测试守护（ENGINE-08）
+
+- **PDF 真脱敏** (`privacyguard/pii/pdf_adapter.py`):
+  - `apply_pii_redactions`：PyMuPDF `add_redact_annot + apply_redactions(IMAGE_PIXELS)` 真删除
+  - `garbage=4 + deflate=True + clean=True` 三件套扫除残留对象
+
+#### Phase 2: PDF 增加银行卡/邮箱/财税实体识别与部分掩码 (2026-08-11)
+
+- **6 个新 validator** (`privacyguard/pii/validators/`):
+  - `uscc.py`：GB 32100 mod-31-3 + 8 类登记管理部门类别代码表
+  - `bank_card.py`：Luhn + 6 位 BIN 词典白名单（19,890 entries, CC BY-SA 4.0）
+  - `email.py`：RFC 5322 简化版 + 公共域名后缀判定
+  - `vat_invoice.py`：8 位传统 + 20 位全电发票双格式 + 上下文锥点
+  - `bank_account.py`：9-21 位纯数字 + 必查上下文锥点（多 occurrence 修复）
+  - `taxpayer_id.py`：15 位旧版三证合一编号
+
+- **Partial mask helper** (`write_partial_masks`):
+  - 4-branch mixed dispatch: PIIHit | fitz.Rect | (x,y,w,h,mode) | (PIIHit, mode)
+  - `_FONT_NAME_MAP` 字体映射 (helv / heit / hebo / ...)
+  - OCR 字号 fallback: `max(rect.height-4, 6)`
+  - D-03: rect 宽度按 mask_strategy 字符数重算 + 居中
+
+- **PDF metadata 清除** (`clear_pdf_metadata`):
+  - SAFE-03: 5 字段 (Title / Author / Subject / Producer / Creator) 置空
+  - 不动 CreationDate / ModDate / Keywords / XMP
+
+- **UI** (`main.py`):
+  - SettingsDialog 9-row per-entity table + bulk flip buttons
+  - Toolbar `btn_mask_override` 文档级 toggle
+  - save loop 单一委托调用 `write_partial_masks` (CR-01 fix)
+
+- **打包 parity**:
+  - Windows + macOS spec hiddenimports 覆盖全部 6 个新 validator
+  - `bin_prefixes.json` 数据文件 + CC BY-SA LICENSE 入 datas
+  - macOS `build_complete.sh` 强制校验 bin_prefixes.json 存在
+
+#### 跨平台打包验证 (Phase 8 partial, 2026-08-11)
+
+- 静态 spec 审计：12/12 Phase 2 关键模块 hiddenimports 覆盖（Windows + macOS）
+- 模块导入模拟：6 个 validator + `write_partial_masks` + `PartialMaskItem` 全部可导入
+- OPS-03 严格契约保持：`import privacyguard` 不触发 PII 加载
+- cp30 回归风险不存在：`privacyguard.utils.security.resource_path` 验证
+
+#### 测试基线
+
+- Phase 1 + Phase 2 + 02-04 gap closure: **272 baseline + 10 新增 = 282 tests OK**
+- 文档归档: `.planning/phases/01-pdf/` + `.planning/phases/02-pdf/` + `.planning/phases/08-audit-and-packaging/`
+
+---
+
 ## [37.7.6] - 2026-05-16
 
 ### 🛠️ 全面重复实现收敛
