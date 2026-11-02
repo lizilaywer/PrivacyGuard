@@ -12,7 +12,6 @@ import tempfile
 
 from privacyguard.utils.exceptions import ConversionError
 from privacyguard.utils.security import validate_safe_path
-from privacyguard.utils.temp_manager import TempFileManager
 
 
 def resolve_soffice_cmd():
@@ -32,6 +31,9 @@ def resolve_soffice_cmd():
         for candidate in candidates:
             if os.path.exists(candidate):
                 return candidate
+    if system == "Linux":
+        # Linux 常见别名 libreoffice 一并探测，与 UI 侧判定口径保持一致
+        return shutil.which("soffice") or shutil.which("libreoffice") or "soffice"
     return shutil.which("soffice") or "soffice"
 
 
@@ -52,7 +54,8 @@ def convert_with_libreoffice(doc_path, temp_dir=None, max_retries=1, timeout=90)
     """
     own_temp = temp_dir is None
     if own_temp:
-        temp_dir = tempfile.mkdtemp(prefix="pg_doc_convert_")
+        # P1-1: 前缀对齐 pgud_，使 trace_cleaner 能回收崩溃残留的孤儿目录
+        temp_dir = tempfile.mkdtemp(prefix="pgud_doc_convert_")
 
     try:
         # 将源文件复制到临时目录，确保路径为纯英文
@@ -104,7 +107,10 @@ def convert_with_libreoffice(doc_path, temp_dir=None, max_retries=1, timeout=90)
 
     finally:
         if own_temp:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+            # 安全修复: 不在此处删除 temp_dir——返回值 docx_path 位于其中，
+            # 立即删除会导致调用方拿到悬空路径。由 TempFileManager 或
+            # 痕迹清理在后续阶段回收。
+            pass
 
 
 def convert_with_antiword(doc_path, temp_dir=None):
@@ -124,7 +130,7 @@ def convert_with_antiword(doc_path, temp_dir=None):
 
     own_temp = temp_dir is None
     if own_temp:
-        temp_dir = tempfile.mkdtemp(prefix="pg_doc_anti_")
+        temp_dir = tempfile.mkdtemp(prefix="pgud_doc_anti_")
 
     try:
         # 安全验证
@@ -132,7 +138,12 @@ def convert_with_antiword(doc_path, temp_dir=None):
         if not is_safe:
             raise ConversionError("文件路径不安全", error_msg)
 
-        result = subprocess.run(["antiword", doc_path], capture_output=True, text=True, timeout=60)
+        # 安全修复: 将源文件复制到临时目录的纯 ASCII 文件名下，
+        # 再传给 antiword（与 LibreOffice 路径一致，避免非 ASCII 路径失败）
+        temp_doc_path = os.path.join(temp_dir, "source.doc")
+        shutil.copy2(doc_path, temp_doc_path)
+
+        result = subprocess.run(["antiword", temp_doc_path], capture_output=True, text=True, timeout=60)
         if result.returncode != 0:
             stderr = result.stderr.strip() if result.stderr else "未知错误"
             raise ConversionError("antiword 转换失败", stderr)
@@ -151,7 +162,8 @@ def convert_with_antiword(doc_path, temp_dir=None):
 
     finally:
         if own_temp:
-            shutil.rmtree(temp_dir, ignore_errors=True)
+            # 安全修复: 同 convert_with_libreoffice，不删除返回值所在目录
+            pass
 
 
 def convert_doc_to_docx(doc_path, temp_dir=None):
@@ -169,7 +181,8 @@ def convert_doc_to_docx(doc_path, temp_dir=None):
     """
     # 如果调用方未提供临时目录，创建一个共享的
     if temp_dir is None:
-        temp_dir = tempfile.mkdtemp(prefix="pg_doc_convert_")
+        # P1-1: 前缀对齐 pgud_，使 trace_cleaner 能回收崩溃残留的孤儿目录
+        temp_dir = tempfile.mkdtemp(prefix="pgud_doc_convert_")
 
     try:
         return convert_with_libreoffice(doc_path, temp_dir=temp_dir), temp_dir

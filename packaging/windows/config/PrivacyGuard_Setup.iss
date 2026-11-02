@@ -1,11 +1,12 @@
 ; PrivacyGuard Windows 安装程序配置
 ; Inno Setup 脚本
-; 版本来源: 命令行 /DMyAppVersion 或默认值
+; 版本来源: 打包脚本通过 /DMyAppVersion=<version> 从 version.txt 注入
+; 注意: 直接编译此 iss 会使用下方默认值 0.0.0（明显错误，提醒用打包脚本）
 
 #define MyAppName "PrivacyGuard"
 #define MyAppNameFull "PrivacyGuard 脱敏卫士"
 #ifndef MyAppVersion
-  #define MyAppVersion "37.7.4"
+  #define MyAppVersion "0.0.0"
 #endif
 #define MyAppPublisher "PrivacyGuard Team"
 #define MyAppURL "https://github.com/privacyguard/privacyguard"

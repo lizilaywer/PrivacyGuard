@@ -20,9 +20,12 @@ class OCREngineManager:
         rapid = RapidOCREngine()
         if rapid.is_available():
             self._engine = rapid
-            print("[OCR] RapidOCR 已初始化")
         else:
-            print("[WARN] RapidOCR 不可用")
+            # cp116: 真实异常存在 RapidOCREngine._last_error 里供诊断（is_available 时已存），
+            # 安全审计 v40.1: 不打印/不记录 real_err（含完整 traceback+绝对路径）。
+            import logging as _lg
+            _lg.getLogger(__name__).warning("[OCR] 引擎不可用，详情见 RapidOCREngine._last_error")
+            print("[WARN] OCR 引擎不可用: RapidOCR 初始化失败，扫描功能将不可用")
 
     def get_engine(self) -> Optional[BaseOCREngine]:
         """

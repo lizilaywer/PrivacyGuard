@@ -179,7 +179,7 @@ def suggest_fixes():
 
 3. 对于 PyInstaller 打包问题:
    - 使用 diagnose_onnxruntime.py 确认所有 DLL 都存在
-   - 尝试使用 PrivacyGuard_windows_v2.spec 重新打包
+   - 使用主 spec packaging/windows/config/PrivacyGuard_windows.spec 重新打包
    - 确保打包环境和运行环境使用相同的 VC++ 版本
 
 4. 如果问题仍然存在，尝试降级 onnxruntime:

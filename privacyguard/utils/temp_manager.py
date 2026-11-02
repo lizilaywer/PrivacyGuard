@@ -13,6 +13,10 @@ import threading
 import atexit
 import tempfile
 
+# cp90: 应用专属临时文件前缀（PrivacyGuard User Data），用于安全识别崩溃残留，
+# 避免“清理使用痕迹”误伤其他程序的 temp 文件
+TEMP_PREFIX = "pgud_"
+
 
 class TempFileManager:
     """统一临时文件管理器，确保资源正确释放（v36.5: 线程安全版）
@@ -64,8 +68,8 @@ class TempFileManager:
                 pass  # 清理失败不抛出异常
 
     def create_temp_file(self, suffix='', content=None):
-        """创建临时文件并追踪（v36.5: 线程安全）"""
-        temp = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+        """创建临时文件并追踪（v36.5: 线程安全；cp90: 加应用专属前缀）"""
+        temp = tempfile.NamedTemporaryFile(prefix=TEMP_PREFIX, suffix=suffix, delete=False)
         temp_name = temp.name
         temp.close()  # 立即关闭文件句柄
 
@@ -80,8 +84,8 @@ class TempFileManager:
         return temp_name
 
     def create_temp_dir(self):
-        """创建临时目录并追踪（v36.5: 线程安全）"""
-        temp_dir = tempfile.mkdtemp()
+        """创建临时目录并追踪（v36.5: 线程安全；cp90: 加应用专属前缀）"""
+        temp_dir = tempfile.mkdtemp(prefix=TEMP_PREFIX)
 
         # v36.5: 线程安全地添加到列表
         with self._instance_lock:
@@ -133,3 +137,41 @@ class TempFileManager:
             self.cleanup()
         except Exception:
             pass
+
+
+def active_temp_entries():
+    """cp90: 当前进程所有实例正在追踪的临时文件/目录绝对路径集合。"""
+    active = set()
+    with TempFileManager._global_lock:
+        instances = TempFileManager._instances[:]
+    for inst in instances:
+        try:
+            with inst._instance_lock:
+                for p in inst.temp_files + inst.temp_dirs:
+                    active.add(os.path.abspath(p))
+        except Exception:
+            continue
+    return active
+
+
+def list_stale_temp_entries():
+    """cp90: 扫描系统 temp 目录下 pgud_ 前缀的残留条目（崩溃/异常退出遗留）。
+
+    排除本进程活跃实例正在追踪的路径（避免删除正在使用的临时文件）。
+    返回绝对路径列表。
+    """
+    tmp_root = tempfile.gettempdir()
+    active = active_temp_entries()
+    stale = []
+    try:
+        names = os.listdir(tmp_root)
+    except OSError:
+        return stale
+    for name in names:
+        if not name.startswith(TEMP_PREFIX):
+            continue
+        full = os.path.abspath(os.path.join(tmp_root, name))
+        if full in active:
+            continue
+        stale.append(full)
+    return stale

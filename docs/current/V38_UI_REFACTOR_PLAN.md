@@ -1,10 +1,13 @@
 # PrivacyGuard v38 UI 重构执行方案
 
-- 日期：2026-03-13（2026-03-18 已补执行状态）
-- 基线版本：`v37.7.4`
+> **状态（2026-08-01）**：本方案 Phase A-E 代码层已全部落地并稳定运行多个版本（v37.8.x 系列在其基础上持续交付 cp67-cp90 等功能）。当前版本 `v37.8.11`，主回归 418 项全绿。本文档保留为执行方案回溯，不再作为活跃待办；剩余"真机截图驱动抛光"为低优先级收尾。
+
+- 日期：2026-03-13（2026-03-18 已补执行状态；2026-08-01 复核状态）
+- 起始基线版本：`v37.7.4`
+- 当前版本：`v37.8.11`
 - 当前检查点：`v38_ui_refactor_cp31_20260313_140645`
 - 目标：在不牺牲现有功能和性能的前提下，把主界面和交互升级为更现代、Windows 友好、符合中国办公软件习惯的产品形态
-- 当前执行状态：代码层主阶段已完成，默认进入真机截图驱动抛光
+- 当前执行状态：✅ 代码层主阶段已完成，默认进入真机截图驱动抛光
 
 ## 2026-03-18 执行结论
 
@@ -15,8 +18,8 @@
    - 首页、PDF、Word、批量 Word、图片合并、高级设置已统一到同一套桌面级壳层语言
    - 宽窗口 / 全屏 / 超宽窗口策略已接入主工作区与设置中心
    - 工具栏、设置页、批量页、图片合并页都已补齐响应式密度逻辑
-3. 当前运行基线仍保持 `v37.7.4`
-4. 当前主回归基线已提升到 `52/52`
+3. 当前运行基线已推进到 `v37.8.11`（2026-08-01 复核）
+4. 当前主回归基线已提升到 `418` 项全绿
 
 ### 当前剩余工作
 
@@ -200,17 +203,14 @@
 每轮至少执行：
 
 ```bash
-python3 -m compileall -q main.py privacyguard tests
-python3 -m unittest \
-  tests.unit.test_mixed_pdf_ocr \
-  tests.test_path_validation \
-  tests.unit.test_ocr_api \
-  tests.unit.test_package_imports \
-  tests.unit.test_pdf_text_hit_dedup \
-  tests.unit.test_app_config \
-  tests.unit.test_word_replace_rules \
-  tests.unit.test_batch_word_replace \
-  -v
+# 编译检查
+python -m compileall -q main.py privacyguard tests
+
+# 主回归（unittest discover 自动发现，清单不漂移）
+#   Windows
+powershell -ExecutionPolicy Bypass -File scripts/run_regression.ps1
+#   macOS / Linux
+./scripts/run_regression.sh
 ```
 
 重点人工验证：

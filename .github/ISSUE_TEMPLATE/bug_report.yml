@@ -1,0 +1,24 @@
+name: Bug report / 问题反馈
+description: 使用虚构或匿名化样本描述问题，切勿上传真实卷宗
+body:
+  - type: markdown
+    attributes:
+      value: 请勿提交真实当事人信息、密码、配置或原始卷宗。安全漏洞请先阅读 SECURITY.md。
+  - type: input
+    id: version
+    attributes:
+      label: 软件版本与操作系统
+      placeholder: v40.2.5 / Windows 11 x64
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤、预期与实际结果
+    validations:
+      required: true
+  - type: textarea
+    id: sample
+    attributes:
+      label: 虚构的最小样本或截图（可选）
+      description: 分享前检查正文、属性、附件和画面中的路径信息。

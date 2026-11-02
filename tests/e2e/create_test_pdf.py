@@ -3,9 +3,6 @@
 
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import inch
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
 
 def create_test_pdf():
     """创建包含测试数据的 PDF"""

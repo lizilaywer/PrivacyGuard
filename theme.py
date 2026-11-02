@@ -54,7 +54,9 @@ class Theme:
     SPACING_LARGE = 22
 
     # 字体
-    FONT_FAMILY = "'Segoe UI Variable', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', Arial, sans-serif"
+    # cp80: 补 macOS 回退（PingFang SC 苹方 / Helvetica Neue），mac 上样式表
+    # 字体不再落到 Arial+合成中文；Windows 仍优先 Segoe/雅黑 UI
+    FONT_FAMILY = "'Segoe UI Variable', 'Segoe UI', 'Microsoft YaHei UI', 'Microsoft YaHei', 'PingFang SC', 'Helvetica Neue', Arial, sans-serif"
     FONT_SIZE_SMALL = 12
     FONT_SIZE_NORMAL = 14
     FONT_SIZE_LARGE = 18

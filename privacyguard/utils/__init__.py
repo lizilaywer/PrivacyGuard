@@ -30,6 +30,9 @@ from privacyguard.utils.config import (
     get_config_value
 )
 
+# v37.8.11 P0-3: 统一日志框架
+from privacyguard.utils.logger import init_logging, get_logger, is_initialized
+
 __all__ = [
     # 异常类
     'PrivacyAppError',
@@ -51,4 +54,8 @@ __all__ = [
     # 工具函数
     'validate_safe_path',
     'resource_path',
+    # 日志（v37.8.11 P0-3）
+    'init_logging',
+    'get_logger',
+    'is_initialized',
 ]

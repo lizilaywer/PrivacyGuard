@@ -16,8 +16,10 @@ class TestAppConfig(unittest.TestCase):
         self.assertEqual(read_app_version(), expected)
 
     def test_read_app_version_falls_back_to_current_release(self):
+        # v37.7.12 cp41: 版本号统一来源后，读取失败时返回 "0.0.0"
+        # 而非具体旧版本号，避免硬编码过期版本误导界面/标题栏。
         with patch("main.Path.read_text", side_effect=OSError):
-            self.assertEqual(read_app_version(), "37.7.6")
+            self.assertEqual(read_app_version(), "0.0.0")
 
     def test_simple_config_save_persists_multiple_values(self):
         fd, temp_path = tempfile.mkstemp(suffix=".json")

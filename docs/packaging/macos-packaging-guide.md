@@ -2,12 +2,30 @@
 
 > 当前 active macOS 打包流程说明。本文档以 `packaging/macos/` 下现有脚本和配置为准。
 
+## v40.2.5 当前便携流程（2026-10-24）
+
+本节取代下方旧 DMG 环境/版本说明；旧章节仅保留作历史参考。
+
+```bash
+bash packaging/macos/scripts/build_portable.sh
+```
+
+- 使用 `venv_macos_release/bin/python3`；可通过 `PRIVACYGUARD_PYTHON` 指定另一套独立发布解释器。
+- 本轮采用 CPython 3.13.2（构建 target 13.0）及 requirements.txt 锁定运行依赖；实际包要求 macOS 14+ / Apple Silicon。
+- 输出 `releases/macos/PrivacyGuard-<version>-macOS-arm64-portable.zip`、SHA256、全包二进制验证 JSON。
+- 新入口不依赖 activate，不删除跨平台 dist/build，不自动下载依赖，不剥除包内运行代码，不夹带个人 config.json。
+- 配置和日志写 `~/Library/Application Support/PrivacyGuard/`；应用包保持不可变。
+- 必须检查全部 Mach-O 的 minOS 与外部链接，不能仅看 pyexpat 或改 Info.plist。可选 Tk/readline/_decimal 的宿主库已排除，Decimal 使用标准库纯 Python 回退。
+- ad-hoc 签名不是 Developer ID/Apple 公证。旧 sign/notarize 路径需单独在有证书环境中验证，不属于本次交付。
+- 原生自检：`PrivacyGuard.app/Contents/MacOS/PrivacyGuard --self-test`（仅合成数据，禁止网络连接）。
+- 完整审计记录：`docs/current/RELEASE_AUDIT_20261024.md`。
+
 ---
 
 ## 当前发布基线
 
-- 当前版本：`v37.7.4`
-- 版本标识：`37.7.4 - Release Audit and Final Polish`
+- 当前版本：`v37.7.19`
+- 版本标识：`37.7.19`
 - 版本唯一来源：项目根目录 `version.txt`
 
 ---

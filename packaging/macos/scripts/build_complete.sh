@@ -195,6 +195,12 @@ rm -f "$DMG_PATH" "$DMG_PATH.sha256"
 
 if [ "$CREATE_DMG_AVAILABLE" = true ]; then
     echo "[INFO] 创建 DMG 文件..."
+    # v40.2.3 修复：create-dmg 的 -srcfolder 语义是"文件夹内容成为镜像根"，
+    # 直接传 .app 会产出根目录散落 Contents/ 的损坏 DMG——改为暂存目录模式
+    # （先放 .app 副本 + /Applications 符号链接，再把暂存目录传给 create-dmg）
+    DMG_STAGING=$(mktemp -d)
+    cp -R "$APP_PATH" "$DMG_STAGING/"
+    ln -s /Applications "$DMG_STAGING/Applications"
     if create-dmg \
         --volname "$APP_NAME" \
         --window-pos 200 120 \
@@ -204,12 +210,13 @@ if [ "$CREATE_DMG_AVAILABLE" = true ]; then
         --icon "$APP_NAME.app" 200 185 \
         --hide-extension "$APP_NAME.app" \
         "$RELEASE_DIR/$DMG_NAME" \
-        "$APP_PATH"; then
+        "$DMG_STAGING"; then
         echo "[OK] DMG 创建成功: releases/macos/$DMG_NAME"
     else
         echo "[WARN] create-dmg 失败，回退到 hdiutil 方案"
         create_plain_dmg || true
     fi
+    rm -rf "$DMG_STAGING"
 else
     echo "[INFO] create-dmg 不可用，使用 hdiutil 创建标准 DMG"
     create_plain_dmg || true

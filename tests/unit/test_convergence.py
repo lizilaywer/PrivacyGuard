@@ -101,17 +101,18 @@ class TestVersionFallbackAlignment(unittest.TestCase):
     """验证版本回退值一致。"""
 
     def test_main_py_version_fallback_matches_current(self):
-        """main.py 的 read_app_version() 回退值应为当前版本。"""
-        from main import read_app_version
-        version_txt = (Path(__file__).resolve().parents[2] / "version.txt").read_text(encoding="utf-8").strip()
-        # 回退值等于当前版本（因为 version.txt 存在时不会用到回退值）
-        # 但我们验证硬编码的回退值与 version.txt 一致
+        """main.py 的 read_app_version() 回退值应为 "0.0.0"。
+
+        v37.7.12 cp41: 版本号统一来源后，读取失败时返回 "0.0.0"
+        而非具体旧版本号，避免硬编码过期版本误导界面/标题栏。
+        version.txt 是版本号唯一来源，fallback 仅作故障显式提示。
+        """
         source = MAIN_PY.read_text(encoding="utf-8")
         match = re.search(r'return "(\d+\.\d+\.\d+)"', source)
         self.assertTrue(match, "main.py 应包含版本回退值")
         fallback = match.group(1)
-        self.assertEqual(fallback, version_txt,
-                         f"版本回退值 {fallback} 应与 version.txt {version_txt} 一致")
+        self.assertEqual(fallback, "0.0.0",
+                         f"版本回退值应为 '0.0.0'，实际为 {fallback}")
 
     def test_privacyguard_init_version_fallback_matches_main(self):
         """privacyguard/__init__.py 的版本回退值应与 main.py 一致。"""

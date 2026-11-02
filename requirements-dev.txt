@@ -1,0 +1,13 @@
+# PrivacyGuard 开发/构建依赖（运行时依赖见 requirements.txt）
+# 安装: pip install -r requirements-dev.txt
+
+# 打包工具
+pyinstaller==6.18.0
+
+# 测试辅助（当前使用标准库 unittest，无需额外框架）
+# pytest>=8.0          # 未来迁移选项
+# coverage>=7.4        # 覆盖率度量选项
+
+# 代码质量
+ruff>=0.4            # linter（v37.8.11 P2-3 已纳入 CI）
+# mypy>=1.10           # 类型检查选项

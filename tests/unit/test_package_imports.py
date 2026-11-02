@@ -1,6 +1,5 @@
 import builtins
 import importlib
-import os
 import sys
 import unittest
 from pathlib import Path
@@ -21,7 +20,7 @@ class TestPrivacyGuardImports(unittest.TestCase):
         original_import = builtins.__import__
 
         def guarded_import(name, globals=None, locals=None, fromlist=(), level=0):
-            if name.startswith("rapidocr_onnxruntime"):
+            if name.startswith("rapidocr"):
                 raise ImportError("blocked for import smoke test")
             return original_import(name, globals, locals, fromlist, level)
 

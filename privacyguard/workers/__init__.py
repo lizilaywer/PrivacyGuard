@@ -10,12 +10,16 @@ __all__ = [
     'ImageMergeWorker',
     'OCRWorker',
     'WordWorker',
+    'WordBatchReplaceWorker',
+    'DocSearchWorker',
 ]
 
 _LAZY_IMPORTS = {
     'ImageMergeWorker': ('privacyguard.workers.image_merge', 'ImageMergeWorker'),
     'OCRWorker': ('privacyguard.workers.ocr_worker', 'OCRWorker'),
     'WordWorker': ('privacyguard.workers.word_worker', 'WordWorker'),
+    'WordBatchReplaceWorker': ('privacyguard.workers.batch_replace_worker', 'WordBatchReplaceWorker'),
+    'DocSearchWorker': ('privacyguard.workers.search_worker', 'DocSearchWorker'),
 }
 
 

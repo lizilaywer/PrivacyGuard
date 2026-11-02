@@ -89,8 +89,11 @@ if ! python3 -c "import PyInstaller" 2>/dev/null; then
 fi
 
 # 检查图标文件
-if [ ! -f "${MACOS_DIR}/assets/PrivacyGuard.icns" ]; then
-    print_error "未找到图标文件: PrivacyGuard.icns"
+# v40.2.3 修正：spec 的 BUNDLE 图标是 assets/logo/macos/AppIcon.icns
+# （旧检查指向 packaging/macos/assets/PrivacyGuard.icns——spec 2026-04-30 起
+#   已不再使用该文件，旧检查自此必然误报失败）
+if [ ! -f "${PROJECT_ROOT}/assets/logo/macos/AppIcon.icns" ]; then
+    print_error "未找到图标文件: assets/logo/macos/AppIcon.icns"
     exit 1
 fi
 
@@ -142,10 +145,12 @@ if [ ! -d "${APP_PATH}" ]; then
 fi
 
 # 检查必需的文件
+# v40.2.3 修正：PyInstaller 按 spec icon 参数的"原文件名"复制为
+# Contents/Resources/AppIcon.icns（不是 ${APP_NAME}.icns）
 REQUIRED_FILES=(
     "Contents/MacOS/${APP_NAME}"
     "Contents/Info.plist"
-    "Contents/Resources/${APP_NAME}.icns"
+    "Contents/Resources/AppIcon.icns"
 )
 
 for file in "${REQUIRED_FILES[@]}"; do

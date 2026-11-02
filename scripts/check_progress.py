@@ -176,7 +176,7 @@ class ProgressChecker:
         print()
         print("  文档相关:")
         print("    • 项目状态:     cat docs/STATUS.md")
-        print("    • 开发流程:     cat docs/DEVELOPMENT_WORKFLOW.md")
+        print("    • 开发指南:     cat AGENTS.md")
         print("    • 更新日志:     cat CHANGELOG.md")
         print()
 

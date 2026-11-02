@@ -1,10 +1,15 @@
 # Priority Remediation Plan
 
-最后更新：2026-03-11
-当前基线版本：v37.7.4
+最后更新：2026-08-01
+当前基线版本：v37.8.11
 适用范围：PrivacyGuard 当前主分支代码
 
 ## 执行状态
+
+> **✅ 全部完成** — P1-P4 已于 2026-03-09 执行完成，后续热修复全部 verified。
+> 本文件保留为"整改记录 + 下次类似问题的执行模板"，不再是待执行计划。
+
+### 历史执行记录
 
 - `P1 -> P4` 已于 2026-03-09 执行完成。
 - 验证检查点：`20260309_runtime_remediation_cp18_verified`
@@ -14,7 +19,24 @@
 - Word 预览增量刷新热修复：`20260310_word_preview_highlight_cp27_verified`
 - 本轮发布同步：`20260310_release_sync_cp29_verified`
 - PyInstaller 打包导入失败跟进修复：`20260311_pyinstaller_packaging_fix_cp30_verified`
-- 当前状态：本文件保留为“整改记录 + 下次类似问题的执行模板”，不再是待执行计划。
+
+### 2026-08-01 后续改进（v37.8.11 系统化审计后）
+
+以下改进基于 2026-08-01 全面代码审计，不属于本计划原始 P1-P4 范围，
+但作为同源改进记录在此：
+
+| 任务 | 状态 | 检查点 | 说明 |
+|------|------|--------|------|
+| P0-3 统一日志框架 | ✅ 完成 | cp95 | logger.py + main.py/ocr_worker.py 全量 print→logger |
+| P1-1 requirements.txt 去重 | ✅ 完成 | — | pyinstaller 从运行时依赖移至 dev 依赖 |
+| P1-2 ocr_worker.py 拆分 | ✅ 完成 | cp96 | 印章/签名算法外提至 ocr/ 模块（1570→1003 行） |
+| P1-3 settings_dialog.py 拆分 | ✅ 完成 | cp97 | 按域拆 SettingsLayoutMixin + SettingsActionsMixin（2058→994 行） |
+| P2-1 整改计划状态同步 | ✅ 完成 | — | P1-P4 历史条目全量补 ✅ 标记，与本文件"全部完成"声明对齐 |
+| P2-2 补 CONTRIBUTING.md + ARCHITECTURE.md | ✅ 完成 | — | 根目录新增两份顶层文档，PROJECT_STRUCTURE 同步 |
+| P2-3 worker 线程测试 + ruff 入 CI | ✅ 完成 | cp98 | 24 项 worker 生命周期测试；ruff E9+F 规则纳入 CI；修复 13 个 F821 潜在 NameError |
+| P3-1 helpers.py 按域拆分 + user-guides 补全 | ✅ 完成 | cp99 | helpers.py 1225 行拆为 5 个域模块 + 再导出垫片；TESTING_GUIDE 从 v19 重写到 v37.8.11 |
+
+回归基线：385 → 418（+9 logger 测试 +24 worker 生命周期测试，416 passed + 2 skipped）。
 
 ## 用法
 
@@ -75,11 +97,11 @@ python3 -m compileall -q main.py privacyguard
 - `tests/unit/test_word_replace_rules.py`
 - 新增必要测试文件
 
-## P1: 先修运行时安全和导入稳定性
+## P1: 先修运行时安全和导入稳定性 ✅
 
-目标：先解决“会出错/会崩/有安全边界问题”的部分。
+目标：先解决"会出错/会崩/有安全边界问题"的部分。
 
-### P1-1 路径校验统一到共享安全实现
+### P1-1 路径校验统一到共享安全实现 ✅
 
 问题：
 
@@ -108,7 +130,7 @@ python3 -m compileall -q main.py privacyguard
 2. 所有调用点都走共享实现
 3. 新增路径前缀绕过测试并通过
 
-### P1-2 修复 `import privacyguard` 的 OCR 依赖崩溃
+### P1-2 修复 `import privacyguard` 的 OCR 依赖崩溃 ✅
 
 问题：
 
@@ -139,11 +161,11 @@ python3 -m compileall -q main.py privacyguard
 1. `import privacyguard` 不再依赖 OCR 运行环境
 2. OCR 失败只在 OCR 真正被调用时暴露
 
-## P2: 修正确性问题，并顺手拿到第一波性能收益
+## P2: 修正确性问题，并顺手拿到第一波性能收益 ✅
 
 目标：修复错误结果和不必要的重复计算。
 
-### P2-1 修复文本型 PDF 重复命中重复追加矩形
+### P2-1 修复文本型 PDF 重复命中重复追加矩形 ✅
 
 问题：
 
@@ -174,7 +196,7 @@ python3 -m compileall -q main.py privacyguard
 2. 相关测试通过
 3. `main.py` 与模块化 worker 逻辑保持一致
 
-### P2-2 收敛重复实现，停止主程序和模块层继续漂移
+### P2-2 收敛重复实现，停止主程序和模块层继续漂移 ✅
 
 问题：
 
@@ -193,11 +215,11 @@ python3 -m compileall -q main.py privacyguard
 1. 同一类逻辑只有一个主实现
 2. 其他位置只做调用
 
-## P3: 优先做 Word 预览性能整改
+## P3: 优先做 Word 预览性能整改 ✅
 
 目标：解决长 Word 文档下预览卡顿和高亮串位风险。
 
-### P3-1 停止右侧预览每次全量 `setHtml()`
+### P3-1 停止右侧预览每次全量 `setHtml()` ✅
 
 问题：
 
@@ -222,7 +244,7 @@ python3 -m compileall -q main.py privacyguard
 1. 单次手动脱敏/撤回不再触发整页重绘
 2. 大文档下右侧预览响应显著改善
 
-### P3-2 去掉 HTML 全局正则替换式高亮
+### P3-2 去掉 HTML 全局正则替换式高亮 ✅
 
 问题：
 
@@ -246,11 +268,11 @@ python3 -m compileall -q main.py privacyguard
 1. 长文档渲染性能改善
 2. 重复文本高亮不串位
 
-## P4: 修产品一致性问题
+## P4: 修产品一致性问题 ✅
 
 目标：解决“用户看起来像保存了，其实没保存”和“版本信息不一致”。
 
-### P4-1 明确并修复设置持久化策略
+### P4-1 明确并修复设置持久化策略 ✅
 
 问题：
 
@@ -277,7 +299,7 @@ python3 -m compileall -q main.py privacyguard
 1. 用户点击“保存设置”后，关键设置重启后仍生效
 2. 测试或手工验证有记录
 
-### P4-2 统一版本来源
+### P4-2 统一版本来源 ✅
 
 问题（历史背景，已于 2026-03-09 收敛）：
 

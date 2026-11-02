@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    # P2: 双平台 CI 矩阵（原仅 windows-latest，macOS 无覆盖）
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install ruff
+
+      - name: Ruff lint check
+        run: python -m ruff check main.py privacyguard tests
+
+      - name: Compile check
+        run: python -m compileall -q main.py privacyguard tests
+
+      - name: Run regression tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -m unittest discover -s tests/unit -v
+
+      - name: Verify version consistency
+        run: |
+          python -c "
+          from pathlib import Path
+          v = Path('version.txt').read_text(encoding='utf-8').strip()
+          print(f'version.txt: {v}')
+          # Verify version_info.txt matches version.txt
+          vi = Path('packaging/windows/config/version_info.txt').read_text(encoding='utf-8')
+          assert v in vi, f'version_info.txt does not contain {v} — run: python packaging/windows/scripts/generate_version_info.py'
+          print(f'version_info.txt: OK (contains {v})')
+          # Verify main.py reads version dynamically (not hardcoded)
+          import ast
+          main_src = Path('main.py').read_text(encoding='utf-8')
+          assert 'read_app_version' in main_src, 'main.py must use read_app_version()'
+          assert 'VERSION = APP_VERSION' in main_src, 'main.py must set VERSION from APP_VERSION'
+          print('main.py: OK (dynamic version)')
+          # Verify privacyguard/__init__.py reads from version.txt
+          init_src = Path('privacyguard/__init__.py').read_text(encoding='utf-8')
+          assert 'version.txt' in init_src, 'privacyguard/__init__.py must read from version.txt'
+          print('privacyguard.__version__: OK (reads version.txt)')
+          print('=== ALL VERSION SOURCES CONSISTENT ===')
+          "

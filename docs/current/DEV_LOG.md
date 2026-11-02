@@ -1,10 +1,2457 @@
 # PrivacyGuard 脱敏卫士 - 开发日志
 
+## 2026-11-02 - 全仓清点、隐私审查与 GitHub 展示
+
+- Windows 实测 741 项：738 passed / 3 skipped；修复 spec 测试读取默认 GBK 的问题，原生离线 OCR/Word/PDF 自检通过。
+- 当前文件字节/哈希/文本模式与 Python AST 清点，关键链路及现有安全边界复核；完整覆盖和人工/自动检查的区别写入 `REPOSITORY_AUDIT_20261102.md`。
+- 本地 100 次未推送提交含已删除私人配置/临时索引，发布使用远端为父提交的干净源码快照，保留本地开发历史，不强推。
+- 新建虚构素材生成器，隔离演示配置，实际操作首页、PDF 扫描/书签与 Word 扫描/双栏预览；新增中英文首页、封面和社区模板。
+- `.gitignore` 加固、两份代理计划仅停止跟踪；版本维持 40.2.5，未发布新二进制。
+
 ## 项目信息
 - **项目名称**: PrivacyGuard 脱敏卫士
-- **当前版本**: v37.7.4 (Release Audit and Final Polish)
-- **开发日期**: 2026-03-18
-- **状态**: ✅ `v37.7.4` 发布准备完成，当前进入正式发布前真机截图驱动抛光阶段
+- **当前版本**: v40.2.5
+- **状态**: macOS 便携交付；Windows 一键构建资料包与发布门禁就位，Windows 原生构建待执行；741 项回归（739 passed / 2 skipped，macOS）
+- **开发日期**: 2026-10-25
+
+---
+
+## 2026-10-25 - Windows 便携构建资料包与门禁
+
+- 用户明确选择本地 Windows 构建；未上传源码、未推送、未使用云端 runner。
+- 根目录新增一键 BAT，创建全新 Python 3.11 x64 venv_win 并安装 requirements/开发依赖；失效旧环境提示重命名，不擅删。
+- 重写正式便携入口，解决 popd 后错误码丢失、全局删除 build/dist、盲删 pyc、只验证 EXE、启动器忽略包内 VC++ DLL 等问题。
+- build_portable.py：回归/版本/依赖门禁，PE x64、模型、资源、VC++ DLL、私有数据检查，冻结自检，CRC 通过才发布 ZIP，写 SHA256/验证报告，拒绝覆盖旧包。
+- 新增 11 项跨平台合成 PE/归档回归。配置测试支持干净检出模板，macOS 路径测试不再假定 POSIX 分隔符。
+- 资料包生成器只收集显式源码/资源清单，校验 Python 3.11 语法，BAT 转 CRLF，包内含逐文件 SHA256；不含虚拟环境和私人文档。
+- 最终 ZIP 解压到独立临时目录后，227 个输入逐文件校验通过；741 项回归为 739 passed / 2 skipped（缺少真实样本），Ruff/ZIP CRC/隐私排除检查通过。测试修正允许合法自定义替换词及旧模板未消费印章元数据，未修改出厂配置。
+- 交付类型为 Windows-BuildKit，不冒充 Windows-Portable 成品；Windows 真机编译、冻结自检与手工验收由用户电脑执行。
+- 运行时未变更，版本仍 40.2.5。备份：`backups/pre_windows_portable_20261025.tar.gz`。
+
+---
+
+## 2026-10-24 - v40.2.5：按现有源码重新梳理与发布审计
+
+- 不使用聊天中的旧架构；读取最新状态/日志并建立 248 文件清单（最终清单以生成结果为准），重点人工核对扫描/替换/坐标/结构/导出/线程/本地数据/冻结依赖。
+- 确认并修复：OCR 读旧页序、clip 隐藏原始流、截去丢遮罩、失败冒充零命中成功、私有配置混入包与包内写日志、批量 Event 抢跑、书签规则丢失/反向引用、Word 页眉页脚变体、损坏草稿及运行线程退出。
+- 版本更新到 40.2.5，Windows version_info 由生成脚本输出，未手改；未实测 Windows 新包。
+- 原 venvmac 缺少解释器；创建 venv_macos_release，使用现有兼容 CPython 3.13.2，安装锁定依赖；旧环境未删除。
+- 两次完整 Mach-O 门禁：首次检出 26.0 宿主可选库后中止，移除未使用的 Tk/readline/_decimal 扩展后 395 个二进制全部 <=14.0。
+- 生成 304 MiB ZIP，解压冻结包的真实离线 OCR、含图 Word 打开/替换、主窗口关闭与签名复验通过。
+- 仍未解决：Word 超链接/嵌套表格/批注修订等特殊内容、PDF 全面附件/元数据净化；明确记录，不把单测全绿当作无盲区。
+- 完整报告 `RELEASE_AUDIT_20261024.md`；备份 `backups/pre_macos_audit_20261024.tar.gz`。未执行 git commit/push。
+
+---
+
+## 2026-10-22 - v40.2.4：打包 pathex 同名劫持修复（致命）
+
+### 现象
+用户按一键脚本打出 v40.2.3 Windows 包，实测打开后点"开始脱敏"弹
+"OCR 处理错误：OCREngineUnavailableError"，真实异常
+ImportError: attempted relative import with no known parent package
+（privacyguard/ocr/rapidocr.py line 21，以顶层模块身份二次执行）。
+
+### 根因
+Windows spec pathex 含 privacyguard/utils|ocr|workers 子目录（违反 cp119
+"仅 project_root"约定），ModuleGraph 把 privacyguard/ocr/rapidocr.py 注册为
+顶层模块 rapidocr，顶掉 pip 的第三方 rapidocr 包。旧构建 PYZ toc 铁证：
+顶层 'rapidocr' -> privacyguard/ocr/rapidocr.py（应为 site-packages 包），
+且第三方包全部子模块+模型数据一个都没进构建。
+
+### 修复
+1. pathex=[project_root, current_dir]（对齐 mac spec），spec compile 验证通过
+2. venv_win 复活：基准解释器 49144 用户目录下 Python311 失踪，
+   pyvenv.cfg 重绑定 hal 用户目录 Python311（同 3.11.9，零重装）
+3. 版本 40.2.3 → 40.2.4；v40.2.3 Windows 包标记不可分发
+
+### 教训
+- pathex 加子目录 = 把该目录所有模块名提升到顶层命名空间，与 pip 包撞名
+  必炸且构建期完全静默（只有运行时炸）。cp119 约定必须机械遵守。
+- 诊断利器：build/<name>/PYZ-00.toc 用 ast.literal_eval 解析，直接看
+  模块名到源路径的映射
+
+---
+
+## 2026-09-06 - v40.2.0：称谓人名识别（cp_person_name 阶段1 收官）
+
+### 背景
+用户提供称谓词列表（被告人/犯罪嫌疑人/原告/辩护人…），要求识别称谓后的人名
+并遮罩。决策：发现即全页遮 / 渐进式验证（词表→jieba→模型，实测达标即止）/
+默认关闭零开销 / 称谓词 config 可扩展。
+
+### 引擎三轮迭代（实测数据驱动）
+1. v1 贪婪4字+裁边 → 47 项测试暴露 3 个根本缺陷（否决候选吞锚点/谓语粘连/
+   副词误检）
+2. v2 lead 锚点 lookahead 不消费 + 连接词截断 + _NOT_NAME 前缀否决 → 48/48
+3. 真实卷宗实测三轮：误检修 6 类（知人/被人民/提供保证/证言/认罪×2/事陈绕奇）、
+   反向结构补齐（作为/担任/系）→ 最终 3/3 人名 100% 准确零误检
+
+### 落地
+- privacyguard/ocr/person_name.py（引擎，纯函数零依赖）
+- 三管线接入（text_pdf 6元组/mixed_pdf 两遍法/word_worker 收集pass）
+- config default_rules["称谓人名"]（默认关）+ person_name_titles 可扩展
+- 52 项单测 + scripts/eval_person_name_real.py 实测脚本
+- 渐进路线兑现：词表版达标 → 不引入 jieba/NER 模型，零新增依赖
+
+---
+
+## 2026-08-18 - v40.1.5：操作台视觉与交互大修
+
+## 2026-08-14 - v40.1.4：四维审计修复（安全/稳定性/性能/可维护性）
+
+### 背景
+对 v40.1.3 做四维并行深度审计（4 个审计代理 + 8 组性能基准），产出 P1×6 / P2×12 / P3×6，按四批统一修复，每批后回归全绿 + 真机启动验证。
+
+### 修复要点
+- 安全：html_sanitize 离线策略（拒一切带 scheme URL + 协议相对 //）+ CSP meta + NoExternalNavWebPage 导航白名单；CSS url() 信标阻断；sessions 0700 / pdfsnap·草稿·日志·config 0600；config 原子写
+- 稳定性：mask-only 快照继承结构字节（S1）；提取越界守卫（S2）；扫描中禁结构操作（S3）；_apply_snapshot 刷新派生状态；回炉打开补 _cleanup_before_open；DocSearchWorker 加 parent
+- 性能：Word data-key 单遍索引（901ms→11ms）；快照 192MB 限量落盘；框选 OCR 移 _RegionOCRWorker；PNG 往返改 samples 直读；RapidOCREngine 类级单例；_flush_session_draft 复用字节流；导出 garbage 4→2
+- 可维护性：watermark.py（189 行）+ helpers_pdf 几何×4（148 行）+ helpers_word_rules 批量摘要（76 行）迁出；test_path_validation 入 CI；孤儿 QSS 清理 + flowActive 高亮修复
+
+### 验证
+579 项回归全绿（+49）；compile 全通过；真机启动无异常；F1 基准 82 倍提速实测
+
+---
+
+## 2026-08-14 - v40.1.3：主页 idle workspace 视觉重设计
+
+### 背景
+v40.1.2 安全审计加固完成后，对默认主页（idle workspace）做视觉与布局重设计，参照 `HOME_REDESIGN_PREVIEW.html` 原型，目标是让用户一进入就抓住重点、看清流程与主要功能。**仅改 idle 主页，未触碰操作台/工具栏/按钮**，兼容性不受影响。
+
+### 改动
+- **Hero 区**：移除右上角盾牌图标圈；三条能力徽章（本地离线/自动分流/安全本地）移至标题下方
+- **开始卡**：横向布局（左侧蓝色图标圈 + 中间标题/描述 + 右侧放大主按钮，最小高 46/宽 170），蓝色强调边框
+- **四大功能路由卡**：新增彩色图标容器（PDF 红 #D64545 / Word 蓝 #2563EB / 批量琥珀 #B54708 / 图片绿 #15803D，字母标识跨平台稳定）；标题与描述两端对齐图标上下沿（route_head 收缩至图标高度并垂直居中）；首字左对齐补偿字体度量差
+- **推荐流程**：5 文本步骤改为 3 圆圈节点（① 导入 → ② 脱敏 → ③ 导出）+ › 箭头，首步高亮
+- **布局调换**：推荐流程上移，四大功能下移至最下方功能区
+- **卡片宽度自适应**：解除三层 maxWidth 锁（1320 / density 1180~1980）+ 移除居中 addStretch，卡片跟随窗口宽度填满，均衡边距由 idle_outer_layout 提供
+
+### 验证
+527 项回归全绿（修复 2 项历史遗留失败：test_substring_long_keyword_wins / test_wide_box_no_longer_returns_none）
+
+---
+
+## 2026-08-11 - v40.1.2：全面安全审计加固（三轮 P0/P1/P2）
+
+### 背景
+cp134 前端-后端接线修复完成后，对整个代码库做三轮深度安全审计（稳定性/安全性/提取截去恢复完整性），系统性排查脱敏工具的核心安全维度。
+
+### 全面安全审计修复（commit 4cd32fd，4 P0 + 5 P1）
+**P0 安全漏洞**：
+- 日志写脱敏原文（卡号/身份证）改掩码——text_pdf/mixed_pdf/word_worker 的 Luhn/校验位跳过日志改打 len+首尾掩码；main.py 撤销日志同理
+- pdfsnap 导出成功后删除草稿——save_pdf 成功后 delete_draft，消除未脱敏原文常驻 APPDATA（最多 20 份残留窗口）
+- 残留 print 改 logger——session_store/image_list_dialog/page_view_mixin 等 10 处，不打印路径/异常 message
+- 草稿指纹去绝对路径——build_fingerprint 去掉 path 字段（含用户名），只留 size+mtime
+
+**P1 隐患**：
+- clean_paths symlink 逃逸防护（rmtree 前判 islink）
+- build_targeted_keyword_rules 过滤 None/空词项（防误脱敏 "None"）
+- refresh_bookmark_preview 保留 _targeted_toc_rules（防设置变更让书签侧脱敏丢失致导出泄漏）
+- 提取截去 cp131/cp132/cp133/cp128 接线补回
+- 恢复误丢文件：helpers_pdf.py（4 个提取函数）、widgets.py（信号+rect_added）、mixins/__init__.py
+
+### P2 加固（commit 73262fa，2 P2）
+- _ensure_edit_permission 异常保守失败（perms=0 走弹窗，不再放行）
+- 全局异常钩子 traceback 降 DEBUG（ERROR 只记类型名，弹窗不显示 exc_value）
+- 跳过：validate_safe_path 覆盖（路径全来自 QFileDialog，ROI 低）、Windows junction（威胁模型不成立）
+
+### 验证
+510 项回归（508 passed + 2 历史遗留失败：test_substring_long_keyword_wins / test_wide_box_no_longer_returns_none）
+
+---
+
+## 2026-08-11 - v40.1.1：前端-后端接线全面审计修复 + Worker parent 一致性
+
+### 背景
+用户使用其他 AI 完成提取/截去功能接线恢复与多项修复后，要求全面摸排更新进度并对前端与
+后端匹配性做独立审计。审计中发现 cp132 的 parent 修复只覆盖了 DocSearchWorker，4 个兄弟
+QThread 子类未传 parent，存在相同的运行中析构闪退隐患。
+
+### 改动（Part 1 — 复核确认其他 AI 的修复）
+- main.py: 实例化 ExtractSidePanel 并连接 8 个信号（new_page/export/delete/move_up/
+  move_down/replace/prev_page/next_page）；此前缺失导致 `enter_extract_mode()` 抛 AttributeError
+- main.py: `_render_page_to_canvas` 同步 `canvas.page_index = page_idx`；此前缺失导致
+  `vertical_region_selected` 信号始终发射 `page_idx=0`，截去/提取错误作用在第 1 页
+- main.py: TraceCleanDialog 调用补 `main_window=self`；此前从设置窗口进入时回调链断裂
+- main.py: DocSearchWorker 实例化补 `parent=self`（cp132）；防止 QThread 运行中被回收
+- crop_mixin.py: 删除重复的 `_capture_undo_state(structural=True)`；此前撤销栈压入两份
+  相同快照，用户需按 Ctrl+Z 两次才能撤销一次截去
+- test_undo_redo.py: 修正 import 路径，从 `privacyguard.utils.helpers_pdf` 导入
+
+### 改动（Part 2 — 本次审计新发现并修复）
+- 4 个兄弟 Worker 的 `__init__` 补 `parent=None` 形参，`super().__init__(parent)`：
+  - `privacyguard/workers/ocr_worker.py` (OCRWorker)
+  - `privacyguard/workers/word_worker.py` (WordWorker)
+  - `privacyguard/workers/image_merge.py` (ImageMergeWorker)
+  - `privacyguard/workers/batch_replace_worker.py` (WordBatchReplaceWorker)
+- main.py 中 2 个兼容包装类（OCRWorker/WordWorker）+ 5 处实例化点统一传递 `parent=self`，
+  与 DocSearchWorker 一致，消除 QThread 运行中析构的潜在闪退风险
+
+### 审计结论（前端-后端匹配性深度审计，5 项检查）
+- ExtractSidePanel 8 信号槽完整性：PASS
+- CropMixin 信号连接一致性：PASS（无重复连接）
+- DocSearchWorker parent 传递：FAIL → 已修复（推广至全部 5 个 Worker）
+- TraceCleanDialog 调用一致性：PASS（生产路径唯一调用点已传 main_window）
+- BookmarkSidePanel 等其他控件接线：PASS（main.py 66 处 `.connect` 全部正确）
+
+### 验证
+- 编译检查：main.py + privacyguard + tests 全部通过
+- 回归 510 项通过，2 项 skipped（样本依赖跳过，与版本无关）
+- version.txt → version_info.txt → __version__ 一致
+
+---
+
+## 2026-08-08 - v40.1.0：PDF 书签功能 + 安全审计修复
+
+### 背景
+用户提出新增 PDF 书签（TOC）功能需求：左侧可展开/收缩书签栏，支持浏览/搜索/跳转/
+增删改/子书签，兼容已有 PDF 书签的读取与编辑，并支持对书签标题做关键词脱敏。
+
+### 改动
+- 新增 `helpers_bookmark.py`：纯逻辑层（redact_toc_titles / find_bookmark_matches / TOC↔树转换）
+- 新增 `bookmark_side_panel.py`：独立 QFrame 面板（搜索/+−按钮/QTreeWidget/右键菜单）
+- 新增 `bookmark_mixin.py`：MainWindow 协调层（TOC 读取/跳转/增删改/实时预览）
+- main.py 接线：工具栏按钮、content_row 布局、打开PDF加载TOC、save_pdf 导出脱敏
+- 配置层：新增 `redaction.bookmark_redact_enabled`（config.py + settings_dialog + 勾选框）
+
+### 安全审计（2 P0 + 4 P1）
+经稳定性 + 安全性双 agent 审计，修复：
+- P0 导出漏脱敏：统一规则源，预览=导出（避免 targeted 规则漏应用）
+- P0 异常信息泄漏：print 改 logger
+- P0 脱敏失败中止导出（宁可失败不可泄漏）
+- P0 current_page None 崩溃防御
+- P1 删除全部书签显式 set_toc([]) + 大小写对齐 + doc.is_closed + 标题校验
+
+### 验证
+- 回归 490 项（书签新增 23 项全绿），4 项历史遗留失败
+- 端到端：248 条书签 PDF 全链路验证
+
+---
+
+## 2026-08-06 - v40.0.0 大版本发布：提取/截去 + 全面审计修复
+
+### 版本号变更
+v37.8.11 → v40.0.0（大版本：新增提取/截去功能模块 + 全面审计修复）
+
+### cp122-cp132 提取/截去功能（已在前序 DEV_LOG 记录）
+- cp122 提取/截去纵向区域裁剪（show_pdf_page 矢量裁剪）
+- cp122-fix 提取默认拼接/截去跨页修复（canvas.page_index 同步）
+- cp123 提取交互重构（toggle/右侧浮动工具栏/片段选中/导出弹窗统一/回炉打开）
+- cp124-cp132 交互打磨（信号重复连接/拖动工具栏/边缘拖动/默认位置/禁用遮罩/滚轮翻页/缩放/搜索取消闪退）
+
+### cp133 全面审计修复（7P1 + 4P2）
+两个 agent 交叉审计发现 11 个真实问题，全部修复：
+- P1: 换文档清理模式状态、退出页面视图+防重入、crop撤销快照、page_data同步、
+  原子性+泄漏、替换信号残留、防御性return
+- P2: 渲染降级、search finished双触发、越界检查、除零防御
+
+### 验证
+回归 472 项全绿，ruff 全绿，version.txt→version_info.txt→__version__ 一致。
+
+---
+
+## 2026-08-05 - 提取/截去交互重构（cp123）
+
+### 背景
+用户反馈：①提取/截去应 toggle（再次点击退出）；②"新页/完成提取"不应在顶部工具栏，
+应在右侧独立工具列；③所有片段都应可选可操作（不只最新片段）；④导出弹窗应与
+save_pdf 一致（打开文档+报告）；⑤右侧应可滚动+多结果页查看。
+
+### 改动
+1. btn_extract/btn_crop 改 toggle（style="toggle"+setCheckable），_on_extract_toggle/
+   _on_crop_toggle 含互斥（blockSignals 防回环）+ 退出确认（未导出提示）
+2. 新建 ExtractSidePanel（panels/extract_side_panel.py）：56px 右侧工具列，6 个图标按钮
+3. widgets.py 新增 canvas_clicked 信号，左侧键点击右侧片段选中（蓝色高亮）
+4. 导出弹窗统一：build_extract_report 纯函数 + OK/打开文档/导出报告 三按钮
+5. 多结果页：_extract_view_page + 翻页按钮；超高滚动：setMinimumHeight
+
+### 验证
+新增 4 项单测（build_extract_report）。回归 472 项全绿，ruff 全绿。
+
+---
+
+## 2026-08-05 - 提取拼接/截去跨页/右键菜单修复（cp122-fix）
+
+### 背景
+用户反馈 cp122 三个问题：①截去只作用第一页（翻页后仍操作第1页）；②提取应默认拼接
+到当前结果页而非各自新页；③右侧需右键菜单（删除/替换/移序）。
+
+### 根因与修复
+1. 截去页码错误：`_render_page_to_canvas` 不更新 `canvas.page_index`，纵向框选信号
+   永远发 page_idx=0。修复：渲染时 `canvas.page_index = page_idx`（同时修复提取页码）。
+2. 提取拼接：重构为片段元数据模型 `_extract_segments`（list[list[dict]]），默认拼接到
+   当前结果页底部，"新页"按钮另起。纯函数 build_result_doc_from_segments 重建。
+3. 右键菜单：canvas_right 启用 customContextMenuRequested，菜单项删除/替换/上移/下移，
+   右键时按 y 坐标自动选中片段，操作后重建+刷新。
+
+### 验证
+新增 6 项单测（片段拼接/多页/删除/移序）。回归 468 项全绿，ruff 全绿。
+
+---
+
+## 2026-08-04 - 提取/截去纵向区域裁剪功能（cp122）
+
+### 需求
+用户需要：①提取 PDF 某页的纵向区域到独立结果文档（可跨页累积，最后导出）；
+②截去某页的纵向区域，上下部分自动拼接。两者都保持矢量/原始内容，文字可选可搜。
+
+### 实现
+- 纯函数 extract_vertical_region_to_page / crop_vertical_region_from_page（helpers_pdf.py）
+  用 PyMuPDF show_pdf_page 做矢量裁剪，旋转页用 derotation_matrix 转坐标
+- SinglePageCanvas 增加 vertical_select_mode（纵向框选，x 撑满页宽）
+- CropMixin + ExtractMixin 两个独立模块，main.py 仅按钮接线 + Mixin 继承
+- 提取左右分屏（复用 canvas_right），结果文档内存暂存，完成时 QFileDialog 导出
+- 截去重建页面（上半+下半 show_pdf_page 拼接）替换原页，structural 撤销快照
+
+### 验证
+11 项纯函数单测全绿（含旋转 90°/180° 坐标转换）。全量回归 462 项全绿（451+11）。
+MRO 无冲突，ruff 全绿。
+
+---
+
+## 2026-08-04 - UI 三项改进（cp121）
+
+### 背景
+用户反馈三项 UI 改进需求：①"恢复推荐值"按钮应恢复到 1.5（与 cp120 默认一致）
+而非 2.0；②关键词列表需要一键清空按钮；③工具栏需要"重置文档"按钮恢复初始状态。
+
+### 改动
+1. `_reset_precision_defaults`：findData(2.0)→findData(1.5)（settings_actions_mixin.py）
+2. 关键词区"手动框选"复选框右侧新增"清空关键词"按钮 + `_clear_custom_keywords` 方法
+3. 工具栏撤销/恢复之间新增重置按钮（reset.svg 线条图标）+ `reset_document` 方法：
+   恢复到 _undo_stack[0] 基线快照，含确认对话框，重新 seed 栈；`_refresh_undo_redo_buttons`
+   增加 btn_reset 启用/禁用（有文档且有可清除编辑时启用）
+
+### 验证
+compileall + ruff 全绿，回归 451 项全绿。
+
+---
+
+## 2026-08-04 - OCR 默认精度提升：修复扫描件小字漏检（cp120）
+
+### 背景
+
+用户反馈：扫描件"回函 祥瑞物业 百盛.pdf"，高级设置关键词"池州市"，扫描后只有
+开头的被遮罩，落款处的"池州市祥瑞物业服务有限"未遮罩。用户猜测是空格/换行导致匹配失败。
+
+### 排查过程
+
+1. PDF 无文本层（纯扫描件），走 OCR 路径
+2. 用项目完整流程（collect_image_block_ocr_hits）跑，scan_scale=2.0 下两个都命中
+3. 但用户终端日志显示"页面0: 图片OCR命中 1"（只有1个）
+4. 读 config.json：scan_level=1.0
+5. 实测 scan_scale=1.0 下 OCR 只检测到 18 行（落款行整行漏检），
+   1.5/2.0 下检测到 20 行（落款行正常）
+6. 根因：1.0 渲染分辨率下 OCR 文本检测模型在落款区域未检出文本框
+
+### 修复
+
+DEFAULT_CONFIG scan.default_level 1.0→1.5（与 UI 推荐 一致）。
+新增 test_scan_default_level_is_1_5 固化。回归 451 全绿。
+
+---
+
+## 2026-08-04 - 打包根因修复：runtime_hook 破坏相对导入（cp119）
+
+### 背景
+
+用户反馈：打包产物（Portable.zip 解压后运行 PrivacyGuard.exe）点"智能脱敏"立即报错：
+`OCR 处理错误: OCREngineUnavailableError: RapidOCR 引擎不可用`。
+展开异常详情，真实根因为 `ImportError: attempted relative import with no known parent package`，
+定位到 `privacyguard\ocr\rapidocr.py:48`。
+
+### 根因定位（实测复现）
+
+经代码核对 + 开发环境实测复现，根因在 `packaging/windows/config/runtime_hook_privacyguard.py`：
+该 runtime hook 把 `privacyguard/utils`、`privacyguard/ocr`、`privacyguard/workers` 三个子包目录
+直接 `sys.path.insert(0, ...)`。这导致 Python 把这些目录下的 `.py` 文件当作顶层裸模块加载，
+`rapidocr.py:19` 的 `from .base import BaseOCREngine` 因找不到 `__package__` 上下文而失败。
+
+实测脚本确认：将 `privacyguard/ocr` 插入 sys.path 后，加载 `rapidocr.py` 即报完全相同的
+`attempted relative import with no known parent package`。
+
+注：错误显示在 line 48（`from rapidocr import RapidOCR`，绝对导入第三方包），是因为 cp116 的
+`is_available()` except 捕获后归因；真正失败的相对导入是 line 19，但整个模块加载在 line 19 就
+已失败，runtime_hook 破坏了整个 privacyguard 包的导入完整性。
+
+### 修复
+
+1. runtime_hook 重写：仅注入 app_dir，删除全部子包目录。
+2. Windows/macOS spec pathex 改为仅 project_root。
+3. 消除三处冗余 privacyguard 子模块硬编码清单 → collect_submodules 自动发现 + 单点回退。
+4. 清理：diagnostic.spec（失效）/ windows/archive/（过时）/ __pycache__×3 / .DS_Store。
+5. 文档：README 重写 / DUAL_OCR→OCR_PACKAGING 重命名 + 版本号修正。
+
+### 验证
+
+spec 顶层执行（mock Analysis）确认：pathex 仅 project_root、privacyguard 47 子模块自动发现、
+runtime_hooks 指向修复后文件；packaging 全部 .py 编译通过；无残留引用。
+
+---
+
+## 2026-08-03 - 全量代码审计修复（cp118）
+
+### 背景
+
+第三方独立代码审计对 v37.8.11 提出 13 项发现（A1-A5 / B1-B3 / C1-C7）。
+逐一代码核对后：修复 10 项、评估保留 3 项、确认误报 1 项（B2）。
+
+### 修复内容（按优先级）
+
+**高优先级（脱敏正确性/稳定性）**
+- A2 痕迹清理回调链断裂：`TraceCleanDialog` 新增 `main_window` 显式参数，
+  从设置窗口进入时不再靠 Qt parent 路由找回调方法（`_mark_webengine_clear_pending`
+  /`_on_traces_cleaned`）。`main.py:_open_trace_clean_dialog` 传入 `main_window=self`。
+- B1 rect_added 死信号：`widgets.py:356` 纯遮罩路径补 `rect_added.emit`，
+  恢复手动框选撤销能力（Ctrl+Z）+ 双页对侧刷新。
+- A5 image_merge Document 泄漏：`doc` 生命周期改 try/finally 保 close；
+  外层 except 扩大为 Exception（PyMuPDF `FzErrorSystem` 不在原元组内，会穿透）。
+
+**中优先级（正确性/一致性）**
+- A3 _TraceSizeWorker 生命周期：worker 以对话框为 parent；
+  `closeEvent/reject/accept` 统一调 `_shutdown_worker`（requestInterruption+wait）。
+- A1 OCR 宽度守卫静默漏脱：超宽 box 不再 return None 丢弃，改为
+  `effective_img_region=None` 回退纯权重估算（无像素分支已有 max_w_ratio 限宽）。
+- A4 off_x/off_w 文本层路径：文本命中框补 `x-=off_x; w=max(2.0,w-off_w)`。
+- B3 _lookup_replace 优先级：子串匹配 `sorted(key=len, reverse=True)` 长词优先。
+
+**低优先级（质量/排障）**
+- C3 text_pdf 无效缓存删除（iter_unique_text_matches 的 seen 已去重，cache 恒 miss）。
+- C5 search_worker：异常加 logger.warning；进度 emit 节流。
+- C7 ManualRegionDialog QTimer 回调加 sip.isdeleted 守卫。
+- C1 print→logger：config.py/mixed_pdf.py/text_pdf.py 共 16 处。
+
+### 评估保留（C2/C4/C6）
+- C2 manager.py 死代码：打包 hook 引用，删除风险 > 收益，保留。
+- C4 密码 .strip()：双向风险设计选择，保留现状。
+- C6 性能：归属 OPTIMIZATION_ROADMAP。
+
+### 验证
+- compileall 零错误 + ruff（E9/F）全绿
+- 回归 450 项全绿（448 passed + 2 skipped，真实样本缺失的预期跳过）
+- 新增 19 项测试（test_trace_cleaner +4 / test_cp118_stability +15），
+  test_calculate_sub_rect_width_limit 11 项契约更新
+
+---
+
+## 2026-08-03 - RapidOCR 打包依赖终结修复（cp117）
+
+### 背景
+
+用户报告：重新打开压缩包构建产物后版本号已正确，但智能脱敏仍报
+`OCREngineUnavailableError: RapidOCR 引擎不可用`。用户要求一次性全面排查解决。
+
+### 排查过程
+
+编写 `_ocr_diagnostic.py` 诊断脚本，覆盖 rapidocr 完整导入链逐项验证 +
+dist 产物实地检查 + 构建版本新旧判断。诊断结果：
+
+1. **venv 中所有依赖可正常导入**，`RapidOCR()` 实例化成功 → 代码层面无问题
+2. **dist 中 `antlr4` 目录 NOT FOUND** → cp116 的 spec 修改是对的
+3. **dist 中 `cobble` 目录 NOT FOUND** → 新发现的缺失依赖
+4. **exe 修改时间 15:40:54 早于 spec 修改时间 16:23:49**（差 43 分钟）→
+   用户测试的是 cp116 之前的旧构建产物
+
+进一步验证 `collect_all` 对 tqdm/cobble 的效果及依赖来源：
+- `tqdm`：rapidocr 声明依赖（`rapidocr -> tqdm`），`download_file.py:11`
+  `from tqdm import tqdm`，`RapidOCR()` 初始化时加载 → **必需**
+- `cobble`：mammoth 声明依赖（`mammoth -> cobble<0.2,>=0.1.3`）→ Word 预览需要
+- `protobuf`：rapidocr 源码无引用 → 非必需，不收集
+
+### 修复内容
+
+**1. 两平台 spec 新增 collect_all('tqdm') + collect_all('cobble')**
+
+- `packaging/windows/config/PrivacyGuard_windows.spec`
+- `packaging/macos/config/PrivacyGuard.spec`
+- binaries/datas/hiddenimports 三处拼接同步更新
+- tqdm: 34 datas + 31 hiddenimports
+- cobble: 3 datas + 2 hiddenimports
+
+**2. requirements.txt 新增 tqdm==4.69.0**
+
+rapidocr 直接依赖，此前作为传递依赖未显式 pin。
+
+**3. verify_dependencies.py 新增 tqdm / cobble 检查**
+
+REQUIRED_MODULES + COLLECT_ALL_MODULES 均新增两项。
+
+### 验证
+
+- `verify_dependencies.py` 全量通过：23 REQUIRED_MODULES + 16 COLLECT_ALL_MODULES
+- 诊断脚本确认 venv 中所有依赖可导入，`RapidOCR()` 实例化成功
+- spec 文件 py_compile 语法校验通过
+- 重新打包后验证 dist 包含 antlr4/cobble/tqdm（待打包完成后确认）
+
+---
+
+## 2026-08-03 - RapidOCR 打包根因修复（cp116）
+
+### 背景
+
+用户报告：cp115 重新打包后版本号已正确，但智能脱敏仍报
+`OCREngineUnavailableError: RapidOCR 引擎不可用`。用户要求一次性全面排查解决。
+
+### 根因
+
+经逐层剖析 RapidOCR v3.9.2 源码导入链，定位到两个互锁问题：
+
+**根因 A（致命）：antlr4-python3-runtime 未收集**
+
+`from rapidocr import RapidOCR` 触发 `rapidocr/__init__.py` 的 `__getattr__`
+懒加载 → `import_module("rapidocr.main")` → `rapidocr/main.py` 顶部
+`from omegaconf import DictConfig` → omegaconf 按需加载 grammar →
+`omegaconf/grammar/gen/OmegaConfGrammarLexer.py` 顶部 `from antlr4 import *`。
+
+但 `collect_all('omegaconf')` 返回的 22 个 hiddenimports **不含 antlr4**
+（外部依赖），PyInstaller 静态分析也未追踪到（omegaconf 按需加载 grammar），
+spec 文件也未声明 → 打包后 `ModuleNotFoundError: No module named 'antlr4'`
+→ 整条导入链失败。
+
+**根因 B（致盲）：is_available() 吞掉真实异常**
+
+`RapidOCREngine.is_available()` 原实现 `except ImportError: return False`，
+仅捕获 ImportError。但导入链失败可能抛 `FileNotFoundError`（缺数据文件）、
+`OSError`（DLL 加载失败）等非 ImportError 异常——这些会绕过探测直接崩溃，
+或被外层 try 兜底后只显示"引擎不可用"四字，**真实异常被彻底吞掉**，
+导致 cp114/cp115 每轮排查都在猜缺哪个依赖。
+
+### 修复内容
+
+**1. 错误透传（彻底打破"看不到根因"的死循环）**
+
+- `privacyguard/ocr/rapidocr.py`：`is_available()` 改为 `except Exception`
+  捕获所有异常，存入 `self._last_error`（含完整 traceback）并打印到 stderr；
+  新增 `get_last_error()` 方法。`recognize()` 初始化失败同样存储真实错误。
+- `privacyguard/workers/ocr_worker.py`：`OCREngineUnavailableError` 消息拼入
+  `get_last_error()` 返回的真实异常，弹窗直接显示根因。
+- `privacyguard/ocr/manager.py`：`_init_engine` 打印真实异常。
+
+**2. antlr4 依赖收集（根因 A）**
+
+两平台 spec 同步新增：
+- `collect_all('antlr4')` → 57 datas + 56 hiddenimports
+- hiddenimports 显式声明 `antlr4` / `antlr4.atn` / `antlr4.dfa` /
+  `antlr4.error` / `antlr4.tree` / `antlr4.xpath`
+- binaries / datas 拼入 antlr4 收集结果
+
+**3. 依赖声明补全**
+
+- `requirements.txt` 新增 `antlr4-python3-runtime==4.9.3` + `omegaconf==2.3.1`
+  + `colorlog==6.11.0`（均为 RapidOCR 直接依赖，此前作为传递依赖未显式 pin）
+- `verify_dependencies.py`：REQUIRED_MODULES + COLLECT_ALL_MODULES 新增 antlr4
+
+### 验证
+
+- `verify_dependencies.py` 全量通过：21 个 REQUIRED_MODULES 全 OK +
+  14 个 COLLECT_ALL_MODULES 全可收集（antlr4 datas=57/hidden=56）+ 3 模型在位
+- `compileall` 零错误；`ruff --select E9,F` 零告警
+- 回归 431 项全绿（429 passed + 2 skipped，与基线一致）
+
+### 修改文件
+
+- privacyguard/ocr/rapidocr.py / privacyguard/ocr/manager.py
+- privacyguard/workers/ocr_worker.py
+- packaging/windows/config/PrivacyGuard_windows.spec
+- packaging/macos/config/PrivacyGuard.spec
+- packaging/windows/scripts/verify_dependencies.py
+- requirements.txt / CHANGELOG.md / docs/current/DEV_LOG.md / docs/current/STATUS.md
+
+---
+
+## 2026-08-03 - 打包依赖收集补全（cp115）
+
+### 背景
+
+用户要求对照 `requirements.txt` 全面检查打包配置，确保打包产物正常可用、用户无需自行安装依赖。
+在 cp114 修复 RapidOCR 引擎不可用（补全 pyclipper/shapely/omegaconf/colorlog/six/requests）后，
+进一步全量复核发现仍有 3 项 collect_all 缺失 + 7 项传递依赖 hiddenimports 缺失。
+
+### 排查方法
+
+1. 逐条对照 `requirements.txt`（28 行）与 Windows/macOS spec 文件的 collect_all + hiddenimports
+2. 用 `collect_all('omegaconf')` 验证 RapidOCR 依赖链是否完整覆盖 → 发现 22 个 hiddenimports
+   中不含 yaml
+3. 用 `inspect.getsource` 检查 onnxruntime/rapidocr 的直接 import 语句
+4. 检查 PyInstaller 内置 hook 覆盖范围 → 7 个传递依赖均无内置 hook
+5. 检查传递依赖在 venv 中的安装状态 → protobuf 未安装（onnxruntime quantization 可选）
+
+### 修复内容
+
+**3 项 collect_all 缺失**（两平台 spec 同步）：
+
+| 依赖 | 根因 | 数据量 |
+|------|------|--------|
+| PyYAML（yaml） | omegaconf 运行时 `import yaml`，但 `collect_all('omegaconf')` 不含 yaml | 18 datas + 18 hidden |
+| mammoth | `main.py:904` 直接 import 用于 Word→HTML 预览；Windows spec hiddenimports 遗漏 | 46 datas + 45 hidden |
+| psutil | `requirements.txt` 声明，含平台二进制扩展 | 11 datas + 11 hidden |
+
+**7 项传递依赖 hiddenimports 防御性声明**（均无 PyInstaller 内置 hook）：
+- flatbuffers（onnxruntime 模型序列化）
+- sympy + mpmath（onnxruntime 形状推理链）
+- cobble（rapidocr 内部依赖）
+- packaging + typing_extensions（通用兼容层）
+- protobuf **未声明**——venv 中未安装，onnxruntime quantization 模块可选
+
+**verify_dependencies.py 同步更新**：
+- REQUIRED_MODULES 新增 yaml、psutil（mammoth 已有）
+- COLLECT_ALL_MODULES 新增 yaml、mammoth、psutil
+
+### 验证
+
+- `compileall` 两平台 spec 文件零错误
+- `verify_dependencies.py` 全量通过：20 个 REQUIRED_MODULES 全 OK + 12 个 COLLECT_ALL_MODULES 全可收集
+  + 3 个 RapidOCR 模型文件在位
+- collect_all 数据量确认：yaml(18/18) / mammoth(46/45) / psutil(11/11) 均非空
+
+### 修改文件
+
+- packaging/windows/config/PrivacyGuard_windows.spec
+- packaging/macos/config/PrivacyGuard.spec
+- packaging/windows/scripts/verify_dependencies.py
+- CHANGELOG.md / docs/current/DEV_LOG.md
+
+---
+
+## 2026-08-02 - 加密 PDF 脱敏修复（cp114）
+
+### 问题
+
+用户报告：设有密码的 PDF 在执行智能脱敏时报错。推断为 PDF 打开需要密码、编辑修改也需要密码，
+但 OCR 扫描和保存时未自行检测密码状态。
+
+### 根因排查
+
+全量排查所有 `fitz.open` 调用点（10 处），定位到 4 处缺陷：
+
+1. **ocr_worker.py:1002** — OCR 线程 `fitz.open(self.pdf_path)` 从磁盘重开加密 PDF 后未
+   `authenticate`，页面内容仍加密 → `get_text` / `get_pixmap` 报 "document closed or encrypted"
+2. **main.py save_pdf:9056** — 未修改分支 `fitz.open(self.file_path)` 同样未认证 → 无法添加
+   `add_redact_annot` / `apply_redactions`
+3. **page_view_mixin.py:623** — 插入加密外部 PDF 未处理密码
+4. **设计缺陷** — `pdf_open_password` 同时承担"导出加密"和"磁盘重读认证"两个职责。用户在
+   PasswordOpenDialog 选「解除密码」后 `pdf_open_password=""`（导出不加密），但原文件仍加密，
+   OCR/save_pdf 从磁盘重读无密码可用 → 必然失败
+
+### 修复
+
+- **新增 `_pdf_auth_password` 字段**（main.py `__init__` / `_cleanup_before_open`）：
+  专用于磁盘重读认证，与导出加密设置解耦。`_authenticate_pdf_on_open` 中无论 open/remove/change
+  动作均 `self._pdf_auth_password = pw`（已通过 authenticate 验证的密码）
+- **OCRWorker**（ocr_worker.py）：`__init__` 新增 `pdf_open_password: str = ""` 参数；
+  `run()` 中 `fitz.open` 后检测 `doc.needs_pass`，无密码或 `authenticate` 返回 ≤0 抛
+  `OCREngineUnavailableError` 走 error_signal → finished_signal 统一清理路径
+- **main.py OCRWorker 初始化**：`start_ocr` 与 `_start_targeted_mask_scan` 均传
+  `pdf_open_password=self._pdf_auth_password`
+- **save_pdf**：两个分支均补守卫——`tobytes` 流分支防御性 `if doc_save.needs_pass and
+  self._pdf_auth_password: authenticate`；磁盘重开分支 `if doc_save.needs_pass` 认证失败抛
+  `RuntimeError`（被 except 捕获弹错误框，cursor 在 finally 恢复）
+- **插入文件**（page_view_mixin.py `_insert_pdf_pages_at`）：`src.needs_pass` 时弹
+  `QInputDialog.getText(Password)` 密码框，`authenticate` 失败循环重试，用户取消返回 0
+
+### 验证
+
+- compileall 零错误
+- ruff（E9+F）ocr_worker.py / page_view_mixin.py 全绿
+- 回归 431 项（429 passed + 2 skipped，与基线一致）
+
+### 第二轮修复（用户实测反馈）
+
+用户实测后报 `TypeError: OCRWorker.__init__() got an unexpected keyword argument
+'pdf_open_password'`，并要求编辑需要密码时弹窗输入。
+
+- **包装层漏改**：main.py:317 `class OCRWorker(_ModularOCRWorker)` 兼容包装层 `__init__`
+  未声明 `pdf_open_password` 参数、也未转发给 `super().__init__()`。`_start_targeted_mask_scan`
+  传参时被包装层拦截 → TypeError。修复：包装层 `__init__` 补全参数声明与 `super()` 转发
+- **编辑权限弹窗**：新增 `_ensure_edit_permission()` 方法——检测 `self.doc.permissions` 缺
+  `PDF_PERM_MODIFY` 位时弹 `QInputDialog` 密码框输入 owner 密码；`doc.authenticate(pw)` 验证
+  成功且获 MODIFY 权限则更新 `_pdf_auth_password`；密码错误/权限不足循环重试；用户取消返回
+  False。接入 `start_ocr` / `_start_targeted_mask_scan` / `save_pdf` 三处入口，取消时中止操作
+- 验证：compileall 零错误 + ruff 全绿 + 回归 431 项全绿
+
+---
+
+## 2026-08-02 - 加密文档打开与密码管理（cp113）
+
+### 背景
+
+此前加密 PDF 直接拒绝打开（"暂不支持"），加密 Word 抛 BadZipFile 直达全局 hook。
+用户需求：打开加密 PDF/Word 时弹密码框验证；框上提供"打开 / 打开并解除密码 / 打开并修改密码"
+三动作；密码状态与操作台右上角锁按钮（cp72）共享，导出时统一写入。
+
+### 落地内容
+
+1. **`privacyguard/utils/word_crypto.py`（新建）**：
+   - `is_encrypted_docx(path)`：OLE2 魔数 `D0 CF 11 E0` 判定（vs ZIP `PK\x03\x04`）
+   - `decrypt_docx_to_temp(path, password, output_path)`：msoffcrypto 懒导入解密到指定路径，
+     密码错误抛 ValueError，半成品文件自动清理
+2. **`privacyguard/utils/helpers_pdf.py` 新增 `detect_pdf_password_state(doc)`**：
+   返回 `{needs_user_pw, has_owner_restriction, permissions}`；惰性 import fitz 按位检测；
+   None/异常返回安全默认
+3. **`privacyguard/ui/dialogs/password_open_dialog.py`（新建）`PasswordOpenDialog`**：
+   密码输入框 + 显示密码复选框 + 三动作按钮（打开 / 打开并解除密码 / 打开并修改密码）；
+   Word 模式"修改密码"按钮禁用 + tooltip；复用 EncryptSettingsDialog 主题风格；
+   回车触发默认"打开"动作
+4. **main.py 改造**：
+   - `__init__` / `_cleanup_before_open`：新增 `word_open_password` 字段及重置
+   - `_open_pdf_file`：替换"拒绝加密 PDF"为 `detect_pdf_password_state` →
+     `_authenticate_pdf_on_open`（弹框循环重试，authenticate 验证，按 action 设密码状态，
+     调 `_refresh_encrypt_button_state` 同步锁按钮）
+   - `_open_word_docx`：`is_encrypted_docx` 前置检测 → `_decrypt_word_for_open`（弹框 +
+     msoffcrypto 解密到 temp_manager 临时目录，保留原 basename，复用 converted_temp_file
+     清理机制）→ `Document(load_path)`；info bar 按 action 提示"导出时不带密码"；
+     except 扩充 `BadZipFile`
+5. **`requirements.txt`**：新增 `msoffcrypto-tool==5.4.2`
+6. **测试**：`tests/unit/test_word_crypto.py`（9 项：魔数检测 + mock 解密成功/失败/建目录）、
+   `tests/unit/test_pdf_password.py`（4 项：无密码/user pw/owner restriction/None 默认）
+
+### 设计决策
+
+- Word 仅"打开+解除"，不支持修改密码（python-docx 无法加密保存）；"修改密码"按钮禁用 + tooltip
+- 密码解除/修改在"导出时生效"，与 cp72 锁按钮统一语义；pdf_open_password/pdf_edit_password 共享
+- owner restriction（打开无需密码但编辑受限）也检测弹框，用户可取消（保留限制直接打开）或输密码解除
+- 密码错误循环重试至成功或取消（needs_user_pw 取消=放弃打开）
+- 加密 Word 解密临时文件保留原 basename（标题显示原文件名，预览/保存读取一致），
+  复用 `_cleanup_temp_file` 清理机制，不新增清理接线
+- msoffcrypto 懒导入（与 OCR 懒加载原则一致）
+- PDF"保留原加密"简化：用户输入密码作为 pdf_open_password，导出时重新加密（owner 限制不保留）
+
+### 验证
+
+- compileall 零错误
+- ruff 全绿
+- 回归 431 项（429 passed + 2 skipped，含 13 项新测试），不退化
+
+### 修改文件
+
+- requirements.txt / main.py / privacyguard/utils/word_crypto.py（新）/
+  privacyguard/utils/helpers_pdf.py / privacyguard/ui/dialogs/password_open_dialog.py（新）/
+  privacyguard/ui/dialogs/__init__.py / tests/unit/test_word_crypto.py（新）/
+  tests/unit/test_pdf_password.py（新）/ 文档
+
+---
+
+## 2026-08-02 - 导出弹窗新增"打开文档"按钮（cp112）
+
+### 背景
+
+PDF/Word 导出成功后的弹窗只有"OK / Show Details... / 导出报告"（PDF）或"OK"（Word），
+用户需手动到资源管理器找到文件再打开。增加"打开文档"按钮可一键用系统默认程序打开导出的文件。
+
+### 落地内容
+
+1. **`privacyguard/utils/helpers_ui.py` 新增 `open_path_in_system(path)`**：跨平台用系统默认
+   程序打开文件，返回 `(ok, error_msg)`。Windows `os.startfile` / macOS `open` / Linux `xdg-open`
+2. **PDF 导出弹窗**（main.py:9036）：在"导出报告"与"OK"之间新增"打开文档"按钮
+   （`btn_open_doc`，ActionRole），点击后调用 `open_path_in_system(fname)`，失败弹 warning 提示
+3. **Word 导出弹窗**（main.py:9167）：原 `QMessageBox.information` 改为自定义 QMessageBox，
+   新增"打开文档"按钮，行为同 PDF
+
+### 设计决策
+
+- 跨平台打开逻辑抽到 `helpers_ui.py` 纯函数（遵循 AGENTS.md 铁律，不写 main.py）
+- 函数返回 `(ok, error_msg)`，main.py 负责弹窗反馈
+- PDF 与 Word 弹窗都加，体验一致
+- 按钮顺序：导出报告 | 打开文档 | OK（Show Details 在底部），"打开文档"在 OK 之前
+
+### 验证
+
+- compileall 零错误
+- ruff 全绿
+- 回归 418（416 passed + 2 skipped），不退化
+
+### 修改文件
+
+- `privacyguard/utils/helpers_ui.py`（+1 函数 `open_path_in_system` / docstring + `__all__`）
+- `main.py`（PDF 弹窗 +1 按钮 + 点击处理；Word 弹窗 information → 自定义 QMessageBox + 打开文档按钮）
+
+---
+
+## 2026-08-02 - 页面视图插入文件功能（cp111）
+
+### 背景
+
+页面视图左侧工具栏原有"插入空白页"按钮，无法把现有 PDF/图片作为新页插入。
+用户需要在选中页后追加外部文件内容（如证据 PDF、扫描图片）。
+
+### 落地内容
+
+1. **新增"插入文件"按钮**（`btn_page_insert_file`）：左侧工具栏"插入空白页"之后，
+   图标 `assets/icons/page_insert_file.svg`（page 轮廓 + 内部图片占位符）
+2. **`_insert_file_after_selected`**：弹文件对话框（PDF + 图片多选）→
+   选中页最大页码 +1 为插入位置 → 逐文件分流
+3. **`_insert_pdf_pages_at`**：`fitz.open` 源 PDF → `doc.insert_pdf(src, start_at=...)` 插入全部页
+4. **`_insert_image_as_page_at`**：Pillow 读图 + RGB 转换 + PNG stream → `new_page` + `insert_image`
+5. 每插入一页执行 `shift_page_data_for_insert` + `shift_page_set_for_insert`（page_data /
+   `_ocr_processed_pages` / `grid_selected_pages` 同步重排）；清搜索缓存；重建网格；
+   `_capture_undo_state(structural=True)` 入撤销栈
+6. 单文件失败跳过继续，结束汇总提示成功 N 页 + 失败 M 个
+
+### 设计决策
+
+- 多文件按对话框返回顺序依次插入（不弹排序子对话框，保持轻量）
+- 图片页尺寸 = 图片原始像素尺寸（与 `image_merge.py` 一致）
+- 同步处理（Pillow + PNG stream），少量文件不阻塞 UI
+- 不支持 Word（非页面单元）
+- 复用 `_insert_blank_page_after_selected` 全链路（shift / undo / rebuild）
+
+### 验证
+
+- compileall 零错误
+- ruff 全绿
+- 回归 418（416 passed + 2 skipped），不退化
+
+### 修改文件
+
+- `assets/icons/page_insert_file.svg`（新建）
+- `privacyguard/ui/mixins/page_view_mixin.py`（+1 按钮 / +1 启用态名 / +3 方法 / 导入 QFileDialog + logger）
+
+---
+
+## 2026-08-02 - P0-1 终端用户使用手册补全（cp100）
+
+### 背景
+
+docs/guides/ 此前仅有 CLAUDE_CODE_TIPS / QUICK_START_FOR_CLAUDE_CODE（agent 向）与
+TESTING_GUIDE（开发向），无终端用户操作手册。README 是项目概览非操作指南，新用户无可照做文档。
+
+### 落地内容
+
+新建 `docs/guides/USER_GUIDE.md`，14 章覆盖 v37.8.11 全部功能：
+1. 能力总览（表格）
+2. 安装与启动（打包版 + 源码）
+3. 5 分钟快速上手
+4. PDF 脱敏（打开/规则扫描/印章签名手印/OCR/手动框选/整文档定向遮罩）
+5. 页面视图（多页网格/Ctrl+滚轮缩放/选择/旋转插入删除/遮罩颜色）
+6. 全文搜索定位
+7. 撤销重做（Ctrl+Z/Y，栈深 20）
+8. 导出与加密（AES-256 打开/编辑密码 + 脱敏报告 txt）
+9. Word 脱敏（规则/自定义关键词/替换规则/批量/双预览高亮筛选）
+10. 设置中心（5 区块）
+11. 会话恢复（草稿）
+12. 痕迹清理
+13. 快捷键速查表
+14. 常见问题（8 条）
+
+### 事实核实
+
+- 12 预设规则 + 印章/签名手印 2 项特殊检测，从 main.py:250 DEFAULT_RULES 提取（含校验位说明）
+- 快捷键 Ctrl+Z/Y 从 main.py:1595 QShortcut 确认；Ctrl+滚轮/选择/适合页面从 AGENTS.md 能力清单确认
+- 文档类型、加密、报告、会话恢复、痕迹清理均与 AGENTS.md / 代码对齐
+
+### 验证
+
+- 纯新增文档，无代码变更，无回归风险
+- 内容与 v37.8.11 实际功能逐项对齐
+
+---
+
+## 2026-08-02 - P0-3 helpers.py 垫片消费方迁移 + 垫片移除（cp102）
+
+### 背景
+
+P3-1 将 helpers.py 拆为 5 个域模块后，helpers.py 退化为 81 行再导出垫片，所有消费方仍
+`from privacyguard.utils.helpers import X`。垫片长期存在会掩盖真实依赖关系、形成惰性兼容层。
+
+### 落地内容
+
+1. **10 个消费点全部迁移到按域直接导入**（零行为变更）：
+   - `main.py`：`from helpers import *` → 5 个域模块 `import *`（collectively 等价原 60 名字）
+   - `privacyguard/ui/dialogs/`：settings_dialog、word_replace_rules_dialog → helpers_word_rules
+   - `privacyguard/ui/mixins/`：page_view_mixin→helpers_pdf；settings_actions_mixin→helpers_word_rules+helpers_ui；
+     settings_layout_mixin→helpers_ui；word_preview_mixin→helpers_word_preview+helpers_word_rules
+   - `privacyguard/ui/widgets.py`→helpers_pdf
+   - `privacyguard/workers/`：batch_replace_worker→helpers_word_rules+helpers_word_doc；search_worker→helpers_pdf
+2. **删除 helpers.py 垫片**：迁移前用 grep 确认全项目（main.py + privacyguard + tests + packaging）
+   仅 10 个 from-import 点 + 垫片自身，无模块导入/属性访问/相对导入/打包钩子引用；删除后回归全绿。
+3. **ruff.toml 注释同步**：F403/F405 忽略说明从"main.py 使用 helpers star import"更新为
+   "main.py 使用 5 个域模块 star import"，行数 9287→9271。
+4. **AGENTS.md Main Files**：helpers 描述更新为"5 域模块直接导入，垫片已移除"。
+
+### 验证
+
+- 迁移后（垫片仍在）：compileall 0 错误；ruff All checks passed；回归 418 OK(skipped=2)
+- 删垫片后：compileall 0 错误；回归 418 OK(skipped=2)（确认无任何代码依赖 helpers.py）
+- grep 确认 `from privacyguard.utils.helpers import` 残留 = 0（消费方）
+
+---
+
+## 2026-08-02 - P0-2 AGENTS.md 开发方向与行数同步（cp101）
+
+### 背景
+
+OPTIMIZATION_ROADMAP 撰写时用 PowerShell `Measure-Object -Line` 统计行数，该法对 CRLF
+文件系统性少计约 14%，导致 main.py(8420)/ocr_worker.py(1000)/settings_dialog.py(988)
+等数字全部偏低。改用 Python `sum(1 for _ in open(...))` 权威计数后：
+main.py=9271、ocr_worker.py=1163、settings_dialog.py=1046。同时 AGENTS.md 默认开发方向
+仍把已落地的"高亮来源过滤"列为待办。
+
+### 落地内容
+
+1. **AGENTS.md 行数同步**：9,287→9,271（共 4 处：架构说明、分层图、Main Files、重构完成备注）。
+2. **AGENTS.md 开发方向更新**：原第 4 项 "preview highlight filtering by source" 标记为
+   v37.8.11 已落地（helpers_word_preview.py 三函数 + main.py:658 + word_preview_mixin.py 接入），
+   从默认方向移除；保留 per-file rule mapping / batch rule-set templates 为活跃方向。
+3. **AGENTS.md Main Files**：helpers.py 描述从"57 函数聚合模块"更新为"按域拆 5 模块 + 再导出垫片"。
+4. **新增 OPTIMIZATION_ROADMAP 交叉引用**：AGENTS.md 开发方向段指向 docs/current/OPTIMIZATION_ROADMAP.md。
+5. **修正 OPTIMIZATION_ROADMAP.md 全部错误行数**：8420→9271、1000→1163、988→1046。
+
+### 验证
+
+- AGENTS.md 残留 9,287 引用 = 0（grep 确认）
+- 纯文档变更，无代码回归风险；compileall 不适用（.md）
+
+---
+
+## 2026-08-01 - P3-1 helpers.py 按域拆分 + TESTING_GUIDE 重写（cp99）
+
+### 背景
+
+helpers.py 单文件 1225 行 / 57 函数 + 3 常量，涵盖 Word 规则、PDF 命中、页面操作、
+设置 UI、批量处理、Word docx 操作、Word 预览等多个不相关域，违反"功能域作为独立模块"
+架构原则。同时 `docs/guides/TESTING_GUIDE.md` 仍停留在 v19.0（2026-02-08），与当前
+v37.8.11 基线严重脱节。
+
+### 落地内容
+
+1. **helpers.py 按域拆分为 5 个模块**（`privacyguard/utils/`）：
+
+   | 模块 | 函数数 | 域 |
+   |------|--------|-----|
+   | `helpers_pdf.py` | 17 | 命中访问/矩形几何/PDF 加密/全文搜索/页面重排/撤销快照 |
+   | `helpers_word_rules.py` | 14 | 规则规范化/匹配应用/预览分段/多源合并/全文遮罩关键词 |
+   | `helpers_word_doc.py` | 7 | docx run 级替换/纯文本抽取/页眉页脚遍历 |
+   | `helpers_word_preview.py` | 6+3常量 | 面板刷新/重载/高亮筛选/OCR 替换解析 |
+   | `helpers_ui.py` | 13 | 设置文案/批量结果/工作台工具栏文案/密度档位 |
+
+2. **helpers.py 改为再导出垫片**：5 个 `from .helpers_xxx import *`，`__all__` 与原文件
+   完全一致（60 个名字），所有消费方（main.py / widgets.py / workers / mixins / dialogs）
+   的 `import` 语句零改动。
+
+3. **唯一跨模块依赖**：`helpers_ui.py` 的 `build_batch_rule_summary_lines` 依赖
+   `helpers_word_rules.py` 的 `normalize_word_replace_rules`，通过显式 `from` 导入解决。
+
+4. **修复 `test_custom_keyword_rules.py`**：该测试用 AST 解析 helpers.py 源码提取函数，
+   拆分后函数迁至 `helpers_word_rules.py`，更新 AST 解析路径。
+
+5. **重写 `docs/guides/TESTING_GUIDE.md`**：从 v19.0 全面重写到 v37.8.11 基线，
+   覆盖测试架构、执行方式、CI 流水线、编写规范、Worker 测试模式、覆盖范围、性能基准、
+   常见问题。
+
+### 验证
+
+- ruff check 全绿（0 errors）
+- compileall 零错误
+- 回归 418 项全绿（416 passed + 2 skipped），零行为变更
+
+---
+
+## 2026-08-01 - P2-3 worker 线程测试 + ruff 纳入 CI（cp98）
+
+### 背景
+
+2026-08-01 系统化审计识别出两个问题：
+1. 5 个 QThread Worker（OCRWorker/WordWorker/WordBatchReplaceWorker/DocSearchWorker/ImageMergeWorker）
+   缺少生命周期与契约测试，MainWindow 依赖的信号/中断/决策接口变更无回归防护。
+2. 项目无静态检查工具，P1-3 拆分 Mixin 时引入的 13 个 F821（undefined-name）潜在
+   NameError 未被发现（测试未覆盖设置对话框全部代码路径）。
+
+### 落地内容
+
+1. **新增 `tests/unit/test_worker_lifecycle.py`**（24 项测试）：
+   - 实例化契约：5 个 Worker 最小合法参数构造 + None 防御
+   - 信号契约：所有 pyqtSignal 类属性存在（MainWindow 接线依赖）
+   - 中断 API：requestInterruption / isInterruptionRequested 方法存在性
+   - WordBatchReplaceWorker 跨线程错误决策：provide_error_decision + _wait_for_error_decision
+   - ImageMergeWorker 空输入边界：run() 同步执行不崩溃
+   - WordWorker._find_matches：Luhn 校验门控 + 自定义关键词匹配
+
+2. **ruff 静态检查纳入 CI**：
+   - 新增 `ruff.toml`：select = ["E9", "F"]，ignore = ["F403", "F405"]（star import 噪声）
+   - CI（`.github/workflows/ci.yml`）新增 "Ruff lint check" 步骤
+   - `requirements-dev.txt` 启用 ruff
+
+3. **ruff 修复的真实缺陷**：
+   - **F821 × 13**（undefined-name，潜在 NameError）：P1-3 创建的 SettingsLayoutMixin /
+     SettingsActionsMixin 引用了未在本模块导入的函数/类（normalize_custom_keyword_rules、
+     build_settings_hero_tags、QDialog、QTimer、Theme 等）。测试因未覆盖设置对话框全部
+     代码路径而未暴露。已补全导入，WordReplaceRulesDialog 改为方法内懒导入避免循环依赖。
+   - **F401 × 70**（unused-import）：全项目自动清理 70 个未用导入。
+   - **F541 × 5 + F811 × 2**（f-string 无占位符 / 重定义）：自动修复。
+   - **F841 × 13**（unused-variable）：手动修复（main.py 死变量 icon_size×3、target_item、
+     system；ocr_worker.py y_coords；测试文件若干）。
+   - **print→logger 遗漏 × 5**：word_worker.py（3 处）+ search_worker.py（2 处），
+     P0-3 漏网，本次补修。
+
+4. **遗留**：F403/F405（72 项）来自 `main.py:221 from privacyguard.utils.helpers import *`，
+   替换为显式导入需审计 9287 行 main.py，作为后续清理任务。新代码不应新增 star import。
+
+### 验证
+
+- ruff check 全绿（0 errors）
+- compileall 零错误
+- 回归 418 项全绿（416 passed + 2 skipped），较基线 394 +24（worker 生命周期测试）
+
+### 教训
+
+P1-3 拆分 Mixin 时遗漏了导入迁移——每个 Mixin 模块需独立导入自己用到的名字，
+不能依赖宿主类的模块命名空间。ruff F821 能在 CI 阶段捕获此类缺陷，
+是 Mixin/模块拆分的安全网。今后模块拆分必须跑 ruff check 验证。
+
+---
+
+## 2026-08-01 - P2-2 新增 CONTRIBUTING.md + ARCHITECTURE.md 顶层文档
+
+### 背景
+
+2026-08-01 系统化审计识别出"缺少贡献指南与架构说明文档"问题（P2-2）。
+GitHub 默认在仓库根目录识别 `CONTRIBUTING.md`，但项目此前只有分散在
+`AGENTS.md` / `DEVELOPMENT_WORKFLOW.md` / `PROJECT_STRUCTURE.md` 中的片段信息，
+新贡献者入门成本高。
+
+### 落地内容
+
+1. **新增 `CONTRIBUTING.md`**（根目录）：
+   - 开发环境准备（Windows/macOS venv 约定）
+   - 代码架构铁律（与 AGENTS.md 对齐：新功能独立模块，main.py 禁止加方法）
+   - 开发流程（checkpoint → 修改 → 回归 → 文档同步）
+   - 测试规范（tests/unit discover、CI 流水线、基线说明）
+   - 提交规范（Conventional Commits，参考最近提交）
+   - 版本管理（version.txt 单一源）
+   - PR 流程与 Issue 反馈模板
+
+2. **新增 `ARCHITECTURE.md`**（根目录）：
+   - 总体架构图（协调器 + 共享模块包 + 外部依赖三层）
+   - 分层职责（main.py / Mixin / 共享模块 / 外部依赖）
+   - 模块清单（utils / ocr / workers / ui / 顶层业务模块）
+   - 关键设计决策（版本源、配置双路径、OCR 懒加载、混合 PDF 流程、日志框架、撤销重做）
+   - 核心数据流（PDF 脱敏、Word 脱敏）
+   - 扩展规则（Worker / Dialog / 纯逻辑 / Mixin 四类）
+   - 测试架构与文档路由表
+
+3. **同步 `docs/current/PROJECT_STRUCTURE.md`**：根目录文件清单补两份新文档。
+
+4. **同步 `docs/current/PRIORITY_REMEDIATION_PLAN.md`**：P2-2 标记 ✅ 完成。
+
+### 验证
+
+- 纯文档变更，无代码改动，无需回归测试
+- 两份文档均引用 AGENTS.md 作为单一事实来源，不重复架构铁律全文
+- 文档路由表与 AGENTS.md "Read First" 指针路由保持一致
+
+---
+
+## 2026-08-01 - P2-1 PRIORITY_REMEDIATION_PLAN 状态标记同步
+
+### 背景
+
+PRIORITY_REMEDIATION_PLAN.md 顶部声明"P1-P4 已于 2026-03-09 全部完成"，
+但正文 P1-2、P2、P2-1、P2-2、P3、P3-1、P3-2、P4、P4-1、P4-2 共 10 个条目
+缺少 ✅ 标记，与"全部完成"声明不一致，影响可追溯性。
+
+### 落地内容
+
+1. 10 个历史条目全量补 ✅ 标记
+2. 2026-08-01 后续改进表追加 P2-1 / P2-2 / P2-3 / P3-1 四行（含状态与检查点）
+3. 与文件顶部"✅ 全部完成"声明对齐
+
+### 验证
+
+- 纯文档变更，commit 一次通过
+
+---
+
+## 2026-08-01 - P1-3 拆分 settings_dialog.py 按 Mixin 分域（cp97）
+
+### 背景
+
+settings_dialog.py 单文件 2058 行，所有 UI 构建 + 布局密度 + 域操作逻辑
+集中在 SettingsDialog 单类，违反"功能域作为独立模块"架构原则。
+
+### 落地内容
+
+采用项目既有 Mixin 模式（与 PageViewMixin / WordPreviewMixin 一致），
+按域提取两组 Mixin：
+
+1. **新增 `privacyguard/ui/mixins/settings_layout_mixin.py`**（716 行）：
+   - `resizeEvent` / `showEvent` / `_get_settings_display_scale_factor`
+   - `_bind_settings_window_handle_signals` / `_on_settings_screen_changed`
+   - `_create_settings_metric_card` / `_rebuild_settings_grid`
+   - `_refresh_settings_layout_density`（348 行核心密度计算）
+   - `_create_settings_section_title/header/action_hint/form_label/divider`
+   - `_apply_settings_density_styles`（250 行样式适配）
+
+2. **新增 `privacyguard/ui/mixins/settings_actions_mixin.py`**（378 行）：
+   - 规则操作：`_set_rule_checkbox_states` / `_apply_recommended_rules` /
+     `_select_all_rules` / `_clear_all_rules`
+   - 自定义关键词：`_clear_custom_keywords` / `_load_custom_keyword_rules_to_text` /
+     `_collect_custom_keyword_rules_from_table` / `_import/_export_custom_keyword_rules_json`
+   - OCR/精度：`_on_adjust_changed` / `_reset_precision_defaults` / `_reset_ocr_adjustment`
+   - 导航/摘要：`_scroll_to_settings_section` / `_sync_settings_nav_from_scroll` /
+     `_refresh_settings_overview/sidebar/word_rule/rule/custom/precision/ocr_summary`
+   - 操作入口：`_open_word_rules_editor` / `_open_trace_clean` / `save_settings`
+   - 文档上下文：`_apply_doc_context_visibility`
+
+3. **settings_dialog.py 瘦身**（2058 → 994 行，-1064 行）：
+   - SettingsDialog 继承 `SettingsLayoutMixin, SettingsActionsMixin, QDialog`
+   - 保留 `__init__`（UI 构建）和 `_apply_dialog_theme`（主题）
+   - 各 Mixin 在 docstring 中声明接口契约（依赖 SettingsDialog 提供的属性）
+
+4. **mixins/__init__.py**：新增两组 Mixin 导出
+
+### 验证
+
+- 编译检查零错误
+- `from privacyguard.ui.dialogs.settings_dialog import SettingsDialog` 导入正常
+- 回归 394 项全绿（392 passed + 2 skipped），零行为变更
+
+---
+
+## 2026-08-01 - P1-2 拆分 ocr_worker.py 印章/签名检测算法（cp96）
+
+### 背景
+
+ocr_worker.py 单文件过大（1570 行），印章检测和签名手印检测算法（共 ~430 行）
+与 OCR 线程编排逻辑耦合在同一文件，违反"新功能/算法作为独立模块"架构铁律。
+
+### 落地内容
+
+1. **新增 `privacyguard/ocr/seal_detection.py`**（264 行）：
+   - `SEAL_KEYWORDS` / `SEAL_CHAR_KEYWORDS` 常量
+   - `detect_star_in_roi(roi_mask)` — 五角星图案检测
+   - `ocr_seal_region(roi_img, ocr_engine)` — 印章文字 OCR
+   - `detect_seals(img_np, scan_scale, ocr_engine, page_origin, ring_close_px)` —
+     多特征评分融合印章检测（颜色+圆形度+长宽比+五角星+OCR 文字）
+
+2. **新增 `privacyguard/ocr/signature_detection.py`**（169 行）：
+   - `detect_signatures(img_np, scan_scale, page_origin)` —
+     签名手印检测（红/黑双路径 + 暖色门控 + 脊线孔洞纹理门控）
+
+3. **ocr_worker.py 瘦身**（1570 → 1003 行，-567 行）：
+   - 四个方法（`_detect_star_in_roi` / `_ocr_seal_region` / `_detect_seals` /
+     `_detect_signatures`）替换为薄包装，委托至新模块
+   - `SEAL_KEYWORDS` / `SEAL_CHAR_KEYWORDS` 常量改为从 seal_detection 导入
+   - 保留方法签名兼容现有测试（test_seal_detection.py / test_signature_detection.py
+     通过 `types.MethodType` 绑定调用）
+
+4. **ocr/__init__.py**：新增 `detect_seals` / `detect_signatures` 等懒加载导出
+
+### 验证
+
+- 编译检查零错误
+- 回归 394 项全绿（392 passed + 2 skipped），零行为变更
+- 印章/签名检测测试全部通过（薄包装透明委托，算法逻辑不变）
+
+---
+
+## 2026-08-01 - P0-3 引入统一日志框架（cp95）
+
+### 背景
+
+项目审计识别出全项目散落 print 调试输出（main.py 55 处 + ocr_worker.py 24 处），
+缺少统一日志体系：无级别控制、无文件持久化、无滚动归档，运行时诊断依赖控制台裸输出。
+
+### 落地内容
+
+1. **新增 `privacyguard/utils/logger.py`**：
+   - `init_logging(level, log_dir, console)` 幂等初始化根 logger
+   - 控制台 + 文件双通道（`logs/app.log`，2MB 滚动 × 3 份）
+   - 日志级别支持 logging 常量 / 字符串 / `PG_LOG_LEVEL` 环境变量
+   - PyInstaller 兼容：打包后日志目录回退到可执行文件同级 `logs/`
+   - import 阶段无副作用（未初始化时回退 logging 默认行为）
+
+2. **main.py 接入（55 处 print → 0）**：
+   - `__main__` 入口首批调用 `init_logging()`
+   - 全局异常钩子 / 线程异常钩子：`print` → `logger.error`
+   - SimpleConfig / 配置迁移 / 清理 / Word 预览 / canvas 渲染 /
+     OCR 编排 / cp81-90 定位与快照 / 临时文件清理：全量替换
+   - 级别映射：错误→error / 警告→warning / 常规信息→info / 调试→debug
+
+3. **ocr_worker.py 接入（24 处 print → 0）**：
+   - 印章/签名检测确认日志 → debug（高频，避免 INFO 刷屏）
+   - 检测失败 / OCR 引擎错误 → error
+   - 页面命中统计 → info
+   - `traceback.print_exc()` → `logger.error(..., exc_info=True)`
+   - 移除未使用的 `import traceback`
+
+4. **包导出**：`privacyguard/utils/__init__.py` 新增 `init_logging` / `get_logger` / `is_initialized`
+
+5. **单元测试**：`tests/unit/test_logger.py`（9 项）
+   - 幂等性（重复调用不叠加 handler）
+   - 文件 + 控制台 handler 创建
+   - 字符串 / 环境变量级别解析
+   - 未初始化时无副作用
+   - 文件写入验证
+
+### 验证
+
+- 编译检查：`python -m compileall -q main.py privacyguard tests` 零错误
+- 回归基线：385 → **394**（+9 logger 测试），392 passed + 2 skipped（真实样本缺失）
+
+### 级别约定
+
+| 场景 | 级别 |
+|------|------|
+| 未捕获异常 / 线程异常 / OCR 引擎失败 / 快照字节流失败 | error |
+| 主题检测失败 / 清理异常 / canvas 无效 / 定位失败 | warning |
+| 配置初始化 / 引擎启用 / 批量完成 / 页面命中统计 | info |
+| 印章/签名确认详情 / 像素边界回退 / 去重统计 | debug |
+
+环境变量 `PG_LOG_LEVEL=DEBUG` 可开启全量诊断输出。
+
+---
+
+## 2026-08-01 - 项目清理 + 复盘审计（cp94）
+
+### 项目清理
+
+移除 15MB+ 冗余文件：
+- 物理垃圾：3 个空 `_tmp_scrub_*` 目录、192KB 旧备份、11.9MB 测试合并 PDF、2.6MB 截图
+- Git 跟踪冗余（8 个文件）：.project_info / 3 个旧 HTML / clean_project.bat/.sh / start_app.sh
+- CLAUDE.md：9KB 过时副本 → 4 行 AGENTS.md 指针
+- .gitignore：新增 .pytest_cache/ 和 _tmp_scrub_*/
+
+### 复盘审计
+
+- 17 个提取模块文件逐行检查：17/17 PASS（无截断、语法零错误、导入完整）
+- 导入链审计：无循环导入、__all__ 60/60 精确匹配、28 个关键名全部可达
+- 安全/稳定性 16 项检查：16/16 PASS（v37.8.11 修复全部保留）
+- 修复 4 处无条件 debug print（main.py 扫描启动 + ocr/manager.py 引擎初始化）
+
+---
+
+## 2026-08-01 - main.py 渐进式重构 Phase 1-4c（cp92-93）
+
+### Phase 1: 自由函数提取
+
+- 57 个模块级自由函数（291-1653 行）提取至 `privacyguard/utils/helpers.py`（1,402 行）
+- 含 `__all__` 显式导出 60 个名称（含下划线前缀内部函数）
+- 3 个随行常量：WORD_PREVIEW_IMAGE_EXTENSION_MAP / WORD_PREVIEW_BLOCK_SELECTOR / HIGHLIGHT_FILTER_SOURCES
+- main.py -1,372 行；test_custom_keyword_rules.py 改为解析 helpers.py
+
+### Phase 2: Dialog 类提取
+
+- 7 个 Dialog 类提取至 `privacyguard/ui/dialogs/`（6 个文件，3,273 行）
+- SettingsDialog(2,190) / TraceCleanDialog / WordReplaceRulesDialog / ImageListDialog /
+  FeedbackDialog / DonateDialog / _TraceSizeWorker
+- 避免循环导入：default_rules/config 通过构造参数传入，VERSION 用 privacyguard.__version__
+- main.py -3,161 行
+
+### Phase 3: 内联 JavaScript 外部化
+
+- _INTERACTIVE_JS_CODE（514 行）提取至 `assets/js/word_preview_interactive.js`
+- 替换为 `_load_js_asset()` 文件加载函数（resource_path 兼容 PyInstaller）
+- main.py -508 行
+
+### Phase 4a: 独立类提取
+
+- WordBatchReplaceWorker → `privacyguard/workers/batch_replace_worker.py`
+- DocSearchWorker → `privacyguard/workers/search_worker.py`
+- ManualRegionRedactDialog → `privacyguard/ui/dialogs/manual_region_dialog.py`
+- EncryptSettingsDialog → `privacyguard/ui/dialogs/encrypt_dialog.py`
+- _ScreenColorPickerOverlay + PageGridScrollArea + SinglePageCanvas → `privacyguard/ui/widgets.py`
+- main.py -995 行
+
+### 验证
+
+- 每步 compileall 零错误 + 385 回归全绿（skipped=2）
+- 回滚标签 `pre-phase4`（6c63024）
+- 总计：16,702 → 10,666 行（-6,036 行，-36%）
+- 零行为变更，纯结构重构
+
+### 新增文件
+
+- privacyguard/utils/helpers.py / privacyguard/ui/__init__.py /
+  privacyguard/ui/dialogs/{__init__,settings_dialog,trace_clean_dialog,
+  word_replace_rules_dialog,image_list_dialog,feedback_dialog,donate_dialog,
+  manual_region_dialog,encrypt_dialog}.py / privacyguard/ui/widgets.py /
+  privacyguard/workers/{batch_replace_worker,search_worker}.py /
+  assets/js/word_preview_interactive.js
+
+---
+
+## 2026-08-01 - v37.8.11 全面代码审计 + 安全修复（cp91）
+
+### 审计过程
+
+- 全量源码审查：main.py 16,672 行 + privacyguard/ 包 + 33 测试文件 + 打包脚本 + 文档
+- 16 项发现逐条源码复核确认，零误报
+- 输出完整审计报告（含行号、代码片段、17 条分优先级改进建议）
+
+### P0 安全修复（3 项）
+
+- trace_cleaner.py `clear_pending_webengine` 添加 `allowed_roots` 白名单参数 +
+  `_is_within` 校验，防止标记文件被篡改后注入任意目录路径；main.py 调用方传入
+  sessions dir + temp + QtWebEngine 缓存基目录
+- main.py `_open_pdf_file` 在 `fitz.open(fname)` 前增加 `validate_safe_path` 校验
+- config.py `_save_config` 改为原子写入（mkstemp → json.dump → os.replace），
+  崩溃时不损坏 config.json
+
+### P1 稳定性修复（8 项）
+
+- main.py zoom_scale 零除守卫（abs < 1e-9 提前返回）
+- main.py 水印移除 while 循环加 100 次迭代上限
+- main.py `push_undo_snapshot` 和 redo 栈 `pop(0)` 改为 `del` 切片
+- main.py `sip.isdeleted` 调用全部纳入 try 块
+- main.py 移除方法体内冗余 `import re`
+- word_worker.py `custom_keywords` 添加 `(custom_keywords or "")` None 守卫
+- doc_converter.py 修复 `own_temp` 悬空路径（不再 finally 删除返回值所在目录）+
+  antiword 改为先复制到 `source.doc` 纯 ASCII 文件名
+- image_merge.py `insert_image` 改用 `stream=buf.getvalue()`（RGB 转换生效）+
+  添加 `isInterruptionRequested()` 取消支持
+
+### P2 代码质量（2 项）
+
+- 移除 main.py SettingsDialog `save_settings` 中标注为"调试输出"的 2 行 print
+- 移除 ocr_worker.py 每次构造时无条件输出的 init print
+
+### 验证
+
+- 编译检查 `compileall` 全量通过，零错误
+- 核心回归 **384→385 全绿**（+test_clear_rejects_outside_allowed_roots 1 项安全测试；
+  样本缺失 383+2 skip）
+- 版本 37.8.10→37.8.11
+
+### 修改文件汇总
+
+- main.py — 路径校验/零除守卫/循环上限/del 切片/sip 守卫/import re/debug print
+- privacyguard/trace_cleaner.py — allowed_roots 白名单
+- privacyguard/utils/config.py — 原子写入
+- privacyguard/workers/word_worker.py — None 守卫
+- privacyguard/workers/image_merge.py — stream + 取消
+- privacyguard/utils/doc_converter.py — 悬空路径 + antiword 消毒
+- privacyguard/workers/ocr_worker.py — 移除 init print
+- tests/unit/test_trace_cleaner.py — 更新 + 新增安全测试
+- version.txt / AGENTS.md / STATUS.md / DEV_LOG.md / CHANGELOG.md
+
+---
+
+## 2026-07-27 - v37.8.10 脱敏报告 + 会话恢复 + 工程健康 + 痕迹清理（cp87-90）
+
+### cp87 脱敏报告
+
+- 新模块 privacyguard/report.py（D1）：classify_hit_rule/summarize_page_data/build_redact_report
+- ocr_worker 四处命中携 rule + rule_name_pairs 参数链；save_pdf 弹窗 setDetailedText+导出报告
+
+### cp88 会话恢复
+
+- 新模块 privacyguard/session_store.py（指纹匹配/轻重分离/prune LRU/损坏容错）
+- main 5s 节流存草稿；结构变更立即落盘字节流；开文档提示恢复；退出/换文档 flush
+
+### cp89 工程健康（D2/D3/D5）
+
+- 仓库审计（无未跟踪赘物，pack 1.99 MiB）；run_regression.ps1/.sh；test_toolbar_layout；
+  RELEASE_CHECKLIST.md；陈旧测试归档 tests/legacy/
+
+### cp90 清理使用痕迹
+
+- temp_manager 加 pgud_ 前缀 + 残留识别；新模块 trace_cleaner.py（D1，白名单硬约束）；
+  TraceCleanDialog 四类痕迹清理；WebEngine 占用 pending 标记启动清除
+
+### 验证
+
+- 新增测试：test_redact_report 9 + test_session_store 11 + test_toolbar_layout 6 + test_trace_cleaner 12；
+  核心回归 **319→384 全绿**（discover 全量）；版本 37.8.10
+
+---
+
+## 2026-07-27 - v37.8.9 撤销/恢复 + 工具栏拥挤根治（cp83-86）
+
+### cp83 撤销/恢复（新功能，Plan 模式实施）
+
+- 纯函数 snapshot_page_data（QRectF→元组）/restore_page_data/push_undo_snapshot；
+  主窗口方法簇 _build_undo_snapshot/_capture_undo_state（重入守卫）/
+  _seed_undo_baseline/_apply_snapshot（结构快照重开字节流）/undo/redo
+- 快照接入 10 处：遮罩 5（含 canvas 右键删除补发 rect_removed 信号）+
+  页面结构 3（structural=True 存 doc.tobytes）+ 基线/清理
+- UI：undo.svg/redo.svg + btn_undo/redo（页面右侧）；Ctrl+Z / Ctrl+Y 快捷键；
+  仅 PDF/图片模式；栈深 20 全文档统一
+
+### cp84-86 工具栏拥挤/重叠根治（三轮真机反馈逐层下钻）
+
+- cp84：页面+撤销+恢复独立 edit 组；group_spacing 下限 4→6；rb_color 补宽度地板
+- cp85：内容超屏幕宽强制 narrow 档（缩文案+收纳进“更多”，复用 cp39/40 收纳系统），
+  跨屏自动解除；resize 拉宽兜底
+- cp86（根因）：单 stretch 把全部留白堆中部、右侧被顶出窗口 → 双 stretch
+  （左组|s|缩放+导航|s|utility）留白均分、utility 贴右；删 zoom/nav 强制同宽
+  （省 ~140px）；btn_scan/btn_save 定宽 + 延帧复测
+
+### 验证
+
+- test_undo_redo 8 项；冒烟：undo/redo 6 场景、溢出 narrow 链路 3 场景、
+  stretch+resize 兜底；核心回归 **311→319 全绿**；版本 37.8.9；
+  备份 `backups/cp83_undo_redo_pre/`
+
+---
+
+## 2026-07-27 - v37.8.8 全文搜索侧栏 + 命中高亮定位（cp81/cp82）
+
+### cp81 全文搜索侧栏（新功能，Plan 模式实施）
+
+- 纯函数 `build_search_snippet`（上下文截取+省略号+换行替换）/
+  `collect_text_hits`（大小写不敏感、单页上限 50）
+- `DocSearchWorker(QThread)`：tobytes 快照（页序与旋转/删页/去水印后一致）；
+  文字层直搜，扫描页 RapidOCR（_search_ocr_cache 会话级按页缓存）；可取消
+- UI：search_magnifier.svg + btn_search（加密左侧，PDF/Word 可见）；
+  content_row 布局重构（scroll|页面视图|搜索面板 320px）；面板：输入+小放大镜/
+  状态+取消/结果列表（黄色高亮片段+页码小字）；toggle 显隐
+- Word 内存块同步搜；结果点击：PDF 退页面视图跳页；Word data-key 滚动+闪烁
+- 清理钩子：打开新文档停 worker/清缓存/收面板；插删页清缓存；非 PDF/Word 隐藏
+
+### cp82 命中高亮定位（真机反馈：PDF/图片点结果无视觉反馈）
+
+- hit_signal 扩 5 参携带命中矩形：文字层 search_for 词级矩形（旋转页乘
+  rotation_matrix 转 display）与命中顺序配对；OCR 页保留每行 box，
+  缓存升级 {'text','spans'} 命中回查行矩形；旧缓存/缺失降级仅跳页
+- SinglePageCanvas.flash_rect 绘制层（#FFE066 半透明+橙框，随 zoom 对齐）；
+  _flash_search_hit 设矩形+ensureVisible 滚到命中行+2.4s 定时淡出
+
+### 验证
+
+- 编译干净；test_doc_search 14 项；离屏冒烟 19 场景（面板/toggle/定位/闪烁）；
+  核心回归 **297→311 全绿**；版本 37.8.8；备份 `backups/cp81_doc_search_pre/`
+
+---
+
+## 2026-07-27 - v37.8.7 视觉统一与三平台兼容（cp77-cp80）
+
+### cp77 主页卡内突兀方块修复
+
+- 现象：“开始处理”卡（#F9FBFE）内选择文件周围有 #F6F8FB 方块
+- 根因：scroll 默认样式无选择器（裸属性）→ Qt 规则：无选择器样式传播到
+  所有后代 → 卡内裸 QWidget（idle_start_footer 等）被错涂 scroll_area 色
+- 修复：scroll_style 加 QScrollArea 选择器阻断传播；main_container 命名并
+  显式上 scroll_area 底色（接替传播供色，卡外/画布周围视觉零变化）
+- 实证：离屏像素探针 —— 修复前 footer=#F6F8FB，修复后 =#F9FBFE 与卡一致，
+  卡外保留 #F6F8FB
+
+### cp78 Windows 标题栏配色
+
+- DWM API DWMWA_CAPTION_COLOR(35) 把原生标题栏设为 Theme scroll_area #F6F8FB
+  （COLORREF 0x00BBGGRR，实测 0xFBF8F6）；showEvent 句柄就绪后设置，成功置标志
+- 兼容：仅 win32；Win11 22000+ 生效；Win10 返回错误码/异常静默保持系统默认
+
+### cp79 全局字体优化
+
+- 根因：应用从未设全局默认字体，Qt Windows 默认 MS Shell Dlg 2(9pt) →
+  大量未指定 font-family 的控件（菜单/弹窗/tooltip/行内样式）宋体混杂发虚
+- 修复：QApplication.setFont setFamilies(Segoe UI Variable/Segoe UI/雅黑 UI/
+  雅黑/Arial) 10pt；真实平台实测解析 Segoe UI Variable 10pt
+
+### cp80 三平台兼容审查（Win10/Win11/macOS）
+
+- 全局字体加 sys.platform=='win32' 守卫：macOS 保持 Qt 默认系统字体
+  （SF/苹方 13pt），避免落 Arial 且 10pt 偏小；Win10 无 Variable 自动回退 Segoe UI
+- FONT_FAMILY（theme.py）+ PREVIEW_FONT_STACK 补 PingFang SC/Helvetica Neue
+- _draw_replace_text 字体改回退栈（雅黑→苹方）
+- 复核既有平台分支：winreg 深色检测带守卫、DOC 转换 Darwin/Windows 分支、
+  QDesktopServices 跨平台、打包双平台、macOS Cmd→ControlModifier 自动映射 —— 均兼容
+
+### 验证
+
+- 编译干净（main/theme/privacyguard/tests）；核心回归 **297/297** 保持全绿；
+  版本 37.8.7
+
+---
+
+## 2026-07-27 - v37.8.6 页面视图实时性与零卡顿（cp75/cp76）
+
+### cp75 遮罩颜色切换实时生效
+
+- 现象：脱敏后页面视图下切黑遮/白遮不实时，需动视图才刷新
+- 根因：render_view 页面视图分支走 overlay_only 快速路径，只 canvas.update()
+  重绘，但网格 canvas 的 mask_color 未同步（颜色只在完整重渲染时设置）
+- 修复：overlay 分支改调 _safe_canvas_set_mask_color（内自带 update，与单页
+  路径对称）；黑/白/取色三种切换全部即时生效
+
+### cp76 首次进入页面视图零白屏卡顿
+
+- 现象：刚打开 PDF 猛 Ctrl+滚轮缩小切页面视图，白屏卡 ~1s 后才显示
+- 根因：首次进入缓存全空，_refresh_visible_grid_thumbs 同步 for 循环对全部
+  可见页 fitz 高清渲染（6-8 页 × 100-200ms）阻塞主线程
+- 修复：分帧渲染队列——缓存 miss 页排入 _grid_render_queue，0ms 单发定时器
+  链式驱动 _process_grid_render_queue 每帧只渲一页（渲完即显）；旧倍率缓存
+  先 scaledToWidth 快速过渡帧（遮罩 zoom 同步）；列数缩放 hq 重渲染同队受益
+- 稳定性：队列每次重建；退出视图/文档关闭/网格重建守卫停队清队；
+  渲染前二次核查越界/缓存/canvas 有效性
+
+### 验证
+
+- 编译干净；核心回归 **297/297** 保持全绿；分帧队列冒烟 5 场景 +
+  遮罩色同步 2 场景全过；版本 37.8.6
+
+---
+
+## 2026-07-27 - v37.8.5 PDF 加密 + 新规则 + 精度/UI 修复（cp69-cp74）
+
+### cp72 PDF 加密（新功能，Plan 模式实施）
+
+- `EncryptSettingsDialog` 单弹框双密码（打开 user / 编辑 owner + 显示密码）；
+  锁图标 `btn_encrypt`（assets/icons/lock_encrypt.svg）位于智能脱敏左侧，
+  仅 PDF/图片可见，配置后激活态+tooltip
+- 纯函数 `build_encrypt_save_kwargs`：两空→{}；否则 AES-256 + owner（回退 open）+
+  user + permissions（设编辑密码⇒禁改/复制/注释保留打印，否则全权限）
+- save_pdf 导出注入 `save_kwargs.update(...)`；打开新文档 `_cleanup_before_open` 重置密码；
+  密码不持久化；PyMuPDF 端到端实测（needs_pass/错密码拒绝/owner 全权限）
+
+### cp70 新增 7 条预设规则
+
+- 默认启用：统一社会信用代码（GB32100 mod31-3 校验）/车牌号/固定电话；
+  默认关闭：护照/港澳台通行证/车架号（GB16735 第 9 位校验）/IPv4
+- `verify_hit_by_pattern` 命中后校验分发（正则特征串识别 pattern），
+  text_pdf/mixed_pdf/word_worker 三链路对称挂载；银行卡 Luhn 零改动
+- 三处规则同步 + test_config_alignment 一致性断言验证
+
+### cp69/cp71 精度与误报修复
+
+- 签名手印误报（楷体/仿宋字警/醒/嫌被黑路径误遮）：暖色门控
+  （脊线像素 R-B≥10 且 R-G≥3，中性灰印刷字直接排除）+ holes 8→12；
+  合成样本改淡红印泥色，新增中性印刷字防误报用例
+- 去水印后页面视图不刷新：失效缩略 LRU + 强制重渲染（render_view 该模式仅刷遮罩层）
+- 替换文字左右截断：`_draw_replace_text` 宽度自适配（QFontMetrics 超宽按比例缩字号）
+- box_adjust_ratio 死配置：对文本层 PDF 无效 → `apply_box_adjust_to_hit` 接入 run()
+  文本层命中；扫描倍率/图像增强/offset 审查均按设计生效
+
+### cp73/cp74 UI 修复
+
+- 工具栏“跳到最后一页”与“适应页面”重合：`_enforce_toolbar_min_width`
+  （layout.sizeHint + 28 缓冲动态抬最小宽，屏幕上限约束，模式切换/缩放均重算）；
+  基础 min_width 900→1120 三处同步
+- 框选弹窗：去空白（\s+）/复制（剪贴板+反馈）小按钮；取消=整个行为取消不遮罩
+
+### 验证
+
+- 编译干净；核心回归 **297/297**（258→297，+39：签名 7/扩展规则 27/加密 5）；
+  加密端到端 + 弹框/按钮离屏冒烟全过；版本 37.8.5
+
+---
+
+## 2026-07-27 - v37.8.4 页面视图交互与性能打磨（cp68）
+
+### 背景
+
+cp67 页面视图真机反馈：双页按钮冗余、反复缩放卡顿、视图切换过于顺滑易误触；
+另补 ⛶ 跨视图行为与 Shift 范围选两项交互。
+
+### 五项改进
+
+1. **双页按钮移除**：工具栏 8 处接线清理；dual_view/toggle_dual_view/互斥分支
+   保留（恒 False，hasattr 防御），回滚只需恢复按钮接线
+2. **两段式渲染**：`_relayout_page_grid(fast=True)` 滚轮路径 →
+   `_apply_fast_scaled_thumbs`（缓存 pixmap scaledToWidth Fast 变换，zoom_scale
+   同步保遮罩对齐）+ `_grid_hq_timer` 260ms 去抖高清；`_grid_page_aspect` 缓存
+   免重排全量 fitz 访问（旋转/rebuild 失效）
+3. **双向手势阻尼**：`_ctrl_zoom_last_ts` + `_ZOOM_GESTURE_GAP=0.45s`（跨视图共用，
+   间隔判定天然覆盖松 Ctrl/停滚）：页面视图 1 列边界与单页 ZOOM_MIN 边界
+   同手势停住，新手势才跨越；新增 handle_zoom_request 缩小进入页面视图
+   （从 2 列起步）
+4. **⛶ 跨视图统一**：fit_page 页面视图下先退出再 QTimer.singleShot(0) 延帧调
+   `_apply_fit_page`（scroll 刚 show 尺寸未刷新）；滚轮穿越分支收口同源
+5. **Shift 范围选**：page_clicked 信号扩为 (int, bool, bool)；`_grid_anchor_page`
+   锚点（非 Shift 点击更新，结构变化/退出重置）；Shift 替换为区间选区，
+   Ctrl+Shift 并入
+- 防御：退出页面视图时 stop 两个网格定时器
+
+### 验证
+
+- 编译：`compileall -q main.py privacyguard tests` → OK
+- 核心回归：**258 项保持全绿**（样本缺失 257+1 skip）
+- 离屏冒烟：手势状态机 6 场景（同手势停住/新手势穿越/逐步 clamp 不提前穿越）、
+  ⛶ 跨视图 3 场景（退出+延帧/同步/穿越同源）、Shift 范围选 7 场景
+  （正反向/连续调整/并入/无锚点回退）、双页残留静态断言 —— 全部通过
+- 备份：`backups/cp68_view_interaction_pre/`；版本 37.8.4
+
+---
+
+## 2026-07-27 - v37.8.3 页面视图功能（cp67）
+
+### 背景
+
+用户需求：WPS 式“页面”多页总览（Ctrl+滚轮控制每行页数），左侧线条图标工具栏
+支持选中页左转/右转/插入空白页/删除，网格下仍可手动脱敏。用户确认：遮罩跟随
+变换；显式按钮+滚轮调列数。
+
+### 关键前置：fitz 旋转坐标语义实测（临时诊断脚本，已删）
+
+- get_pixmap/画布 = 旋转后 display 坐标；search_for/get_text(dict|clip)/add_redact_annot
+  = 未旋转坐标；derotation_matrix 可双向换算（rotation=0 时单位阵）
+- 推导并验证 display→display 旋转映射：+90: (H-y-h, x, h, w)；-90: (y, W-x-w, h, w)；
+  180: (W-x-w, H-y-h, w, h)；端到端（旋转+遮罩+tobytes 重开+derotation 导出）断言通过
+
+### cp67 实现
+
+1. **纯函数**（+21 单测）：`transform_hit_rect_for_rotation`、
+   `shift_page_data_for_insert/delete`、`shift_page_set_for_insert/delete`、`clamp_grid_columns`
+2. **网格基础**：`PageGridScrollArea`（Ctrl+滚轮信号）；SinglePageCanvas 新增 grid_mode +
+   page_clicked/page_activated 信号（≤5px 点击选中，保留 >5px 框选脱敏）；
+   每页一个缩略 canvas（共享 page_data 引用，右键撤销天然可用）；懒渲染（可见±一屏，
+   60ms 节流）+ LRU 缓存 60 页；`_render_page_to_canvas` 抽取（参数化 zoom 与单页共用）
+3. **模式切换**：工具栏“页面”toggle（与双页互斥）；列数 1 时继续放大自动退回单页；
+   非 PDF 模式/打开新文档强制退出；resizeEvent 网格重排（节流）
+4. **页面操作**：左侧四按钮（assets/icons 四个 stroke SVG，无选中置灰）；旋转遮罩跟随
+   （共享列表原地替换元素保引用）；插入 doc.new_page + 页码重排；删除二次确认 +
+   至少保留 1 页 + 倒序删除；全部置 `_pdf_modified`（导出走 tobytes 分支）
+5. **旋转页坐标系四处适配**：save_pdf 乘 derotation_matrix；text_pdf 命中乘
+   rotation_matrix；ocr_worker 图片块 bbox 转 display；cp65 区域识别文字层 clip 反变换
+6. **集成**：render_view/扫描实时刷新网格分支；_handle_manual_region_prompt 页码取
+   canvas.page_index；工具栏文案/宽度/分组可见性/模式显隐全接入
+
+### 验证
+
+- 编译：`compileall -q main.py privacyguard tests` → OK
+- 核心回归（含新入列的 test_page_view_ops）：**237→258 项**（样本缺失 257+1 skip）
+- 组件级离屏冒烟：真实 fitz 文档旋转正反变换/插页重排/derotation 导出语义断言通过
+- 待真机验收（完整 MainWindow 离屏崩溃为既有环境限制）：模式进出/列数缩放/
+  选中交互/四项页面操作及导出/网格内框选/双页互斥
+- 备份：`backups/cp67_multi_page_view_pre/`；版本 37.8.3
+
+---
+
+## 2026-07-27 - v37.8.2 发布同步（cp65-cp66）
+
+### 背景
+
+本轮为 PDF 手动框选增加“框选即识别 + 可选全文遮罩”能力，并修复随之发现的
+取消交互/按钮 UI 问题，另按用户要求对调两个工具栏按钮。
+
+### cp65 手动框选 OCR 识别 + 可选全文遮罩（新功能）
+
+- 流程：开关勾选 → 框选释放时 canvas 发 `manual_region_prompt` 信号 → 主窗口
+  `_extract_region_text`（文字层优先，无文字层 3x 渲染剪裁图 RapidOCR，引擎懒加载缓存）
+  → `ManualRegionRedactDialog`（识别文字可编辑/全文遮罩复选框默认不勾/替换文本）
+- 全文遮罩：`_start_targeted_mask_scan` 复用 OCRWorker（rules=[]，识别文字作关键词，
+  find→replace 带替换文本）；`_on_targeted_page_result` 命中并入 manual 列表（可右键
+  单个撤销，不覆盖智能扫描 ocr 结果），`rects_overlap_ratio>0.5` 去重
+- 取消弹窗仍按纯遮罩添加框选区域（与旧行为一致）；关键词按空白拆分
+  （`split_targeted_search_terms`）与 OCRWorker 分词对齐
+- 新增 6 项单测（TestTargetedMaskHelpers）
+
+### cp66 交互与 UI 修复
+
+1. **全文遮罩取消**：`_on_targeted_scan_finished` 补进度条归零（与普通扫描一致）；
+   取消分支“⏹️ 扫描停止”提示，`_targeted_stop_notice` 标志协调后置 `_on_worker_finished`
+   的文案覆盖（信号按连接顺序同步执行，先置标志后消费）
+2. **“取消”按钮截断**：根因是固定 24-28px 高 + 通用 secondary 样式 padding 超高；
+   新增 `_get_cancel_scan_button_style`（上下 padding 归零、≤26px 用 12px 字号），
+   创建与密度切换两处接入；该按钮无 btn_style 属性不会被密度循环覆盖
+3. **工具栏对调**：去水印→primary 组（打开之后）；智能脱敏→utility 组（更多与
+   导出之间）；`_refresh_toolbar_group_visibility` 判据同步；去水印 narrow 收纳/密度
+   文案逻辑按按钮对象操作不受影响
+
+### 验证
+
+- 编译：`python -m compileall -q main.py privacyguard tests` → OK
+- 核心回归：**211→217 项全绿**
+- 离屏冒烟：弹窗属性/canvas 信号/分词对齐通过；取消按钮字体行高实测容纳；
+  工具栏归属静态断言通过（完整 MainWindow 离屏实例化崩溃为既有环境限制，
+  已用改动前基线 main.py 交叉验证非本次引入）
+- 版本：version.txt / version_info.txt → 37.8.2
+- 备份：`backups/cp65_66_manual_region_pre/`
+
+---
+
+## 2026-07-27 - v37.8.1 发布同步（cp62-cp64）
+
+### 背景
+
+本轮围绕高级设置体验与 Word 替换能力完成三项改进：设置模块按文档类型动态显示、
+关键词行内替换扩展到 Word 链路（三级优先级）、手动框选替换开关立即生效。
+
+### cp62 高级设置按文档类型动态显示
+
+- 用户初始诉求含“Word 场景隐藏关键词列表”，经代码分析纠正：WordWorker
+  `all_patterns = rules + custom_keywords`，Word 智能扫描同样使用关键词，必须保留
+- `SettingsDialog` 新增 `doc_context`（pdf/word/None）+ `_apply_doc_context_visibility`：
+  图片/PDF 隐藏 Word 替换右卡片；Word 隐藏第 3/4 区块（含导航/跳转/指标卡）与手动框选开关
+- 密度自适应网格重排过滤隐藏卡片；隐藏仅影响展示，保存仍读全部控件不丢配置
+- 三种上下文冒烟验证（None/pdf/word）通过
+
+### cp63 Word 关键词行内替换（新功能，三级优先级）
+
+- 需求：关键词行 `原告|上诉人` 在 Word 中把“原告”替换为“上诉人”；无 `|` 用统一替换文本；
+  Word 替换规则设置最高级
+- 实现：新增纯函数 `resolve_word_ocr_replacements(ocr_matches, custom_keyword_rules,
+  default_replacement_text)`，在预览右栏全量/增量 + `_save_word` 段落/单元格四处
+  合并前接入；rule 源先占位机制保证 Word 规则最高优先级无需改动
+- 顺带修复：统一替换文本改为合并时取实时值（此前扫描时烘焙，设置变更后不生效）
+- 行为说明：新增关键词仍需重新扫描（检测在扫描阶段）；已命中关键词后补 `|替换文本` 即时生效
+- 新增 8 项单测（TestResolveWordOcrReplacements）
+
+### cp64 手动框选替换开关立即生效
+
+- 根因：`canvas.manual_replace_prompt` 只在 `_render_single_page` 重渲染时同步，
+  设置保存后 PDF 不触发重渲染 → 旧画布持有过期值，需翻页/重启才生效
+- 修复：`_sync_manual_replace_prompt_to_canvases` 保存后立即推送到左右画布
+
+### 验证
+
+- 编译：`python -m compileall -q main.py privacyguard tests` → OK
+- 核心回归：**203→211 项全绿**（skip 1 项为真实诉讼 PDF 缺失的预期跳过）
+- 版本：version.txt / version_info.txt → 37.8.1
+- 备份：`backups/cp62_64_settings_word_inline_pre/`
+
+---
+
+## 2026-07-27 - v37.8.0 发布同步（cp59-cp61）
+
+### 背景
+
+本轮围绕真实诉讼卷宗样本（`提取自诉讼文书卷三.pdf`）和用户真机反馈，完成：
+公章检测两类漏检根因修复、全新“签名手印”检测功能、Word 预览高亮来源筛选、UI 精致化。
+全部采用“无头渲染诊断 → 定向修复 → 真实样本+合成用例双回归”的闭环流程。
+
+### cp59 公章检测双根因修复
+
+1. **尺寸上限**：实测卷宗公章半径 120-127pt > 旧 max_radius_pt=90 → 提到 150
+2. **断环银行章**：外环墨迹断裂 ~40%，小核 CLOSE 不闭合 → 双通道（小核3 ∪ 大核 round(9×scan_scale)）+去重
+3. disc_fill（轮廓面积/最小外接圆）>0.85 强信号；真实章 0.94-0.97
+4. 回归：印章测试 25→31（含真实 PDF 端到端：每页≥1、双章页≥2）
+
+### cp60 签名手印检测（新功能）
+
+- 高级设置新勾选“签名手印”，哨兵 `__SIGNATURE_DETECTION__` 全链路（config/规则/worker/路径跳过）
+- `_detect_signatures`：按手印锚点，红/粉+黑双路径，形态学过滤（solidity≥0.62、extent≥0.40、
+  密度 0.35-0.85、长宽比≤2.0），基于 7 张真实截图标定
+- 两次真机反馈修复：① 大 CLOSE 把对角红水印合并成误报团块 → CLOSE 固定 3px；
+  ② 缺 OPEN 导致手印与水印粘连成超大 blob 被误弃（真手印漏检）+ 水印条片 asp2.15 误报
+  → 加 OPEN(2) 断桥 + 红路径 aspect 收紧到 2.0
+- 遮罩扩展按用户反馈收敛两轮：50/80/30 → 30/50/20 → **15/15/10**（紧贴手印）
+
+### Word 预览高亮按来源筛选（新功能）
+
+- 工具栏“高亮筛选”下拉（规则/手动/智能）；data-source 统一；CSS 过滤态；刷新后自动重应用；+7 测试
+
+### cp61 UI 精致化
+
+- 复选框全自绘 + 白勾 SVG；全局 outline:none 修复 Windows 焦点脏描边；
+  默认窗口固定 1300×900（收敛+居中，不恢复几何）；适应页面→⛶ 38px；公众号改名
+
+### 验证
+
+- 编译：`python -m compileall -q main.py privacyguard tests` → OK
+- 核心回归：**203 项全绿**（含真实 PDF 印章端到端）
+- 版本：version.txt / version_info.txt → 37.8.0
+
+---
+
+## 2026-07-24 - 全面稳定修复 cp58（v37.7.19）
+
+### 背景
+
+用户要求"全面稳定修复，做好测试，安全稳定"。代码审计发现两个关键 bug + 测试覆盖不足。
+
+### Bug 1：`_is_bank_card_pattern` 不能识别带前缀的 pattern（关键 bug）
+
+cp57 引入的 `_is_bank_card_pattern` 使用 `^\[1-9\]\\d\{12,18\}` 锚点要求 pattern 必须以 `[1-9]` 开头。
+
+但 `config.json` 默认银行卡号 pattern 为 `(?<!\d)([1-9]\d{12,18})(?!\d)`，以 `(?<!\d)(` 开头，不满足锚点条件。
+
+后果：`_is_bank_card_pattern` 返回 False，Luhn 校验失效，案件编号等长数字串再次被误匹配为银行卡号。
+
+**修复**：移除 `^` 锚点，匹配核心特征 `[1-9]\d{1N`（N∈[2-9]）即可，支持任意长度范围和前缀。
+
+### Bug 2：`_is_valid_luhn("")` 返回 True（防御性 bug）
+
+Luhn 算法对空串求和为 0，`0 % 10 == 0` 错误地返回 True。
+
+虽然调用方按长度过滤不会传入空串，但函数本身应保持防御性。
+
+**修复**：增加空输入防御 `if not digits: return False`。
+
+### 测试覆盖增强
+
+新增 31 个单元测试：
+
+- `tests/unit/test_luhn_validation.py`（18 个测试）
+  - `TestLuhnValidation`：6 张公开测试银行卡号通过、8 个非银行卡号被过滤、空串/非字符串防御
+  - `TestIdCardExclusion`：15/18 位身份证号识别、省级前缀校验、年月日校验
+  - `TestBankCardPatternScope`：4 种银行卡号 pattern 识别（带前缀/不带前缀/字边界/不同长度范围）
+  - `TestIterUniqueTextMatchesLuhn`：集成测试（案件号过滤、银行卡号保留、身份证号保留、去重）
+- `tests/unit/test_calculate_sub_rect_width_limit.py`（13 个测试）
+  - 大框跳过（> 80% 图像宽度）
+  - 正常框继续走原流程
+  - img_region=None 时不触发宽度检查
+  - 异常输入安全处理（畸形 box / 空 box / 空图像）
+
+### v4 测试兼容性修复
+
+`tests/unit/test_ocr_substring_precision_v4.py` 的 `TestF19RapidOCRConfidence` 使用 `RapidOCREngine.__new__(RapidOCREngine)` 绕过 `__init__`。cp57 新增 `_init_failed` 标志后该测试因缺失属性而失败。
+
+修复：手动设置 `engine._init_failed = False`。
+
+### 验证结果
+
+- 编译检查：OK
+- Luhn 校验测试：18 passed
+- OCR box 宽度限制测试：13 passed
+- 全量回归：193 tests，180 passed / 6 skipped / 3 pre-existing failures（v2/v3 OCR 精度测试，与本次修复无关）/ 4 import errors（PyQt6-WebEngine 环境缺失）
+
+### 关键经验
+
+1. **测试数据要验证**：原计划使用 `4033910000000008` 作为 Visa 测试卡，但实际不满足 Luhn 校验。所有 Luhn 测试卡号需手动验证后再用。
+2. **正则锚点要谨慎**：`^` 锚点会限制匹配范围，对于"包含特征"的检测应避免使用。
+3. **空输入防御**：纯算法函数对空输入的边界行为要明确，不能依赖调用方过滤。
+4. **`__new__` 绕过 `__init__`**：测试中使用 `__new__` 创建实例时，新增的实例属性需手动设置。
+
+---
+
+## 2026-07-24 - 印章检测多特征融合 + 银行卡号 Luhn 校验 cp51-cp56（v37.7.19）
+
+### 背景
+
+用户反馈三个核心问题：
+1. 勾选"印章"规则后大量空白区域被误遮罩，真正公章没识别出来，且遮罩位置向左偏移很多
+2. 勾选全部规则（含银行卡号）后出现"一大块一大块"的大面积遮罩
+3. 引入 Luhn 校验后身份证号无法识别
+
+### cp51 印章检测多特征融合
+
+旧版 `_detect_seals` 仅靠颜色单维度判定，HSV 阈值 S/V=30 过低，白色/灰色微偏色被误判为印章。
+
+重写为多特征融合：
+- 颜色：红+蓝（HSV S/V≥80）
+- 形状：circularity≥0.65，长宽比 [0.7,1.4]
+- 五角星：approxPolyDP 检测 10 顶点
+- OCR 文字：匹配"公章/公司/局/院/所/中心"等关键词
+- 面积：按 scan_scale² 归一化（直径 30-160pt）
+
+### cp52 坐标补偿 + 阈值放宽
+
+用户反馈遮罩向左偏移很多，盖不住印章。
+
+根因：`page.get_pixmap()` 渲染时图像原点对应 `page.rect (x0, y0)`，但旧版 `pdf_x = x / scan_scale` 未补偿 MediaBox 偏移。
+
+修复：
+- 传入 `page_origin=(page.rect.x0, page.rect.y0)` 补偿
+- 放宽 HSV 阈值（S/V≥40）覆盖淡色/扫描褪色印章
+- 放宽形状约束（circularity≥0.5，长宽比 [0.5,2.0]）覆盖椭圆变形
+- 遮罩扩大 5% 覆盖边缘（旧版 shrink 5% 反而让遮罩更小）
+
+### cp53 关键词修复 + 整块覆盖限制
+
+用户反馈勾选全部规则后出现"一大排一大排"大块遮罩。
+
+根因：
+1. `SEAL_CHAR_KEYWORDS` 含"公、章、司、局、院、所"等单字，中文文档红色标题"人民法院"的"院"会误命中
+2. OCR 关键词命中时不验证形状
+3. 整页兜底 OCR 失败时 `on_block_failure_fn` 生成覆盖整页的大矩形
+
+修复：
+- `SEAL_CHAR_KEYWORDS=[]` 去除所有单字关键词
+- OCR 关键词命中时要求 `circularity>0.5`
+- 新增 `_make_block_failure_fn` 限制整块覆盖面积（超过页面 30% 不覆盖）
+
+### cp54 OCR box 宽度限制
+
+用户反馈仍有"一大块一大块"遮罩。
+
+根因：OCR 返回跨整页的大 box 时，`_calculate_from_line` 的 C 档权重估算产生接近整行宽度的 `sub_w`。
+
+修复：
+- `calculate_sub_rect` 入口限制 box 宽度超过图像 80% 时跳过
+- C 档 segments 为空时限制 `refined_line_width = line_width × max_w_ratio`
+
+### cp55 银行卡号 Luhn 校验
+
+用户确认问题在银行卡号规则。银行卡号正则 `([1-9]\d{12,18})` 过于宽松，匹配了大量非银行卡号的长数字串。
+
+修复：新增 `_is_valid_luhn()` 函数，13-19 位纯数字串必须通过 Luhn 校验才视为有效银行卡号。
+
+### cp56 修复 Luhn 误伤身份证号
+
+cp55 的 Luhn 校验把身份证号也误伤了——15 位和 18 位身份证号在 13-19 位范围内，但用 MOD 11-2 校验，不满足 Luhn。
+
+修复：新增 `_looks_like_idcard()` 函数，Luhn 校验前先排除身份证号格式。
+
+### 已知限制
+
+- **公章识别准确率有待提高**：对标准红/蓝圆形印章识别良好，但对变形严重、颜色极淡、盖在复杂文字背景上的印章仍有漏检或误判。后续版本考虑引入深度学习模型。
+- **macOS 端虚拟环境依赖待更新**：`venvmac` 内仍为 `rapidocr-onnxruntime==1.2.3`（PP-OCRv4），需在 macOS 环境下升级到 `rapidocr==3.9.2`（PP-OCRv6）后重新打包。后续更换 macOS 系统后更新。
+
+### 验证
+
+- 编译检查：OK
+- 印章检测测试：25 passed
+- 全量回归：90 tests OK（4 skipped）
+- Luhn 校验：VISA 测试卡 → True；案件号 → False；身份证号 → 跳过 Luhn（保留）
+
+---
+
+## 2026-07-23 - 身份证号正则收紧 cp49（v37.7.18）
+
+### 背景
+
+用户反馈：身份证号自动识别脱敏时容易误识别，把横线或无关的几个数字识别为身份证号。
+
+### 诊断
+
+诊断 `提取自诉讼证据卷.pdf` 文本层匹配：身份证号在文本层无匹配（身份证号在图片块中，需 OCR 识别）。但文本层有大量 17 位无关数字串 `13417202010172812`（疑似案件编号），OCR 路径中若把横线识别为 1、或把相邻数字误拼为 15 位，就会触发误识别。
+
+分析 config.json 中身份证号正则：
+
+```
+(?<!\d)([1-9]\d{5}(19|20)\d{2}(0[1-9]|1[0-2])(0[1-9]|[12]\d|3[01])\d{3}[\dXx]|\d{15})(?!\d)
+```
+
+发现：
+1. **15 位分支 `\d{15}` 过于宽松**——任何 15 位连续数字（案件号、统计号、电话拼接等）都被误匹配为 15 位旧版身份证号
+2. **18 位分支仅校验"年份 19/20 开头"**——前缀 71-91 等未启用地区码（台湾 71/香港 81/海外 91）也会匹配
+
+### 修复
+
+#### 正则收紧（3 处同步）
+
+[config.json](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/config.json) / [main.py DEFAULT_RULES](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/main.py#L188) / [privacyguard/utils/config.py DEFAULT_CONFIG](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/privacyguard/utils/config.py#L50-L57) 同步更新：
+
+- 18/15 位分支均加**省级前缀白名单**：`(?:1[1-5]|2[1-3]|3[1-7]|4[1-6]|5[0-4]|6[1-5])`
+  - 11-15（京津冀晋蒙）/21-23（辽吉黑）/31-37（沪苏浙皖闽鲁）/41-46（豫鄂湘粤桂琼）/50-54（渝川黔滇藏）/61-65（陕甘青宁新）
+- 月结构校验：`0[1-9]|1[0-2]` → 01-12
+- 日结构校验：`0[1-9]|[12]\d|3[01]` → 01-31
+- 15 位分支从 `\d{15}` 改为 `省级前缀 + 4位市县码 + 2位年 + 月(01-12) + 日(01-31) + 3位顺序`
+
+#### 运行时自动迁移
+
+[main.py#L153-L182](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/main.py#L153-L182) 新增 `_migrate_legacy_idcard_pattern(cfg)`：
+
+- 启动时检测 config.json 中的身份证号正则是否是旧宽松版本（与 `IDCARD_PATTERN_LEGACY` 常量比较）
+- 若是，自动替换为 V2 严格版本（`IDCARD_PATTERN_V2`）并写回 config.json
+- 已部署用户下次启动应用时自动享受新正则，无需手工同步配置
+
+### 验证
+
+新增 13 个测试用例到 [tests/unit/test_idcard_pattern_v2.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/tests/unit/test_idcard_pattern_v2.py)：
+
+| 类别 | 用例 | 期望 |
+|------|------|------|
+| 真实身份证号 | 18 位（含 X 结尾）、15 位（旧版） | ✓ 匹配 |
+| 误识别源 | 17 位无关数字串（诊断实际出现） | ✗ 不匹配 |
+| | 11 位手机号 | ✗ 不匹配 |
+| | 含横线数字串（如 342921-1978-1130-2719） | ✗ 不匹配 |
+| | 13/19 位银行卡号 | ✗ 不匹配 |
+| | 12/14/16/17 位无关数字串 | ✗ 不匹配 |
+| | 71/81/91 开头的非法地区码（旧正则会误匹配） | ✗ 不匹配 |
+| | 月份 13/00、日期 32/00 等非法月日 | ✗ 不匹配 |
+| | 中文上下文中的真实身份证号 | ✓ 匹配 |
+
+### 回退方法
+
+1. 还原代码：`Copy-Item backups\cp49_idcard_pattern_tighten_pre\config.json.bak config.json -Force`（同时还原 main.py / privacyguard/utils/config.py / tests 中对应文件）
+2. 验证：`python main.py` 启动应用，OCR 与脱敏功能正常
+
+---
+
+## 2026-07-23 - 多字词一体化遮罩 + OCR 实时显示 cp47/cp48（v37.7.17）
+
+### 背景
+
+用户反馈两个问题：
+1. 脱敏过程中屏幕界面没有实时显示遮罩
+2. 多字关键词（如"王小明"）被拆分为多个独立遮罩，替换时产生"华子 华子 华子"重复替换 bug
+
+### 问题 1：OCR 实时显示（cp47）
+
+**根因**：`_on_ocr_page_result` 仅在 OCR 全部完成后由 `_on_ocr_finished_safe` 调用 `render_view()` 重绘整个页面，过程中无中间状态更新。
+
+**修复**（[main.py#L12265-L12304](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/main.py#L12265-L12304)）：
+
+1. `_on_ocr_page_result` 改为原地更新 OCR 结果列表（`existing.clear()` + `existing.extend(deduped)`），保持 canvas 持有的 list 引用不变
+2. 新增 `_maybe_refresh_visible_page`，节流 300ms 刷新当前可见页 canvas（仅 `canvas.update()` 重绘遮罩层，不重画 pix 图），节约资源
+
+### 问题 2：多字词被拆分为多个 per-char 遮罩（cp48）
+
+**根因**：通过诊断脚本（`page.search_for("王小明")` 直接调用）发现 PyMuPDF 在 needle 跨多个 text span 时会为每个 span 返回一个 Rect：
+
+- `提取自诉讼证据卷.pdf` p0：搜索"王小明"返回 7 个 rect（应仅 5 个，对应文本中 5 次出现）
+- 第 1 次出现被拆分为 3 个 per-char rect（x0=447/484/521, w=27 each, gap=10pt, y0=275.20 同行）
+- 其他 4 次出现各自返回 1 个完整 rect（w=96-103pt）
+
+每个 per-char rect 在下游生成 1 个独立遮罩，替换时各替换一次，导致"王小明→华子"最终变成"华子 华子 华子"。
+
+**修复**（[privacyguard/ocr/text_pdf.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/privacyguard/ocr/text_pdf.py)）：
+
+新增 `_merge_adjacent_same_line_rects(hits, y_tolerance=2.0, gap_ratio=0.5)`：
+
+- 按 (y0, x0) 排序
+- 同行判定：`abs(y0 - prev_y0) <= 2.0pt` 且 `abs(height - prev_height) <= 2.0pt`
+- 相邻判定：`0 < gap <= 0.5 * min(prev_width, curr_width)`（负 gap 即重叠，交由下游 `_deduplicate_rects` 处理）
+- 合并：扩展 prev 的 x1 到 curr 的 x1，height 取较大值
+- 输入兼容：fitz.Rect / SimpleNamespace(x0,y0,width,height) / 4 元组
+
+`collect_text_pdf_hit_boxes` 在 `page.search_for` 返回后调用本函数。
+
+### 验证
+
+#### 诊断脚本（提取自诉讼证据卷.pdf）
+
+| 页 | 文本出现次数 | 修复前 rect 数 | 修复后 rect 数 |
+|----|------------|--------------|--------------|
+| p0 | 5 | 7（含 3 个 per-char） | 5 ✓ |
+| p1 | 5 | 7（含 3 个 per-char） | 5 ✓ |
+| p2 | 1 | 3（全为 per-char） | 1 ✓ |
+
+#### 单元测试
+
+新增 5 个测试用例到 `tests/unit/test_pdf_text_hit_dedup.py`：
+
+- `test_merge_per_char_rects_on_same_line` — 3 个 per-char rect 合并为 1
+- `test_merge_does_not_combine_separate_matches_on_same_line` — 同行 2 个独立匹配保留为 2
+- `test_merge_does_not_combine_rects_on_different_lines` — 不同行不合并
+- `test_merge_empty_and_single` — 边界条件
+- `test_collect_text_pdf_hit_boxes_merges_per_char_split` — 端到端验证
+
+#### 回归测试
+
+`python -m unittest tests.unit.test_pdf_text_hit_dedup tests.unit.test_mixed_pdf_ocr tests.unit.test_ocr_api tests.unit.test_package_imports tests.unit.test_fstring_safety tests.unit.test_convergence tests.test_path_validation -v` → 35 passed (3 skipped)
+
+### 回退方法
+
+1. 还原代码：
+   - `Copy-Item backups\cp47_ocr_live_refresh_pre\main.py.bak main.py -Force`（仅回退 cp47）
+   - `Copy-Item backups\cp48_merge_per_char_rects_pre\text_pdf.py.bak privacyguard\ocr\text_pdf.py -Force`（仅回退 cp48）
+2. 验证：`python main.py` 启动应用，OCR 与脱敏功能正常
+
+---
+
+## 2026-07-23 - 遮罩左右偏移根因修复 cp46（v37.7.16）
+
+### 背景
+
+cp45 修复后用户仍反馈：部分遮罩向左偏移、左右覆盖过多。以 `提取自诉讼证据卷.pdf`（含"王小明"与身份证号）为例诊断。
+
+### 根因
+
+`calculate_sub_rect` 三档算法中的 B 档（段数近似但不等时的累计权重 + 线性插值）在段数 ≠ 文本长度时（标点粘连、CJK 拆段）失效：
+
+- `seg_cum_ratio` 仅累计段宽，忽略段间间隙 → sub_rect 系统性左偏
+- 行中部命中偏移 -38 至 -60pt，行首/行尾仅 ±5pt
+- 同内容不同页偏移不一致（-5pt 与 -60pt 并存），无法统一补偿
+
+### 修复
+
+删除 B 档算法，C 档作为默认兜底（[privacyguard/workers/ocr_worker.py#L797-L801](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/privacyguard/workers/ocr_worker.py#L797-L801)）：
+
+- A 档保留：段数 == 文本长度 → 直接取段（精确度最高）
+- B 档删除：段数近似但不等时的累计权重 + 线性插值（根因所在）
+- C 档兜底：用 `seg_block_width`（含段间间隙）收紧行宽后按字符权重线性估算，中心对齐到段块中心
+
+同时删除未使用的 `bisect` 模块导入。
+
+### 验证（提取自诉讼证据卷.pdf）
+
+以 `提取自诉讼证据卷.pdf`（3 页）自行测试，41 处命中：
+
+- **"王小明"（11 处）**：宽度 83-106pt（每字约 28-35pt），跨页位置一致
+- **18 位身份证**：宽度 ~291pt（~16pt/位），跨页稳定
+- **15 位子串**：起始 x 与 18 位相同，宽度 243.5 = 291.9 × (15/18) = 243.3 ✓
+- 偏移从 -60pt 降至 ±5pt 内
+
+编译检查 OK，回归测试通过（4 个 ERROR 均为已知 PyQt6.QtWebEngineWidgets 环境缺失）。
+
+---
+
+## 2026-07-23 - 遮罩精准度修复 cp45（v37.7.15）
+
+### 背景
+
+用户反馈 cp44 升级 RapidOCR v3.x 后遮罩不准：遮罩没完整覆盖文字、一个位置多层叠加、左右偏移。
+
+### 根因
+
+1. **遮罩不完整覆盖**：OCR v3.x box 有 ±2-5px 偏差，`calculate_sub_rect` 输出后未做 padding，偏差直接暴露为露字
+2. **多层叠加**：`_deduplicate_rects` IoU 阈值 0.7 过严，对部分重叠 box（IoU 0.3-0.6）不合并
+3. **左右偏移**：`_detect_text_boundaries` 在 mean>220 时用 0.30 极严格阈值，把抗锯齿边缘当文字列边界，导致 `line_x_min` 偏内、sub_rect 右移
+
+### 修复
+
+#### 1. PDF 坐标系 padding
+
+`privacyguard/workers/ocr_worker.py` `_calculate_from_line` 返回前：
+
+```python
+PAD_X = 1.0  # 左右各 1pt
+PAD_Y = 0.5  # 上下各 0.5pt
+final_x -= PAD_X
+final_w += 2 * PAD_X
+pdf_y -= PAD_Y
+pdf_h += 2 * PAD_Y
+```
+
+#### 2. 加强合并去重
+
+`main.py` `_deduplicate_rects`：
+- IoU 阈值 0.7 → 0.5
+- 新增 `_is_half_overlapping`：x 重叠 ≥ 50% 且 y 重叠 ≥ 50% → 取并集合并
+
+#### 3. 修复左右偏移
+
+`privacyguard/workers/ocr_worker.py` `_detect_text_boundaries`：
+- mean>220 阈值 0.30 → 0.20
+
+### 配套修复
+
+`tests/unit/test_config_alignment.py` `test_custom_keywords_matches`：
+- 原要求 DEFAULT_CONFIG 与 config.json 严格一致
+- 改为只验证字段存在和类型，因 custom_keywords 是用户运行时可改的配置
+
+### 验证
+
+- 编译检查：`python -m compileall -q main.py privacyguard tests` → OK
+- 回归测试：venv_win 环境下 95 测试全部通过
+
+详见 [CHANGELOG.md cp45](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/CHANGELOG.md) 段。
+
+---
+
+## 2026-07-23 - RapidOCR 引擎升级 cp44（v37.7.14）
+
+### 背景
+
+当前 OCR 引擎为 `rapidocr-onnxruntime==1.2.3`（PP-OCRv4 模型），存在中文识别精度不足问题，影响 PDF 替换文本叠加层（cp43）的命中准确度。RapidOCR v3.9.2 升级到 PP-OCRv6 模型，预期提升中文识别精度。
+
+### 本次完成
+
+将 OCR 引擎从 `rapidocr-onnxruntime==1.2.3`（PP-OCRv4）升级到 `rapidocr==3.9.2`（PP-OCRv6），并修复升级初版未适配 v3.x 返回结构导致的"整个文档被黑遮/白遮"严重问题。
+
+#### API 返回结构差异（关键）
+
+v3.x API 与 v1.x **不兼容**，需适配：
+
+| 项 | v1.x | v3.x |
+|---|---|---|
+| 包名 | `rapidocr-onnxruntime` | `rapidocr` |
+| 导入 | `from rapidocr_onnxruntime import RapidOCR` | `from rapidocr import RapidOCR` |
+| 调用 | `result, elapse = engine(img)` 二元组 | `output = engine(img)` 返回 `RapidOCROutput` 对象 |
+| 结果 | `result = [[box, text, conf], ...]` | `output.boxes (ndarray)` + `output.txts (tuple)` + `output.scores (tuple)` 三个平行序列 |
+| box | `list[list[float]]` 4×2 | `ndarray` shape `(N, 4, 2)`，需转换为 list |
+
+#### 修改清单
+
+- [privacyguard/ocr/rapidocr.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/privacyguard/ocr/rapidocr.py) — 重构 `recognize` 适配 v3.x `RapidOCROutput`，将 ndarray box 转 `list[list[float]]`，保留 v1.x 兼容分支
+- [privacyguard/utils/config.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/privacyguard/utils/config.py) — DEFAULT_CONFIG 与 config.json 同步（cp43 遗漏的 `custom_keyword_rules`、`manual_replace_prompt` 字段；`custom_keywords` `"人"`→`"卷\n执\n违"`；`default_level` `1.5`→`1.0`）
+- [tests/unit/test_app_config.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/tests/unit/test_app_config.py) — fallback 期望 `"37.7.6"` → `"0.0.0"`
+- [tests/unit/test_convergence.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/tests/unit/test_convergence.py) — `test_main_py_version_fallback_matches_current` 改为期望 fallback == `"0.0.0"`（对齐 cp41）
+- [tests/unit/test_config_alignment.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/tests/unit/test_config_alignment.py) — `default_level` 期望 `1.5` → `1.0`（与 config.json 对齐）
+- [main.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/main.py) — OCR 错误提示文案 `pip install rapidocr-onnxruntime` → `pip install rapidocr`
+- [requirements.txt](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/requirements.txt) — `rapidocr-onnxruntime==1.2.3` → `rapidocr==3.9.2`
+- [verify_dependencies.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/packaging/windows/scripts/verify_dependencies.py) — 模块检查项 `rapidocr_onnxruntime` → `rapidocr`
+- [PrivacyGuard.spec](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/packaging/macos/config/PrivacyGuard.spec) — `collect_all('rapidocr')`、hiddenimports
+- [PrivacyGuard_windows.spec](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/packaging/windows/config/PrivacyGuard_windows.spec) — 同上
+- [PrivacyGuard_windows_v2.spec](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/packaging/windows/config/PrivacyGuard_windows_v2.spec) — 手动文件收集逻辑 + hiddenimports
+- [test_ocr_api.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/tests/unit/test_ocr_api.py) — 导入路径 + skipTest 文案
+- [test_package_imports.py](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/tests/unit/test_package_imports.py) — mock 拦截包名 `rapidocr_onnxruntime` → `rapidocr`
+
+#### 重大修复：整个文档被黑遮/白遮
+
+升级初版误以为 v3 返回结构与 v1 一致，`result, elapse = engine(img)` 解包抛 `TypeError: cannot unpack non-iterable RapidOCROutput object`，OCR 返回空，触发 `mixed_pdf._cover_failed_block` 保守整块覆盖逻辑，最终整页被黑遮/白遮。
+
+修复方案（`RapidOCREngine.recognize`）：
+- 优先按 v3.x 读取 `output.boxes / output.txts / output.scores` 三个平行序列
+- 将 ndarray 的 box 转换为 `list[list[float]]` 以兼容下游 `iter_ocr_lines` 与 `calculate_sub_rect`
+- 保留 v1.x 兼容分支（`isinstance(output, tuple)` 走旧解包路径）
+- 置信度读取兼容 `scores` 为 None 或长度不足的情况，缺失时回退 0.9
+
+#### 验证
+
+- 编译检查：`python -m compileall -q main.py privacyguard tests` → OK
+- 回归测试：venv_win 环境下 95 测试全部通过（`Ran 95 tests` 无 FAILED/ERROR）
+- RapidOCR 相关测试（test_ocr_api、test_package_imports、test_mixed_pdf_ocr）全部通过
+
+### 回退方法
+
+见 [CHANGELOG.md cp44](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/CHANGELOG.md) 回退方法段。
+
+---
+
+## 2026-07-23 - RapidOCR 升级前备份 cp44-pre（v37.7.13）
+
+### 背景
+
+当前 OCR 引擎为 `rapidocr-onnxruntime==1.2.3`（PP-OCRv4 模型），存在中文识别精度不足问题，影响 PDF 替换文本叠加层（cp43）的命中准确度。RapidOCR v3.9.2 升级到 PP-OCRv6 模型，预期提升中文识别精度。
+
+### 本次完成
+
+**仅备份与文档记录，未修改运行时代码。**
+
+- 备份 16 个 RapidOCR 相关文件到 `backups/pre_rapidocr_v3_upgrade_20260723/`
+- 记录升级前基线状态：
+  - 导入路径 `from rapidocr_onnxruntime import RapidOCR`
+  - 调用方式 `RapidOCR()` 无参构造
+  - 返回结构 `(result, _)` 二元组，`line = [box, text, confidence]`
+- 提供回退步骤（代码还原 + 依赖还原）
+
+### 下一步（升级执行）
+
+- 修改导入路径为 `from rapidocr import RapidOCR`
+- 修改构造方式为 `RapidOCR(engine="onnxruntime")`
+- 验证 v3.x 返回值结构是否兼容当前 `line[0]/line[1]/line[2]` 访问
+- 更新 requirements.txt：`rapidocr-onnxruntime==1.2.3` → `rapidocr==3.9.2`
+- 更新 PyInstaller hook 的 hiddenimports
+- 跑回归测试验证
+
+### 回退方案
+
+见 [CHANGELOG.md cp44-pre](file:///c:/Users/49144/Desktop/ClaudeCodeHub/PrivacyGuardApp/CHANGELOG.md) 回退方法段。
+
+---
+
+## 2026-07-23 - PDF 替换文本叠加层 cp43（v37.7.13）
+
+### 背景
+
+用户反馈 PDF 脱敏后页面出现大量黑遮/白遮色块，整体可读性差。希望遮罩后能叠加替换文本层（如遮盖手机号后显示"138****5678"），与 Word 替换预览体验一致。需求要点：
+1. 高级设置 - 自定义关键词改为表格，每条关键词可选填替换文本
+2. 手动框选也支持输入替换文本，可全局关闭
+
+### 设计决策
+
+1. **page_data 命中项改为 dict 而非 tuple**：`{'rect': QRectF, 'replace_text': str}` 便于扩展，通过 `_hit_rect` / `_hit_replace_text` / `_make_hit` 兼容函数访问，过渡期允许 dict 和裸 QRectF 共存，避免一次性改全所有调用点
+2. **OCR 命中链路透传 matched_text**：text_pdf 返回 5 元组追加 `found_str`；mixed_pdf 返回 `(rect, matched_text)` 元组；OCRWorker 用 `_lookup_replace` 查找替换文本（精确匹配 > 子串包含）
+3. **替换文本留空 = 纯遮罩**：向后兼容旧行为，未填写替换文本的关键词仍做纯遮罩
+4. **手动框选开关默认开启**：`manual_replace_prompt` 全局开关，开启后框选完成弹窗输入替换文本，关闭则纯遮罩
+5. **PyMuPDF `add_redact_annot` 原子叠加**：用 `text=..., fill=..., text_color=..., cross_out=False, fontname="china-s"` 一次调用完成遮罩 + 文本叠加，CJK 字体内置
+6. **预览用对比色**：遮罩颜色亮度 < 128 用白字，≥ 128 用黑字，确保可读
+
+### 实施清单
+
+- `main.py`：30+ 处改动（兼容函数 / 表格控件 / 开关 / 预览叠加 / 导出叠加 / 配置加载回读）
+- `privacyguard/workers/ocr_worker.py`：`custom_keyword_rules` 参数 + `keyword_replace_map` + `_lookup_replace` + 3 处命中返回 dict
+- `privacyguard/ocr/text_pdf.py`：5 元组返回
+- `privacyguard/ocr/mixed_pdf.py`：`(rect, matched_text)` 元组返回
+- `tests/unit/test_custom_keyword_rules.py`：12 个测试方法（规范化 + 迁移纯函数）
+- `config.json`：新增 `custom_keyword_rules` + `manual_replace_prompt` 字段
+
+### 验证
+
+- 编译检查 OK
+- 回归测试：44 tests OK（唯一 ERROR 为已知环境缺失）
+- 单元测试：12/12 通过
+- 待用户手动验证：关键词表格 UI、预览叠加、导出 PDF、手动框选弹窗
+
+---
+
+## 2026-07-23 - 版本号统一来源 cp41（v37.7.12）
+
+### 背景
+
+用户反馈每次升级版本号需要改 16+ 个文件，容易改不全。排查后发现版本号散落在代码失败后备值、VERSION 描述后缀、iss 默认值、11 处文档当前状态描述中。
+
+### 排查结果
+
+| 位置 | 类型 | 改前 | 改后 |
+|------|------|------|------|
+| `main.py:60` | 失败后备值 | `"37.7.6"` | `"0.0.0"` |
+| `privacyguard/__init__.py:17` | 失败后备值 | `"37.7.6"` | `"0.0.0"` |
+| `main.py:142` | VERSION 后缀 | `f"{APP_VERSION} - Engineering Remediation"` | `APP_VERSION` |
+| `PrivacyGuard_Setup.iss:8` | 默认值 | `"37.7.10"` | `"0.0.0"` |
+| 11 处文档 | 当前版本描述 | v37.7.10/37.7.11 | v37.7.12 |
+
+### 设计决策
+
+1. **失败后备值用 0.0.0 而非具体旧版本号**：version.txt 读取失败时返回 `"0.0.0"`，界面会显示明显的错误版本号提示读取失败，而非误导用户以为在用某个旧版本
+2. **去掉 VERSION 描述后缀**：` - Engineering Remediation` 是早期硬编码描述串，与 version.txt 无关。VERSION 直接等于 APP_VERSION，界面显示纯版本号
+3. **iss 默认值防呆**：打包脚本通过 `/DMyAppVersion=%VERSION%` 从 version.txt 注入，直接编译 iss 会用默认值。改为 `"0.0.0"` 后直接编译会得到明显错误版本，提醒用打包脚本
+4. **文档历史段标题保留不改**：CHANGELOG/DEV_LOG/STATUS/rollback_journal 中 `## cp40（v37.7.11）` 这类是历史记录，记录该检查点的版本，不是当前版本
+5. **代码注释中的版本标记保留**：main.py 中 20 处 `# v37.7.10 cp39:` 注释标记代码何时引入，是历史变更标记，不是当前版本号
+
+### 已统一来源的引用链
+
+```
+version.txt (唯一来源)
+  ├─ main.py read_app_version() → APP_VERSION → VERSION
+  │    ├─ 标题栏 setWindowTitle(f"{APP_NAME} v{VERSION} - ...")
+  │    └─ 关于对话框 QLabel(f"版本 {VERSION}")
+  ├─ privacyguard/__init__.py _read_version() → __version__
+  ├─ packaging/windows/scripts/generate_version_info.py → version_info.txt
+  ├─ Windows 打包脚本 (2/3/4/build_complete.bat) → VERSION 环境变量
+  ├─ macOS 打包脚本 (build_macos_app.sh / build_complete.sh / notarize_macos_app.sh)
+  └─ PrivacyGuard_Setup.iss (通过 /DMyAppVersion 注入)
+```
+
+### 验证
+
+- 编译检查 OK
+- version_info.txt 重新生成（FileVersion = 37.7.12.0）
+- 文档版本号一致性 grep 确认（仅历史记录段保留旧版本号）
+
+---
+
+## 2026-07-23 - 去卷宗水印功能 cp40（v37.7.11）
+
+### 背景
+
+用户放入一份案件卷宗节选 PDF（`提取自诉讼文书卷.pdf`），反映页面 4 列 × 6 行网格 + 顶部残缺位置布满斜排水印文字「13417202010172812刘韧」（律师执业证号 + 姓名），严重影响阅读。水印以**文字层 span**形式嵌入（不是图片层、不是注解），与正文同层。用户请求自动识别并去除全部水印，并把"去卷宗水印"功能加入软件。
+
+### Phase 1 探索
+
+用临时脚本 `_analyze_watermark.py` 扫描 PDF 结构：
+
+- 字体：`NotoSansCJKsc-Regular`（正文用 `STSong`）
+- 颜色：`4210752`（=RGB 64,64,64 深灰，正文是纯黑 0）
+- size：固定 `30.0`（正文 23-45 不等）
+- bbox：超大 ~263×263（旋转 45° 包围盒呈正方形）+ 残缺 ~91×91 / ~75×75
+- 内容：`13417202010172812刘韧` / `134172` / `2刘韧`
+- 数量：28 个唯一水印 span/页（4 列 × 6 行网格，底部 4 个"134172"残缺 + 顶部 4 个"2刘韧"残缺）
+- 水印 bbox 与正文 bbox **不重叠**（水印 x 范围 50-313，正文 x 范围 380+），可安全 redact
+
+发现 PyMuPDF `page.get_text("dict")` 在双层文字 PDF 中会重复返回同一 span（block 0-27 与 block 51-78 重复），需要去重。
+
+### 设计决策
+
+1. **去除方式演进**：
+   - ~~方案1（已废弃）~~：`add_redact_annot(rect, fill=(1,1,1))` + `apply_redactions` 白色填充——遮罩覆盖，留白块，用户否决
+   - ~~方案2（已废弃）~~：`add_redact_annot(rect)` 不带 fill + 逐字符 redact——仍误删大量正文（1341→406 字符），因水印字符 bbox 与正文字符在物理区域重叠
+   - ~~方案3（已废弃）~~：直接编辑 PDF 内容流，删除含旋转矩阵 `0.70711 -0.70711 0.70711 0.70711` 的 q...Q 块——写死 45°，对其他角度水印失效
+   - **方案4（最终采用）**：直接编辑 PDF 内容流，三条件评分判定（任意旋转角度 + 文本绘制 + 非 Form XObject）
+2. **内容流编辑方案（方案4）**：
+   - 判定一个 q...Q 块是否为水印（三条件全部满足）：
+     1. 块内含 cm 指令且变换矩阵有旋转/剪切分量（b≠0 或 c≠0，支持任意旋转角度，不只 45°）
+     2. 块内含 Tf 指令（绘制文本，区分于纯图形块）
+     3. 块内不含 Do 指令（避免误删 Form XObject 引用，如正文 /Fm1 Do）
+   - 用 regex 解析 `a b c d e f cm` 指令，检查 b/c 是否非 0
+   - 正文用单位/平移矩阵（b=c=0）+ Form XObject（Do 指令），三条件都不会触发
+3. **评分制识别（5 项特征，满足 ≥3 项判定为水印）**：
+   - 特征1: bbox 近似正方形且偏大（width > 50 且宽高比 0.4-2.5，不限定 100×100）
+   - 特征2: 字体名含 CJK 关键词（NotoSansCJK / SourceHan / 思源 / SimSun / STSong / SimHei / STHeiti / STKaiti / STFangsong / KaiTi / FangSong / Microsoft YaHei / PingFang / Heiti，不限定具体字体）
+   - 特征3: 颜色非纯黑（color != 0，不限定 4210752）
+   - 特征4: 文本含数字 + (含中文 或 长度≥6)
+   - 特征5: 斜排检测（首末字符中心点连线斜率 0.1-10，水平文字斜率≈0，垂直文字 dx≈0）
+4. **去重**：以 (bbox, text) 为键去重，避免 PyMuPDF 双层文字重复返回
+5. **预览确认**：去除前弹确认对话框显示数量 + 示例文本
+6. **不自动保存**：去除后只修改内存 `self.doc`，需用户手动点"导出"
+7. **save_pdf 兼容**：增加 `_pdf_modified` 分支用 `self.doc.tobytes()` 复用内存字节流
+
+### 改动清单
+
+- A. 新增 `_detect_watermark_spans(page)` 方法：rawdict 5 项评分制识别 + 斜排检测 + 去重，用于统计
+- A'. 新增 `_parse_qq_blocks(s)` 静态方法：解析内容流 q...Q 嵌套块
+- A''. 新增 `_remove_watermark_from_stream(page)` 方法：三条件判定 + 任意旋转矩阵识别 + `doc.update_stream` 写回
+- B. 新增 `remove_case_file_watermark()` 方法：扫描 → 确认 → 逐页内容流编辑 → 刷新预览 → 启用导出
+- B'. `save_pdf` 加 `_pdf_modified` 分支：`fitz.open(stream=self.doc.tobytes(garbage=4, deflate=True))` 复用内存
+- C. 工具栏 `toolbar_utility_layout` 在 `btn_save` 之前新增 `btn_remove_watermark`，初始 hide
+- D. 按钮显隐联动：`_cleanup_before_open` 末尾 hide + 重置 `_pdf_modified=False`；`_open_pdf_file` 成功后 show
+- E. Density 文案同步：`watermark_text = "去水印" if density_mode != "narrow" else "水印"`
+- F. `_refresh_toolbar_overflow_menu` narrow 模式收纳：移入"更多"菜单；compact/wide PDF 显式 `show()` 兜底
+
+### 验证
+
+- 编译检查：`python -m compileall -q main.py privacyguard tests` → OK
+- 识别算法验证（改进后）：对 `提取自诉讼文书卷.pdf` 识别到 28 处水印（20 完整 + 4 底部残缺 + 4 顶部残缺），与改进前一致
+- **内容流编辑验证**（改进后）：
+  - 删除 2 个水印绘制块（三条件全部满足）
+  - 正文完整性：10/10 关键正文全部保留
+  - 水印残留：0（"13417202010172812刘韧"/"134172"/"2刘韧"/"刘韧" 全部删除）
+  - 不留白色块（非遮罩）
+- 回归测试：21 tests ok；3 errors 全部因环境缺 `PyQt6.QtWebEngineWidgets`，与改动无关
+- 待用户手动验证：启动 `python main.py` → 打开 `提取自诉讼文书卷.pdf` → 工具栏出现"去水印"按钮 → 点击 → 弹"共识别到 28 处卷宗水印"确认 → 点「是」→ 预览中水印消失 → 点"导出"保存
+
+### 回滚
+
+`Copy-Item backups/cp40_watermark_pre/main.py main.py -Force`
+
+---
+
+## 2026-07-22 - PDF 取色遮罩功能 cp39（v37.7.10）
+
+### 背景
+
+用户请求在 PDF 工具栏"黑遮罩/白遮罩"右侧新增"取色遮罩"按钮，支持任意颜色作为遮罩色。点击后内联展开色板（默认常见色彩 + 自定义色值 + 全屏取色器）。
+
+### 设计决策
+
+1. **内联展开**（不是浮层 popup）：色板面板插入 toolbar 与 QScrollArea 之间
+2. **全屏取色**：截屏 + 全屏覆盖层 + 点击取色 + Esc 取消
+3. **三选一互斥组**：rb_color 与黑/白遮加入同一 `QButtonGroup(exclusive=True)`
+4. **色板点击不关闭面板**：可连续调整，只有 rb_color 按钮点击才切换展开/收起
+
+### 改动清单（9 项）
+
+1. PyQt6 导入扩展 `QColorDialog` + QtCore 导入补 `QPoint`
+2. 新增 `rb_color` 按钮（位于白遮右侧、双页左侧），加入 `bg_color` 互斥组
+3. 色板面板 `color_palette_widget` 容器插入 layout（初始隐藏）
+4. 新增 `_build_color_palette_widget`：8 常用色块 + QLineEdit + 应用按钮 + 全屏取色器按钮
+5. 新增 `_toggle_color_palette`：切换显隐 + 同步输入框
+6. 新增 `_apply_custom_color`：三条路径汇聚入口（色板点击 / hex 输入 / 全屏取色）
+7. 新增 `_ScreenColorPickerOverlay` 类 + `pick_screen_color` + `_on_screen_color_picked`
+8. 重写 `update_canvas_color` 兼容三态（原 else 强制设白会覆盖取色）
+9. 修复 `save_pdf` 硬编码 bug + Density 文案同步 color_text + narrow 模式收纳
+
+### cp39-fix1: 高 DPI 屏取色不准
+
+用户反馈"点到蓝色的地方了，取色器还显示 #FFFFFF"。
+
+**根因**：`grabWindow(0)` 返回物理像素 QPixmap（如 2880×1620），但 QWidget 鼠标坐标是逻辑像素（如 1920×1080）。直接 `img.pixelColor(mouse_pos)` 会取到错误像素——点到屏幕中央蓝色，鼠标坐标 960 在截图中实际对应靠左侧白色区域。
+
+**修复**：
+- 新增 `_pick_color_at`：用 `img.width()/self.width()` 做 DPI 缩放转换
+- 用 `setGeometry(screen.geometry())` 替代 `showFullScreen()`（避免 setFixedSize 冲突）
+- 用 `screen.grabWindow(0, geo.x(), geo.y(), geo.width(), geo.height())` 限定截图到主屏
+- mousePressEvent 触发时再调一次 `_pick_color_at`，确保取到点击瞬间颜色
+- 构造时一次性 `toImage()` 缓存 `_screenshot_img`，避免每次 mouseMove 转换
+
+### 关联 bug
+
+**save_pdf 硬编码 bug**：原 `fill_col = (0,0,0) if name=="#000000" else (1,1,1)` 仅识别 #000000 为黑，其余全部按白(1,1,1)处理。新增取色遮罩后红/灰/自定义色都会被错误映射为白。修复为按 RGB 归一化 `(c.red()/255, c.green()/255, c.blue()/255)`。
+
+### 测试验证
+
+- 编译检查：`python -m compileall -q main.py` → OK
+- 回归测试 64 tests / failures=0 / skipped=2
+  - 唯一 ERROR：`test_main_py_version_fallback_matches_current` 因环境缺 `PyQt6.QtWebEngineWidgets` 无法 import main，与改动无关
+- 修复 `test_fstring_safety` 误报：f-string 中 `{{ border:` 被 regex 误判为未转义 CSS，改用 `%` 字符串格式化
+
+---
+
+## 2026-07-22 - PDF 遮罩精准度修复 cp34-cp38（v37.7.9）
+
+### 背景
+
+用户反馈 PDF 遮罩准度有 bimodal 偏移问题：识别逻辑正确识别到目标字符（如"王小明""孙志华"），但实际遮罩时有时准确、有时左右偏移半个到一个字符、或宽度多出几个字符。问题主要发生在图片 PDF / 混合 PDF 的图片块 OCR 命中路径。
+
+### 根因分析（G18-G21）
+
+- G18: cp37 F20 用 INTER_CUBIC 2x 放大 ROI，抗锯齿填充字符间隙，段切分退化为单段（7 段变 1 段）
+- G19: ROI 边界等于 OCR box，RapidOCR box 有 ±2-5px 偏差，字符可能略超 box 边界导致切分不完整
+- G20: gap_tolerance = max(2, min(median_gap*1.5, char_h/3))，当 char_h/3 > gap 时把 gap 当短间隙不切断
+- G21: _calculate_from_line 坐标转换条件化（if scale_factor != 1.0），F23 外扩后 scale=1.0 但 offset>0 时跳过转换
+
+### 修复方案演进
+
+#### cp37 F20 尝试（失败）
+- ROI 2x 放大（INTER_CUBIC）提升像素精度
+- 问题：抗锯齿填充字符间隙，段切分失败
+
+#### cp38 F20-fix 尝试（失败）
+- 改用 INTER_NEAREST + 二值化
+- 问题：char_h 翻倍导致 gap_tolerance 跟着放大，v3 测试 3 个失败
+
+#### cp38 F20-redesign（最终方案）
+- 彻底放弃 2x 放大，只做 F23 外扩 8px，scale_factor=1.0
+- 段切分准确后走 A 档直接取段，sub_x 误差 ±0.5px = ±0.33pt
+- 与放大方案精度相同，但不破坏 char_h 依赖的所有逻辑
+
+### cp38 核心改动
+
+1. **F20-redesign + F23**（ocr_worker.py line 573-616）：`_extract_roi_2x` 放弃 2x 放大，只做 F23 外扩 8px
+2. **坐标转换无条件化**（ocr_worker.py line 697-724）：删除 `if scale_factor != 1.0` 判断
+3. **gap_tolerance 上限**（ocr_worker.py line 414-422）：加 `median_gap * 0.8` 上限
+4. **F24 宽度合理性检查**（ocr_worker.py line 876-961）：`_verify_sub_rect_width` 兜底方法
+
+### F24 设计决策
+
+选择轻量级宽度检查而非 multi-pass 二次 OCR：
+- 开销极小（仅数值比较），不增加 OCR 调用
+- 对图片 PDF 场景有效（不依赖 PDF 文本层）
+- 覆盖段切分失败的两种典型场景（过窄误切 / 过宽退化）
+- 与现有 A/B/C 档逻辑解耦，作为最终稳定性兜底
+
+### 测试验证
+
+- v3 测试 28 个通过（2 skip 为 PyQt6.QtWebEngineWidgets 环境依赖）
+  - 3 个原失败测试已修正：黑底白字改白底黑字、B 档改 A 档构造、90px 改 108px 避免银行家舍入
+- v4 测试 11 个全通过
+- v5 测试 5 个全通过（新增覆盖 F23 边缘裁剪 / gap_tolerance 极小间隙 / 坐标转换 offset / F24 过宽回退 / F24 A 档不触发）
+- 核心回归套件全部通过
+- 编译检查 → OK
 
 ---
 

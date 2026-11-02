@@ -1,188 +1,89 @@
 # PrivacyGuard Windows 打包指南
 
-> 当前 active Windows 打包流程说明。本文档以 `packaging/windows/` 下现有脚本和配置为准。
+当前版本：**40.2.5**，唯一版本源为根目录 `version.txt`。更新：2026-10-25。
 
----
+## 一键构建便携版
 
-## 当前发布基线
+要求：Windows 10/11 x64、Python **3.11 x64**、VC++ 2015-2022 x64 运行库。
+首次构建联网安装依赖，生成后的应用离线使用，不要求用户安装 Python。
 
-- 当前版本：`v37.7.4`
-- 版本标识：`37.7.4 - Release Audit and Final Polish`
-- 版本唯一来源：项目根目录 `version.txt`
+完整解压源码资料包至短路径后，双击根目录：
 
----
+```bat
+BUILD_WINDOWS_PORTABLE.bat
+```
 
-## 快速开始
+它依次调用环境初始化和正式便携入口。已有正确构建环境时，可单独执行：
 
-### 便携包
-
-```cmd
-cd C:\Users\YourName\Desktop\PrivacyGuardApp
+```bat
 packaging\windows\scripts\build_complete.bat
 ```
 
 输出：
 
-- `releases\windows\PrivacyGuard-v<version>-Windows-Portable.zip`
-- `releases\windows\PrivacyGuard-v<version>-Windows-Portable.zip.sha256`
-
-这是当前 **便携版正式发布入口**。
-
-### 安装包
-
-```cmd
-cd C:\Users\YourName\Desktop\PrivacyGuardApp
-packaging\windows\scripts\3_build_with_setup.bat
-```
-
-输出：
-
-- `releases\windows\PrivacyGuard-<version>-Setup.exe`
-- `releases\windows\PrivacyGuard-<version>-Setup.exe.sha256`
-
-这是当前 **安装版正式发布入口**。
-
----
-
-## 当前脚本分工
-
-| 脚本 | 作用 |
-|------|------|
-| `1_init_environment.bat` | 初始化 Windows 打包环境，创建 `venv_win` |
-| `2_build_exe.bat` | 构建标准 one-dir 便携版 |
-| `3_build_with_setup.bat` | 构建便携版并生成安装包 |
-| `4_create_installer_only.bat` | 基于已有 `dist/` 结果生成安装包 |
-| `build_complete.bat` | 完整发布便携 ZIP |
-| `verify_dependencies.py` | 构建前依赖校验 |
-| `check_vcredist.bat` | VC++ 运行库检查 |
-| `diagnose_onnxruntime.py` | onnxruntime 诊断 |
-| `generate_version_info.py` | 从 `version.txt` 生成 Windows EXE 版本资源 |
-
----
-
-## 构建前要求
-
-- Windows 10/11 64 位
-- Python 3.11+
-- Inno Setup 6（仅安装包场景）
-- Visual C++ Redistributable 2015-2022 x64
-
-推荐初始化：
-
-```cmd
-packaging\windows\scripts\1_init_environment.bat
-```
-
----
-
-## 版本来源与版本资源
-
-- `version.txt` 是唯一版本源
-- 安装包版本通过 `/DMyAppVersion=<version>` 注入 `PrivacyGuard_Setup.iss`
-- EXE 版本资源由 `packaging/windows/scripts/generate_version_info.py` 自动生成到：
-
 ```text
-packaging/windows/config/version_info.txt
+dist/windows-portable/PrivacyGuard/PrivacyGuard.exe
+releases/windows/PrivacyGuard-v40.2.5-Windows-Portable.zip
+releases/windows/PrivacyGuard-v40.2.5-Windows-Portable.zip.sha256
+releases/windows/PrivacyGuard-v40.2.5-Windows-Portable.validation.json
 ```
 
-当前 `v37.7.4` 同步内容：
+必须把整个 ZIP 分发给用户，不可单独分发 EXE。解压后运行 `PrivacyGuard.exe`
+或同目录 `launcher_wrapper.bat`，保留 `_internal`。本流程不生成安装器。
 
-- `version_info.txt` 版本资源：`37.7.4.0`
-- `PrivacyGuard_windows.spec` 补齐 `privacyguard` 相关 hiddenimports
-- 新增 `hook-privacyguard.py` 与 `runtime_hook_privacyguard.py`
-- 安装器构建仍通过 `/DMyAppVersion=<version>` 从 `version.txt` 注入版本号
-- `PrivacyGuard_Setup.iss` 默认回退版本已同步到 `37.7.4`
+## 正式便携构建门禁
 
-## 当前打包执行约定
+`build_complete.bat` 调用同目录 `build_portable.py`，失败立即返回非零退出码：
 
-- 先激活当前虚拟环境，再通过 `python -m PyInstaller` 执行打包
-- PyInstaller 缓存固定到项目内：
+1. 确认原生 Windows x64 Python，拒绝 Mac、32 位或 ARM64 原生解释器。
+2. `pip check`、编译检查、自动发现并运行 `tests/unit` 全量回归。
+3. 运行 `verify_dependencies.py` 和 `generate_version_info.py`；EXE 版本资源不手编。
+4. 使用当前解释器 `python -m PyInstaller` 和标准 Windows spec 构建。
+5. 检查 EXE/DLL/PYD 全部为 x64，版本、JS、配置模板及三个离线 OCR 模型齐全。
+6. 要求三个 VC++ DLL 在根目录或 `_internal`，必要时从本机 System32 复制。
+7. 拒绝私有 `config.json`、日志、草稿和符号链接混入成品。
+8. 运行冻结程序 `--self-test`（含真实离线 OCR、含图 Word 转换/替换、窗口关闭），180 秒超时中止。
+9. 再检查成品，ZIP 保留全部隐藏资源与 `_internal`，CRC 通过才发布，写 SHA256 和验证报告。
 
-```text
-build\.pyinstaller-cache
+只清理本目标的 `dist/windows-portable/PrivacyGuard`，不会删除其他平台和安装版输出。
+缓存和中间文件位于 `build/windows-portable`。已有同名发布 ZIP 时拒绝覆盖，请先备份移走。
+
+## 干净构建资料包
+
+`scripts/create_windows_buildkit.py` 从显式清单生成源码资料包，包含当前未提交的源码修复，
+不使用可能漏掉修复的 `git archive HEAD`。排除虚拟环境、私人配置、PDF/Word 样本、
+日志、会话草稿和历史产物。包内 `BUILD_INPUTS.json` 记录每个输入的 SHA256。
+
+此资料包不是 Windows 成品；必须在 Windows 本机执行构建。macOS 无法用 PyInstaller
+交叉构建 Windows EXE。2026-10-25 当前开发机仅验证了脚本单测、输入完整性和干净解压回归，
+**未执行 Windows 原生 PyInstaller 构建，未宣称 Windows 成品已验证**。
+
+说明入口：`WINDOWS_BUILD_README.md`。可选输入校验：
+
+```bat
+venv_win\Scripts\python.exe scripts\create_windows_buildkit.py --verify .
 ```
 
-- 这样可以避免误用系统里其它 Python / PyInstaller，也能避免依赖用户目录下的全局缓存
+## 保留的其他脚本
 
----
+| 脚本 | 用途 |
+| --- | --- |
+| `1_init_environment.bat` | 安装 Python 3.11 x64 的锁定依赖与构建工具 |
+| `build_complete.bat` / `build_portable.py` | 正式便携 ZIP 发布入口 |
+| `2_build_exe.bat` | 旧 one-dir 构建，输出仍为 `dist/PrivacyGuard`，不等于本轮校验发布流程 |
+| `3_build_with_setup.bat` | 原安装器流程，需 Inno Setup 6，未在本轮实机验证 |
+| `4_create_installer_only.bat` | 从旧布局已有 `dist/PrivacyGuard` 构建安装器 |
+| `generate_version_info.py` | 从唯一版本源生成 EXE 资源 |
+| `verify_dependencies.py` / `diagnose_onnxruntime.py` | 依赖检查与 OCR 诊断 |
+| `launcher_wrapper.bat` | 检查包内/系统 VC++ DLL 后启动 |
 
-## 推荐发布流程
+安装器流程不读取 `dist/windows-portable`，不要将两套输出路径混用。安装版仍使用
+`PrivacyGuard_Setup.iss` 和 `/DMyAppVersion=<version>`；本轮交付仅限便携构建资料包。
 
-### 一句话结论
+## 失败与验收
 
-- 如果你要发 **便携版**，执行：`build_complete.bat`
-- 如果你要发 **安装版**，执行：`3_build_with_setup.bat`
-
-### 发布便携 ZIP
-
-1. 运行 `1_init_environment.bat`
-2. 运行 `build_complete.bat`
-3. 校验以下文件是否存在：
-   - `releases/windows/PrivacyGuard-v<version>-Windows-Portable.zip`
-   - `releases/windows/PrivacyGuard-v<version>-Windows-Portable.zip.sha256`
-4. 解压后优先使用 `launcher_wrapper.bat` 启动一次
-
-### 发布安装包
-
-1. 安装 Inno Setup 6
-2. 运行 `3_build_with_setup.bat`
-3. 校验以下文件是否存在：
-   - `releases/windows/PrivacyGuard-<version>-Setup.exe`
-   - `releases/windows/PrivacyGuard-<version>-Setup.exe.sha256`
-
----
-
-## 关键配置
-
-### PyInstaller spec
-
-- 标准 spec：`packaging/windows/config/PrivacyGuard_windows.spec`
-- 历史增强 spec：`packaging/windows/config/PrivacyGuard_windows_v2.spec`（保留归档，不作为当前正式主链）
-
-### Inno Setup
-
-配置文件：
-
-```text
-packaging/windows/config/PrivacyGuard_Setup.iss
-```
-
-当前安装器策略：
-
-- 64 位安装模式：`ArchitecturesAllowed=x64compatible`
-- 64 位目录安装：`ArchitecturesInstallIn64BitMode=x64compatible`
-- 开始菜单、桌面快捷方式默认走 `launcher_wrapper.bat`
-
----
-
-## 本轮说明
-
-- PyInstaller 打包模块导入失败修复直接影响 Windows 打包可用性
-- 本轮 packaging 更新重点是：导入修复、版本资源、脚本执行环境统一、文档说明同步到当前基线
-- 当前正式发布建议已收口，不再推荐从其它批处理脚本绕行：
-  - 便携包：`build_complete.bat`
-  - 安装包：`3_build_with_setup.bat`
-- 2026-03-18 已在当前 macOS 开发机完成：
-  - `generate_version_info.py`
-  - `python3 -m compileall -q packaging`
-  - Windows 脚本链 / spec / Inno Setup 配置 / 文档一致性复核
-- 2026-03-18 已清理 `packaging/windows/scripts/` 下不再属于正式主链的历史兼容与解除阻止脚本
-- 由于当前机器不是 Windows，本轮未实际执行：
-  - `packaging\windows\scripts\build_complete.bat`
-  - `packaging\windows\scripts\3_build_with_setup.bat`
-- 对外发布前，仍需在 Windows 真机至少完成一次：
-  - 便携包链路验证
-  - 安装包链路验证
-
----
-
-## 发布前检查清单
-
-- `version.txt` 已更新
-- `generate_version_info.py` 已成功执行
-- `build_complete.bat` 或 `3_build_with_setup.bat` 已成功执行
-- 产物和 `.sha256` 已生成
-- 解压或安装后能成功启动 `PrivacyGuard`
-- PDF / Word / OCR 基本流程至少手测一次
-
-最后更新：2026-03-18
+- `[ERROR]` 表示构建不通过，不要分发中间 EXE。保留最早错误排查。
+- 旧虚拟环境失效时，重命名旧 `venv_win` 再运行；不直接复制 Mac 或另一台电脑的环境。
+- Windows 构建后仍须手测：含图 Word、扫描/混合 PDF、导出、关闭和整包解压启动。
+- 校验报告是自动门禁结果，不代表所有文档场景和安全边界已全面覆盖。
+- 没有证书签名的 EXE 可能遇到 Windows SmartScreen 提示；不应通过关闭系统安全防护来解决。

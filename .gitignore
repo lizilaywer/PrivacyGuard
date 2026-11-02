@@ -14,6 +14,10 @@ __pycache__/
 dist-packages/
 .eggs/
 
+# 诊断脚本临时产物（无头渲染调试导出的中间图像）
+tests/_diag_out/
+tests/_diag_*.py
+
 # Virtual Environment
 venv/
 venv_win/
@@ -25,6 +29,12 @@ env/
 build/
 dist/
 *.spec
+!packaging/**/*.spec
+
+# 安全审计 v40.2.3：仓库根的真实卷宗样本与实测报告含当事人 PII，
+# 防止 git add . 误提交（tests 的合成样本不受影响）
+/*.pdf
+scripts/person_name_eval_report.txt
 
 # IDE
 .vscode/
@@ -36,14 +46,23 @@ dist/
 *.tmp
 *.log
 *.bak
+# v37.8.11 P0-3: 运行时日志目录
+logs/
 
 # Test outputs
 tests/reports/*.html
+# cp82: 真机测试产物（图片合并输出 / 临时测试图片），不入库
+merged_*.pdf
+IMG_*.PNG
+IMG_*.png
+IMG_*.jpg
+IMG_*.jpeg
 tests/output/
 
 # Local config
 .env
 .env.local
+config.json
 
 # Development backups
 backups/
@@ -65,8 +84,38 @@ releases/**/*.sha256
 releases/macos/PrivacyGuard.app/
 
 # Windows build
+releases/windows/PrivacyGuard/
+# v40.2.5: 发布产物元数据（校验报告/构建环境说明）不入库
+releases/**/*.json
+releases/**/*.txt
+# mac 交接源 zip（2.9GB 本地备份）
+/PrivacyGuardApp*.zip
 venv_win/
 nul
 
 # WorkBuddy workspace data
 .workbuddy/
+
+# Local agent tool settings / plan drafts
+.claude/
+.trae/
+.qoder/
+
+# Pytest cache
+.pytest_cache/
+
+# Temp scrub directories
+_tmp_scrub_*/
+
+# Local agent state, caches and platform environments
+.mimosa/
+.zcode/
+.zcodeignore
+.ruff_cache/
+venv_macos_release/
+.env.*
+!.env.example
+*.pgdraft.json
+*.pdfsnap
+*.pem
+*.key

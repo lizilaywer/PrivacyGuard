@@ -5,7 +5,7 @@ OCR 引擎基类和数据结构
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 import numpy as np
 
 

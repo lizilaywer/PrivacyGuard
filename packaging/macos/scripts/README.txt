@@ -2,9 +2,16 @@
                     PrivacyGuard macOS 打包脚本说明
 ================================================================================
 
-当前发布基线：v37.7.4
+当前发布基线：v40.2.5
 版本来源：`version.txt`
 发布目录：`releases/macos/`
+
+当前推荐便携入口：bash packaging/macos/scripts/build_portable.sh
+环境：venv_macos_release/bin/python3（或 PRIVACYGUARD_PYTHON 显式指定）
+产物：PrivacyGuard-<version>-macOS-arm64-portable.zip + .sha256 + validation.json
+要求：Apple Silicon / macOS 14+，签名为 ad-hoc，未进行 Apple 公证。
+此入口执行依赖/编译/全量单测、全包 Mach-O 系统版本与路径校验、签名验证。
+以下 DMG/sign/notarize 内容为历史流程，不是本次便携包入口。
 
 --------------------------------------------------------------------------------
  build_macos_app.sh
@@ -60,7 +67,8 @@
 本轮同步说明：
 - macOS 打包脚本已统一改为使用当前环境中的 PyInstaller 和项目内缓存
 - `build_complete.sh` 已验证到 `.app` 产物生成与发布目录回退
-- 当前 active 说明、索引和默认版本都已同步到 `v37.7.4`
+- 当前便携版本来源为 version.txt（v40.2.5），见本文件顶部新入口。
 - 当前正式发布默认入口：`bash packaging/macos/scripts/build_complete.sh`
+- 当前发布环境 venv_macos_release 使用 rapidocr==3.9.2，模型随包携带且运行时不自动下载。
 
-最后更新：2026-03-18
+最后更新：2026-10-24

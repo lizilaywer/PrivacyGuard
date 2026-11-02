@@ -1,0 +1,25 @@
+# PrivacyGuard ruff 配置
+# v37.8.11 P2-3: 启用 ruff 静态检查并纳入 CI
+#
+# 规则选择：E9（语法错误）+ F（pyflakes：未用导入/未用变量/未定义名称等）
+# 这些规则捕获真实缺陷，误报率低。
+#
+# 已忽略：
+# - F403/F405：main.py 使用 5 个域模块的 star import（helpers_pdf / helpers_word_rules /
+#   helpers_word_doc / helpers_word_preview / helpers_ui），保持 `import *` 行为，
+#   无需审计 9271 行 main.py 中所有 helpers 名字。新代码不应新增 star import。
+#
+# 详见 docs/current/PRIORITY_REMEDIATION_PLAN.md P2-3。
+
+target-version = "py311"
+line-length = 120
+
+[lint]
+select = ["E9", "F"]
+ignore = ["F403", "F405"]
+
+[lint.per-file-ignores]
+# __init__.py 中的 re-export 是有意为之
+"__init__.py" = ["F401"]
+# 可用性探测（try: import / except ImportError）不算未用导入
+# 已在各文件行内用 # noqa: F401 标注

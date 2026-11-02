@@ -70,31 +70,57 @@ def validate_safe_path(path, allowed_extensions=None):
     except (TypeError, ValueError, OSError) as e:
         return False, f"路径格式错误: {e}"
 
-    # 路径遍历攻击防护：限制在允许目录内
-    allowed_base_dirs = [
-        os.path.normpath(os.path.abspath(os.path.expanduser("~"))),
-        os.path.normpath(os.path.abspath(tempfile.gettempdir())),
-    ]
-    if not is_windows:
+    # 路径遍历攻击防护
+    if is_windows:
+        # Windows 下白名单（home/temp/cwd）会误拒用户文档常见的
+        # D:/E:/UNC 路径，导致批量替换跨盘文件必然失败。
+        # 改为黑名单：只拒绝系统目录与可执行目录，其余一律放行。
+        system_drive = os.environ.get("SystemDrive", "C:").upper()
+        blacklist_prefixes = [
+            os.path.normpath(f"{system_drive}\\Windows"),
+            os.path.normpath(os.environ.get("ProgramFiles", "C:\\Program Files")),
+            os.path.normpath(os.environ.get("ProgramFiles(x86)", "C:\\Program Files (x86)")),
+            os.path.normpath(f"{system_drive}\\ProgramData"),
+        ]
+
+        def _is_under(base_dir):
+            try:
+                return os.path.commonpath([normalized, base_dir]) == base_dir
+            except ValueError:
+                return False
+
+        for bad in blacklist_prefixes:
+            if _is_under(bad):
+                return False, f"路径位于系统受保护目录: {normalized}"
+    else:
+        # POSIX 保持原白名单语义
+        allowed_base_dirs = [
+            os.path.normpath(os.path.abspath(os.path.expanduser("~"))),
+            os.path.normpath(os.path.abspath(tempfile.gettempdir())),
+        ]
         for unix_tmp in ['/tmp', '/var/tmp']:
             if os.path.isdir(unix_tmp):
                 allowed_base_dirs.append(os.path.normpath(os.path.abspath(unix_tmp)))
 
-    def _is_under(base_dir):
-        try:
-            return os.path.commonpath([normalized, base_dir]) == base_dir
-        except ValueError:
-            return False
+        def _is_under(base_dir):
+            try:
+                return os.path.commonpath([normalized, base_dir]) == base_dir
+            except ValueError:
+                return False
 
-    path_in_allowed = any(_is_under(base) for base in allowed_base_dirs)
-    if not path_in_allowed:
-        cwd = os.path.normpath(os.path.abspath('.'))
-        if not _is_under(cwd):
-            return False, f"路径不在允许范围内: {normalized}"
+        path_in_allowed = any(_is_under(base) for base in allowed_base_dirs)
+        if not path_in_allowed:
+            cwd = os.path.normpath(os.path.abspath('.'))
+            if not _is_under(cwd):
+                return False, f"路径不在允许范围内: {normalized}"
 
     # 检查文件名部分
     basename = os.path.basename(normalized)
-    if not basename or basename.startswith('.') or '..' in basename:
+    if not basename or basename.startswith('.'):
+        return False, "无效的文件名"
+    # 路径遍历防护：normpath 后 basename 不应为纯 ".."
+    # （a..b.pdf 这类合法文件名不受影响）
+    if basename == '..':
         return False, "无效的文件名"
 
     # 检查扩展名

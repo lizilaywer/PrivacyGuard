@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PrivacyGuard 主页重设计 · 评估原型 v2</title>
+<style>
+  :root{
+    --bg:#F5F6F8; --card:#FFFFFF; --border:#E4E7EC; --border-soft:#EEF0F3;
+    --ink:#101828; --ink-2:#344054; --ink-3:#667085; --ink-4:#98A2B3; --disable:#CBD0D8;
+    --brand:#2563EB; --brand-deep:#1D4ED8; --brand-soft:#EFF4FF; --brand-border:#C7DBFB;
+    --ok:#10B981; --radius:10px;
+    --shadow:0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.03);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:"Segoe UI Variable","Segoe UI","Microsoft YaHei UI","Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif;
+    background:#0E1320; color:var(--ink); display:flex; align-items:center; justify-content:center; padding:24px;
+    -webkit-font-smoothing:antialiased;
+  }
+  /* 统一线性图标 */
+  .ic{width:18px;height:18px;flex:none;display:block;stroke:currentColor;stroke-width:1.7;fill:none;
+    stroke-linecap:round;stroke-linejoin:round}
+  .ic.lg{width:22px;height:22px}.ic.sm{width:15px;height:15px}
+
+  /* 桌面窗口外壳 */
+  .window{width:1280px;max-width:100%;height:824px;max-height:100%;background:var(--bg);
+    border-radius:12px;overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 30px 90px rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.06)}
+
+  /* 标题栏 */
+  .titlebar{height:38px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 14px;flex:none}
+  .tl-dots{display:flex;gap:7px}.tl-dots i{width:12px;height:12px;border-radius:50%;display:block}
+  .tl-dots i:nth-child(1){background:#FF5F57}.tl-dots i:nth-child(2){background:#FEBC2E}.tl-dots i:nth-child(3){background:#28C840}
+  .tl-logo{width:22px;height:22px;border-radius:6px;background:linear-gradient(135deg,var(--brand),var(--brand-deep));color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;letter-spacing:-.5px}
+  .tl-title{font-size:13px;color:var(--ink-2)}.tl-title b{color:var(--ink);font-weight:600}
+  .tl-spacer{flex:1}.tl-pill{font-size:11px;color:var(--ink-3);background:var(--bg);border:1px solid var(--border);padding:3px 9px;border-radius:20px}
+  .tl-feedback{display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--ink-3);font-size:11.5px;cursor:pointer;font-family:inherit;transition:.15s}
+  .tl-feedback:hover{color:var(--brand);border-color:var(--brand-border);background:var(--brand-soft)}
+  .tl-feedback .ic{width:14px;height:14px}
+
+  /* 工具栏（单行紧凑，不换行） */
+  .toolbar{background:#fff;border-bottom:1px solid var(--border);padding:7px 10px;display:flex;align-items:center;gap:1px;flex-wrap:nowrap;flex:none;overflow:hidden}
+  .tg{display:flex;align-items:center;gap:1px;padding:0 6px;border-right:1px solid var(--border-soft);height:30px}
+  .tg:first-child{padding-left:2px}.tg:last-child{border-right:none;padding-right:2px}
+  .btn{height:28px;padding:0 7px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--ink-2);font-size:12px;display:inline-flex;align-items:center;gap:5px;cursor:default;white-space:nowrap}
+  .btn.primary{background:var(--brand);color:#fff;font-weight:600;border-color:var(--brand);box-shadow:0 1px 2px rgba(37,99,235,.25)}
+  .btn.primary:hover{background:var(--brand-deep)}
+  .btn.ghost{border-color:var(--border)}
+  .btn.dis{color:var(--disable)}
+  .btn.primary.dis{background:var(--brand);border-color:var(--brand);color:#fff;opacity:.5;box-shadow:none;cursor:not-allowed}
+  .seg{display:inline-flex;border:1px solid var(--border);border-radius:7px;overflow:hidden;height:28px}
+  .seg .swatch{width:26px;height:100%;display:flex;align-items:center;justify-content:center;border:none;cursor:default}
+  .seg .swatch+.swatch{border-left:1px solid var(--border)}
+  .sw-b{background:#1F2937}.sw-w{background:#fff}.sw-c{background:conic-gradient(from 0deg,#EF4444,#F59E0B,#10B981,#3B82F6,#EF4444)}
+  .zoom{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;color:var(--ink-3);border:1px solid var(--border);border-radius:6px;height:28px;padding:0 6px}
+  .navgrp{display:inline-flex;align-items:center;height:28px;border:1px solid var(--border);border-radius:6px;overflow:hidden}
+  .navgrp .btn{height:26px;padding:0 5px;border-radius:0;border:none}
+  .navgrp .navpage{font-size:11.5px;color:var(--ink-3);padding:0 7px;border-left:1px solid var(--border-soft);border-right:1px solid var(--border-soft);height:100%;display:flex;align-items:center}
+
+  /* 信息条 */
+  .infobar{padding:7px 18px;font-size:12px;color:var(--ink-3);background:#fff;border-bottom:1px solid var(--border);flex:none;display:flex;align-items:center;gap:6px}
+  .infobar svg{stroke:var(--ink-4)}.infobar b{color:var(--ink-2);font-weight:600}
+
+  /* 主内容 */
+  .content{flex:1;overflow:auto;padding:20px 28px 8px;display:flex;flex-direction:column;align-items:center}
+  .shell{width:100%;max-width:1160px;display:flex;flex-direction:column;gap:16px}
+
+  /* Hero（克制） */
+  .hero{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 24px;box-shadow:var(--shadow);display:flex;align-items:center;gap:20px}
+  .hero-l{flex:1;min-width:0}
+  .hero h1{font-size:20px;font-weight:600;letter-spacing:.2px;color:var(--ink);margin-bottom:5px}
+  .hero p{font-size:13px;color:var(--ink-3);line-height:1.6}
+  .badges{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .badge{font-size:11.5px;color:var(--ink-2);background:var(--bg);border:1px solid var(--border);padding:4px 10px;border-radius:20px;font-weight:500;display:inline-flex;align-items:center;gap:6px}
+  .badge .ic{width:14px;height:14px;stroke:var(--ink-3)}
+  .hero-r{flex:none}
+  .shieldwrap{width:60px;height:60px;border-radius:50%;background:var(--brand-soft);display:flex;align-items:center;justify-content:center}
+  .shieldwrap .ic{width:30px;height:30px;stroke:var(--brand);stroke-width:1.6}
+
+  /* 主操作区（第一焦点，视觉克制稳重） */
+  .drop{position:relative;background:var(--card);border:1.5px dashed var(--border);border-radius:var(--radius);padding:24px 22px;display:flex;align-items:center;gap:20px;box-shadow:var(--shadow)}
+  .drop:hover{border-color:var(--brand-border);background:#FCFDFF}
+  .drop-ic{width:56px;height:56px;border-radius:12px;background:var(--brand-soft);display:flex;align-items:center;justify-content:center;flex:none}
+  .drop-ic .ic{width:28px;height:28px;stroke:var(--brand);stroke-width:1.6}
+  .drop-mid{flex:1;min-width:0}
+  .drop-mid h2{font-size:15px;font-weight:600;margin-bottom:5px;color:var(--ink)}
+  .drop-mid .h-sub{font-size:12.5px;color:var(--ink-3);line-height:1.55}
+  .drop-mid .h-sub b{color:var(--ink-2);font-weight:600}
+  .drop-btn{height:40px;padding:0 22px;border-radius:8px;border:1px solid var(--brand);cursor:pointer;
+    background:var(--brand);color:#fff;font-size:13.5px;font-weight:600;flex:none;white-space:nowrap;
+    display:inline-flex;align-items:center;gap:8px;box-shadow:0 1px 2px rgba(37,99,235,.25)}
+  .drop-btn:hover{background:var(--brand-deep)}
+  .drop-btn .ic{stroke:#fff}
+
+  /* 小节标题 */
+  .sec-label{font-size:12px;color:var(--ink-3);font-weight:600;letter-spacing:.3px;display:flex;align-items:center;gap:7px}
+  .sec-label .bar{width:3px;height:12px;background:var(--brand);border-radius:2px}
+
+  /* 四模式卡 */
+  .modes{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .mode{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;box-shadow:var(--shadow);transition:border-color .15s, box-shadow .15s}
+  .mode:hover{border-color:var(--brand-border);box-shadow:0 2px 8px rgba(37,99,235,.08)}
+  .mode .top{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+  .mi{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex:none}
+  .mi .ic{width:18px;height:18px}
+  .mi.pdf{background:#FEF0F0}.mi.pdf .ic{stroke:#D64545}
+  .mi.word{background:#EBF2FF}.mi.word .ic{stroke:#2563EB}
+  .mi.batch{background:#FEF6E7}.mi.batch .ic{stroke:#B54708}
+  .mi.img{background:#E7F6EC}.mi.img .ic{stroke:#15803D}
+  .mode h3{font-size:13.5px;font-weight:600;color:var(--ink)}
+  .mode .trigger{font-size:11.5px;color:var(--ink-3);margin-bottom:7px;line-height:1.4}
+  .mode .trigger b{color:var(--ink-2);font-weight:600}
+  .mode .caps{font-size:11.5px;color:var(--ink-3);line-height:1.55}
+
+  /* 三步流程条 */
+  .flow{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;box-shadow:var(--shadow);display:flex;align-items:center;gap:8px}
+  .step{flex:1;display:flex;align-items:center;gap:11px;min-width:0}
+  .sn{width:28px;height:28px;border-radius:50%;background:var(--bg);border:1px solid var(--border);color:var(--ink-3);font-weight:600;font-size:12.5px;display:flex;align-items:center;justify-content:center;flex:none}
+  .step.active .sn{background:var(--brand);border-color:var(--brand);color:#fff}
+  .step.active .sn::after{content:""}
+  .st{min-width:0}.st b{font-size:13px;color:var(--ink);display:block;font-weight:600}
+  .st span{font-size:11.5px;color:var(--ink-3)}
+  .arrow{flex:none;color:var(--ink-4)}
+
+  /* 状态栏 */
+  .statusbar{height:30px;background:#fff;border-top:1px solid var(--border);display:flex;align-items:center;padding:0 16px;font-size:11.5px;color:var(--ink-3);gap:14px;flex:none}
+  .statusbar .okdot{width:7px;height:7px;border-radius:50%;background:var(--ok);display:inline-block;margin-right:6px;vertical-align:middle}
+  .statusbar .sp{flex:1}.statusbar a{color:var(--ink-3);text-decoration:none;cursor:pointer}
+  .statusbar a:hover{color:var(--brand)}
+  .statusbar .sep{color:var(--border)}
+
+  .annot{position:fixed;right:18px;bottom:18px;background:#0E1320;color:#9FB3C8;font-size:11px;padding:9px 13px;border-radius:8px;max-width:280px;line-height:1.55;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+  .annot b{color:#fff}
+  @media (max-width:980px){.modes{grid-template-columns:repeat(2,1fr)}.drop{flex-direction:column;align-items:stretch}.hero-r{display:none}}
+</style>
+</head>
+<body>
+
+<!-- 全局线性图标 sprite（单色 stroke，Win/macOS 渲染一致） -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h3.5l2 2H19a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 4.4-2.9 7.5-7 9-4.1-1.5-7-4.6-7-9V6l7-3z"/><path d="M9 12l2 2 4-4"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M5 20h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-bookmark" viewBox="0 0 24 24"><path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"/></symbol>
+  <symbol id="i-pages" viewBox="0 0 24 24"><rect x="4" y="4" width="12" height="16" rx="1.5"/><path d="M8 8h4M8 12h4M8 16h3"/><path d="M17 7l3 .6V20a1.5 1.5 0 0 1-3 0V7z" opacity=".5"/></symbol>
+  <symbol id="i-droplet" viewBox="0 0 24 24"><path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14a0 0 0 0 1 0 0H6a0 0 0 0 1 0 0V3z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-docs" viewBox="0 0 24 24"><path d="M8 5h7l3 3v11H8z"/><path d="M5 8V3h3" opacity=".6"/><path d="M12 8v3h3" opacity=".5"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"/><circle cx="9" cy="10" r="1.6"/><path d="M5 18l4.5-4.5 3 3L16 13l3 3"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M5 7h7M16 7h3"/><circle cx="14" cy="7" r="2"/><path d="M5 17h3M12 17h7"/><circle cx="10" cy="17" r="2"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 3v-3H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="M8 10h8M8 13h5"/></symbol>
+  <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="6" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="18" cy="12" r="1.3"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 24 24"><path d="M9 7l-5 5 5 5"/><path d="M4 12h9a6 6 0 0 1 0 12h-1"/></symbol>
+  <symbol id="i-redo" viewBox="0 0 24 24"><path d="M15 7l5 5-5 5"/><path d="M20 12h-9a6 6 0 0 0 0 12h1"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M8 7l4-4 4 4"/><path d="M5 14v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/></symbol>
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><path d="M12 8a4 4 0 0 1 4 4 4 4 0 0 1-4 4 4 4 0 0 1-4-4 4 4 0 0 1 4-4z"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5"/><circle cx="12" cy="8" r=".6" fill="currentColor"/></symbol>
+  <symbol id="i-extract" viewBox="0 0 24 24"><rect x="3" y="3" width="12" height="18" rx="1.5"/><path d="M9 8h4M9 12h4M9 16h3"/><path d="M16 12h5"/><path d="M18.5 9.5L21 12l-2.5 2.5"/></symbol>
+  <symbol id="i-crop" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8.2 7.8L20 13"/><path d="M8.2 16.2L20 11"/></symbol>
+  <symbol id="i-reset" viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.6-5.9"/><path d="M4 4v4h4"/></symbol>
+  <symbol id="i-fit" viewBox="0 0 24 24"><path d="M5 9V6a1 1 0 0 1 1-1h3"/><path d="M19 9V6a1 1 0 0 0-1-1h-3"/><path d="M5 15v3a1 1 0 0 0 1 1h3"/><path d="M19 15v3a1 1 0 0 1-1 1h-3"/></symbol>
+  <symbol id="i-first" viewBox="0 0 24 24"><path d="M7 5v14"/><path d="M19 5l-9 7 9 7"/></symbol>
+  <symbol id="i-prev" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></symbol>
+  <symbol id="i-next" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-last" viewBox="0 0 24 24"><path d="M17 5v14"/><path d="M5 5l9 7-9 7"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></symbol>
+</svg>
+
+<div class="window">
+  <!-- 标题栏 -->
+  <div class="titlebar">
+    <div class="tl-dots"><i></i><i></i><i></i></div>
+    <div class="tl-logo">PG</div>
+    <div class="tl-title"><b>PrivacyGuard 脱敏卫士</b>&nbsp;&nbsp;v40.1.2</div>
+    <div class="tl-spacer"></div>
+    <button class="tl-feedback" title="使用说明 / 提交反馈"><svg class="ic"><use href="#i-chat"/></svg>使用 / 反馈</button>
+  </div>
+
+  <!-- 工具栏（线性图标；首页：打开=主按钮，其余禁用灰显，点开文件后激活） -->
+  <div class="toolbar">
+    <!-- 主：打开（图标） -->
+    <div class="tg">
+      <button class="btn" title="打开文件"><svg class="ic"><use href="#i-folder"/></svg></button>
+    </div>
+    <!-- 脱敏：智能脱敏（突出）+ 去水印 -->
+    <div class="tg">
+      <button class="btn primary dis" title="智能脱敏"><svg class="ic sm"><use href="#i-spark"/></svg>智能脱敏</button>
+      <button class="btn dis"><svg class="ic sm"><use href="#i-droplet"/></svg>去水印</button>
+    </div>
+    <!-- 遮罩色块 -->
+    <div class="tg">
+      <div class="seg" title="遮罩颜色">
+        <button class="swatch sw-b" title="黑遮罩"></button>
+        <button class="swatch sw-w" title="白遮罩"></button>
+        <button class="swatch sw-c" title="取色遮罩"></button>
+      </div>
+    </div>
+    <!-- 页面结构 -->
+    <div class="tg">
+      <button class="btn dis" title="页面视图"><svg class="ic"><use href="#i-pages"/></svg></button>
+      <button class="btn dis" title="书签 / 目录"><svg class="ic"><use href="#i-bookmark"/></svg></button>
+      <button class="btn dis" title="提取：框选纵向区域裁剪到独立结果文档"><svg class="ic"><use href="#i-extract"/></svg></button>
+      <button class="btn dis" title="截去：框选纵向区域挖掉并上下拼接"><svg class="ic"><use href="#i-crop"/></svg></button>
+    </div>
+    <!-- 编辑 -->
+    <div class="tg">
+      <button class="btn dis" title="撤销 (Ctrl+Z)"><svg class="ic"><use href="#i-undo"/></svg></button>
+      <button class="btn dis" title="重置文档"><svg class="ic"><use href="#i-reset"/></svg></button>
+      <button class="btn dis" title="恢复 (Ctrl+Y)"><svg class="ic"><use href="#i-redo"/></svg></button>
+      <button class="btn dis" title="适应页面"><svg class="ic"><use href="#i-fit"/></svg></button>
+    </div>
+    <div style="flex:1"></div>
+    <!-- 缩放 / 翻页（居中） -->
+    <div class="tg">
+      <div class="navgrp">
+        <button class="btn dis"><svg class="ic sm"><use href="#i-minus"/></svg></button>
+        <span class="navpage">100%</span>
+        <button class="btn dis"><svg class="ic sm"><use href="#i-plus"/></svg></button>
+      </div>
+      <div class="navgrp">
+        <button class="btn dis"><svg class="ic sm"><use href="#i-first"/></svg></button>
+        <button class="btn dis"><svg class="ic sm"><use href="#i-prev"/></svg></button>
+        <span class="navpage">1 / 1</span>
+        <button class="btn dis"><svg class="ic sm"><use href="#i-next"/></svg></button>
+        <button class="btn dis"><svg class="ic sm"><use href="#i-last"/></svg></button>
+      </div>
+    </div>
+    <div style="flex:1"></div>
+    <!-- 输出：搜索 / 加密（图标）+ 导出（突出） -->
+    <div class="tg">
+      <button class="btn dis" title="全文搜索"><svg class="ic"><use href="#i-search"/></svg></button>
+      <button class="btn dis" title="加密导出（AES-256）"><svg class="ic"><use href="#i-lock"/></svg></button>
+      <button class="btn primary dis" title="导出脱敏结果"><svg class="ic sm"><use href="#i-export"/></svg>导出</button>
+    </div>
+    <!-- 系统（贴右） -->
+    <div class="tg">
+      <button class="btn ghost" title="高级设置"><svg class="ic"><use href="#i-settings"/></svg></button>
+      <button class="btn ghost" title="更多"><svg class="ic"><use href="#i-dots"/></svg></button>
+    </div>
+  </div>
+
+  <!-- 信息条（弱化） -->
+  <div class="infobar">
+    <svg class="ic sm"><use href="#i-info"/></svg>
+    <b>提示</b>：支持直接拖拽导入，系统会按文件类型自动进入 PDF 脱敏 / Word 替换 / 批量 Word / 图片合并。
+  </div>
+
+  <!-- 主内容 -->
+  <div class="content">
+    <div class="shell">
+
+      <!-- Hero -->
+      <div class="hero">
+        <div class="hero-l">
+          <h1>选择开始方式</h1>
+          <p>打开或拖拽文件，系统会自动进入对应模式。所有处理<b>本地完成</b>，文档不出本机。</p>
+          <div class="badges">
+            <span class="badge"><svg class="ic"><use href="#i-lock"/></svg>本地离线</span>
+            <span class="badge">自动分流</span>
+            <span class="badge"><svg class="ic"><use href="#i-shield"/></svg>智能 + 手动</span>
+          </div>
+        </div>
+        <div class="hero-r">
+          <div class="shieldwrap"><svg class="ic"><use href="#i-shield"/></svg></div>
+        </div>
+      </div>
+
+      <!-- 主操作：拖拽 / 选择文件（第一焦点） -->
+      <div class="drop">
+        <div class="drop-ic"><svg class="ic"><use href="#i-upload"/></svg></div>
+        <div class="drop-mid">
+          <h2>把文件拖到这里，或点击选择</h2>
+          <div class="h-sub">支持 <b>PDF</b> / <b>Word</b>（.docx .doc）/ <b>图片</b>（jpg · png · …） · 多选拖入可触发批量处理</div>
+        </div>
+        <button class="drop-btn"><svg class="ic sm"><use href="#i-folder"/></svg>选择文件</button>
+      </div>
+
+      <!-- 四模式卡：拖入什么 → 进入什么 -->
+      <div class="sec-label"><span class="bar"></span>拖入不同文件，自动进入对应模式</div>
+      <div class="modes">
+        <div class="mode">
+          <div class="top"><div class="mi pdf"><svg class="ic"><use href="#i-doc"/></svg></div><h3>PDF 脱敏</h3></div>
+          <div class="trigger">拖入 <b>PDF / 图片</b> 触发</div>
+          <div class="caps">文字层搜索 · 图片 OCR · 混合 PDF · 印章签名检测 · 手动框选</div>
+        </div>
+        <div class="mode">
+          <div class="top"><div class="mi word"><svg class="ic"><use href="#i-doc"/></svg></div><h3>Word 替换</h3></div>
+          <div class="trigger">拖入单个 <b>.docx / .doc</b> 触发</div>
+          <div class="caps">规则替换 · 自定义关键词 · 智能脱敏 · 双栏对比预览</div>
+        </div>
+        <div class="mode">
+          <div class="top"><div class="mi batch"><svg class="ic"><use href="#i-docs"/></svg></div><h3>批量 Word</h3></div>
+          <div class="trigger">拖入 / 选择 <b>多个</b> Word 触发</div>
+          <div class="caps">同一套规则一次处理多份文档 · 逐文件统计替换条数</div>
+        </div>
+        <div class="mode">
+          <div class="top"><div class="mi img"><svg class="ic"><use href="#i-image"/></svg></div><h3>图片合并</h3></div>
+          <div class="trigger">拖入 <b>多张图片</b> 触发</div>
+          <div class="caps">按顺序整理后合并为一个 PDF · 删除 / 移动 / 替换</div>
+        </div>
+      </div>
+
+      <!-- 三步流程条 -->
+      <div class="flow">
+        <div class="step active">
+          <div class="sn">1</div>
+          <div class="st"><b>导入文件</b><span>打开 / 拖拽，自动分流</span></div>
+        </div>
+        <svg class="ic arrow"><use href="#i-arrow"/></svg>
+        <div class="step">
+          <div class="sn">2</div>
+          <div class="st"><b>脱敏处理</b><span>智能识别 / 手动框选 / 规则替换</span></div>
+        </div>
+        <svg class="ic arrow"><use href="#i-arrow"/></svg>
+        <div class="step">
+          <div class="sn">3</div>
+          <div class="st"><b>导出结果</b><span>AES-256 加密 + 脱敏报告</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 状态栏 -->
+  <div class="statusbar">
+    <span><span class="okdot"></span>本地离线运行</span>
+    <span class="sep">|</span>
+    <span>就绪</span>
+    <span class="sp"></span>
+    <a>使用 / 反馈</a>
+    <span class="sep">·</span>
+    <a>池州汪律的AI进化论</a>
+  </div>
+</div>
+
+<div class="annot">
+  <b>v2 评估原型</b> · 全部 emoji 已替换为单色线性 SVG（Win/macOS 渲染一致）；配色克制为企业级；逻辑：Hero → 主操作（第一焦点）→ 四模式分流 → 三步流程。浏览器可直接预览。
+</div>
+</body>
+</html>

@@ -11,14 +11,14 @@ cd /d "%APP_DIR%"
 set "MISSING_DLL="
 set "MISSING_CRITICAL=0"
 
-if not exist "C:\Windows\System32\vcruntime140.dll" (
+if not exist "%APP_DIR%vcruntime140.dll" if not exist "%APP_DIR%_internal\vcruntime140.dll" if not exist "%SystemRoot%\System32\vcruntime140.dll" (
     set "MISSING_DLL=vcruntime140.dll"
 )
-if not exist "C:\Windows\System32\vcruntime140_1.dll" (
+if not exist "%APP_DIR%vcruntime140_1.dll" if not exist "%APP_DIR%_internal\vcruntime140_1.dll" if not exist "%SystemRoot%\System32\vcruntime140_1.dll" (
     set "MISSING_DLL=vcruntime140_1.dll"
     set "MISSING_CRITICAL=1"
 )
-if not exist "C:\Windows\System32\msvcp140.dll" (
+if not exist "%APP_DIR%msvcp140.dll" if not exist "%APP_DIR%_internal\msvcp140.dll" if not exist "%SystemRoot%\System32\msvcp140.dll" (
     set "MISSING_DLL=msvcp140.dll"
 )
 

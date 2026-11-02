@@ -1,0 +1,2752 @@
+{
+  "scope": "Tracked Git index files: complete byte read, SHA256, UTF-8 scan and Python AST; manifest excludes itself. Not a line-by-line human audit or dependency audit.",
+  "files": [
+    {
+      "path": ".github/ISSUE_TEMPLATE/bug_report.yml",
+      "bytes": 781,
+      "sha256": "a8ffe87a7edfa60e6ac5a0936703a9bc23f7562fa2e7fc4858009e376000a666",
+      "kind": "text",
+      "lines": 24
+    },
+    {
+      "path": ".github/pull_request_template.md",
+      "bytes": 320,
+      "sha256": "df1eea7236dc86ec3b70d44cc3305392bf98c10a48c9b6fecff6921e2f236268",
+      "kind": "text",
+      "lines": 11
+    },
+    {
+      "path": ".github/workflows/ci.yml",
+      "bytes": 2312,
+      "sha256": "8f78504056d3b4fb9baf755977ca8b7d2e70ebd1e378ce60e81988a1975f0e7e",
+      "kind": "text",
+      "lines": 65
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 1827,
+      "sha256": "657d4489d8e04cd029d5c5df4e7676de1af64e003e77c3b5c834ca0c7688024a",
+      "kind": "text",
+      "lines": 121
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 16431,
+      "sha256": "d975d506a85e0b50acda7728c2e23c4120cc564349a3dda73a882dc78049261f",
+      "kind": "text",
+      "lines": 319
+    },
+    {
+      "path": "ARCHITECTURE.md",
+      "bytes": 17873,
+      "sha256": "665999f740fb7d48b51c46815e6afd435d3813c06a9e5d7a91127b708c459d0c",
+      "kind": "text",
+      "lines": 408
+    },
+    {
+      "path": "BUILD_WINDOWS_PORTABLE.bat",
+      "bytes": 652,
+      "sha256": "8fecacb8badbb1e347ec585d8b6befa0d4a51427c123f5258ea8731bdb93e515",
+      "kind": "text",
+      "lines": 23
+    },
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 153443,
+      "sha256": "9906810aef3b45b46f8a18a650d03e67340912edbec75c2c900c127732393150",
+      "kind": "text",
+      "lines": 2762
+    },
+    {
+      "path": "CLAUDE.md",
+      "bytes": 202,
+      "sha256": "34ba9cd49ea88795fc0ede07cfe8539a321ac2367ec632062130c1e2173df632",
+      "kind": "text",
+      "lines": 6
+    },
+    {
+      "path": "CONTRIBUTING.md",
+      "bytes": 8139,
+      "sha256": "516d5e0b6bd9e0a43ec9802382d09f76ef8a108b4da6f06766344f8c2756ee3d",
+      "kind": "text",
+      "lines": 239
+    },
+    {
+      "path": "HOME_REDESIGN_PREVIEW.html",
+      "bytes": 22868,
+      "sha256": "a527d18964526fb2bdd15e8e53aca3d7e334a08c278d8b8fd10bd271e148d3fa",
+      "kind": "text",
+      "lines": 345
+    },
+    {
+      "path": "LICENSE",
+      "bytes": 35151,
+      "sha256": "ede10d3e1a31faaae16c5e004d715ccb4bf50a86b4af5a8f5c0c0a93df96b2cb",
+      "kind": "text",
+      "lines": 674
+    },
+    {
+      "path": "README.md",
+      "bytes": 8517,
+      "sha256": "17ff11070bb861a4ca75cf991f0c5e61368d77d82773cfcf152689f34e623692",
+      "kind": "text",
+      "lines": 144
+    },
+    {
+      "path": "README_EN.md",
+      "bytes": 6364,
+      "sha256": "c80d81d0eac3584741b6a95cdb9fe734efc65b3326b3e302c8091f8cc03c30e9",
+      "kind": "text",
+      "lines": 106
+    },
+    {
+      "path": "ROLLBACK_GUIDE.md",
+      "bytes": 1030,
+      "sha256": "1501877189f122906ae248fae0b5a87524f5ae15df91c7839c000fbed54acc7c",
+      "kind": "text",
+      "lines": 49
+    },
+    {
+      "path": "SECURITY.md",
+      "bytes": 1245,
+      "sha256": "27779705fedf6e16b465fee242ccfef1a31a1bb822daa7a9033e5a6be209524e",
+      "kind": "text",
+      "lines": 17
+    },
+    {
+      "path": "WINDOWS_BUILD_README.md",
+      "bytes": 3019,
+      "sha256": "3c32cb60ae93d3430ae193a9cd3c0bd280b21ef0be2ed6d5554f2450c1a58f13",
+      "kind": "text",
+      "lines": 56
+    },
+    {
+      "path": "assets/branding/v38/icon_batch_word.svg",
+      "bytes": 622,
+      "sha256": "6c24f551c91ce1f3baa01fea2728dd6397edb370ddd506b9d7f30768e9e651fd",
+      "kind": "text",
+      "lines": 8
+    },
+    {
+      "path": "assets/branding/v38/icon_feedback_support.svg",
+      "bytes": 640,
+      "sha256": "b0c06401fd7d78bf37fe6d8f2a78bcfe054af448912e461f28334b0361376ece",
+      "kind": "text",
+      "lines": 6
+    },
+    {
+      "path": "assets/branding/v38/icon_image_merge_pdf.svg",
+      "bytes": 721,
+      "sha256": "f8565f692eb5731a8cf0d4882c40bc6a868d889f51ca0578832c5c804199a0d2",
+      "kind": "text",
+      "lines": 9
+    },
+    {
+      "path": "assets/branding/v38/icon_pdf_redaction.svg",
+      "bytes": 660,
+      "sha256": "e63a37ba0c7b02e8dc9f1c2a592246e55a0f24bc6dd950d3f2ffd7a813a52725",
+      "kind": "text",
+      "lines": 8
+    },
+    {
+      "path": "assets/branding/v38/icon_settings_advanced.svg",
+      "bytes": 552,
+      "sha256": "da3052290bc934b74397fc6c26b3337e6631412f85695e422d0eda645990d776",
+      "kind": "text",
+      "lines": 9
+    },
+    {
+      "path": "assets/branding/v38/icon_word_replace.svg",
+      "bytes": 821,
+      "sha256": "9060385c60288461d7ec1bd68f5a1f004fa31b97202df0451b59ab257457fb96",
+      "kind": "text",
+      "lines": 9
+    },
+    {
+      "path": "assets/branding/v38/privacyguard_logo_lockup.svg",
+      "bytes": 1828,
+      "sha256": "8ddee359a15d0f7138b3193ca76ac02a3e11662091ad65d67aeeb2456dc634c7",
+      "kind": "text",
+      "lines": 22
+    },
+    {
+      "path": "assets/branding/v38/privacyguard_logo_mark.svg",
+      "bytes": 1434,
+      "sha256": "431df7189b9da1974f043d21828662a718186e66479bc27a446e0f2c18c15188",
+      "kind": "text",
+      "lines": 20
+    },
+    {
+      "path": "assets/check_white.svg",
+      "bytes": 232,
+      "sha256": "2c5f2617b48d31b4e7c575508e0adb418191609c7299efad859d059dc2a5b361",
+      "kind": "text",
+      "lines": 3
+    },
+    {
+      "path": "assets/donate_qrcode.png",
+      "bytes": 193866,
+      "sha256": "ad18e716d1e18a80dff9114ebeb8efe93a56c394b69b108709b9e7ac604dd01c",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/icons/bookmark.svg",
+      "bytes": 292,
+      "sha256": "4f1332144b36d1d53b8fdc0e4723d0dc6b3102eefd276aa5993ab68f45795cde",
+      "kind": "text",
+      "lines": 3
+    },
+    {
+      "path": "assets/icons/lock_encrypt.svg",
+      "bytes": 314,
+      "sha256": "dac137ca3494e35b732bc965fc932ec5d27817fa651d2d15143d2fe7a9fce54d",
+      "kind": "text",
+      "lines": 5
+    },
+    {
+      "path": "assets/icons/mask_black.svg",
+      "bytes": 139,
+      "sha256": "384610717d988824cc79bab555ea638e79e16da8785dd9e2c57d0853657266a7",
+      "kind": "text",
+      "lines": 3
+    },
+    {
+      "path": "assets/icons/mask_color.svg",
+      "bytes": 351,
+      "sha256": "5091b2780d525af9192152263b8c348c0116f5bd3a27f40a8fc25ce6a71992c2",
+      "kind": "text",
+      "lines": 5
+    },
+    {
+      "path": "assets/icons/mask_white.svg",
+      "bytes": 211,
+      "sha256": "8cbf9f9aa71843fd9b0e5b61249f296818d6e241bfbc7ca9f0750da4a2bd4c9d",
+      "kind": "text",
+      "lines": 3
+    },
+    {
+      "path": "assets/icons/page_crop.svg",
+      "bytes": 408,
+      "sha256": "78a0056d60a4718d6bcef1093e1c8bba1e916a2009822bfc2e55db51d0dd091d",
+      "kind": "text",
+      "lines": 6
+    },
+    {
+      "path": "assets/icons/page_delete.svg",
+      "bytes": 479,
+      "sha256": "3020c4656953c9b1533aeabd13fc94fda51490fabf2e59389e093d53373fc50b",
+      "kind": "text",
+      "lines": 7
+    },
+    {
+      "path": "assets/icons/page_extract.svg",
+      "bytes": 465,
+      "sha256": "9a2686bf59b86234c948516b8e0765105c821149d12d2a7584891ee925fcc169",
+      "kind": "text",
+      "lines": 7
+    },
+    {
+      "path": "assets/icons/page_extract_delete.svg",
+      "bytes": 307,
+      "sha256": "415edd4187271d3d09390ee044733c9693392c26e14a717e8b2b3ad8f0b506e6",
+      "kind": "text",
+      "lines": 5
+    },
+    {
+      "path": "assets/icons/page_extract_down.svg",
+      "bytes": 300,
+      "sha256": "8b36f1063952b99f33a22a8b2e4433ee1a4362d065bf57234a8d792992686a7f",
+      "kind": "text",
+      "lines": 5
+    },
+    {
+      "path": "assets/icons/page_extract_export.svg",
+      "bytes": 463,
+      "sha256": "9f7b10e08f941c9d1462fd0d795a2ca066fb18662f3e47ad1780067602e9528b",
+      "kind": "text",
+      "lines": 7
+    },
+    {
+      "path": "assets/icons/page_extract_new.svg",
+      "bytes": 419,
+      "sha256": "6e06285bf4ca383423432a8d9cda4cf258a6d983656a5d3426361e38d51c9967",
+      "kind": "text",
+      "lines": 6
+    },
+    {
+      "path": "assets/icons/page_extract_replace.svg",
+      "bytes": 315,
+      "sha256": "596df8ab1d892b42225b4e750800b2228e4df00d22b066fb64b6b8f9b253d41e",
+      "kind": "text",
+      "lines": 5
+    },
+    {
+      "path": "assets/icons/page_extract_up.svg",
+      "bytes": 299,
+      "sha256": "62116e93756df7cf6f4ffe0c04f48532254ab8665bafc11b3b8c8cf1550ee930",
+      "kind": "text",
+      "lines": 5
+    },
+    {
+      "path": "assets/icons/page_insert.svg",
+      "bytes": 425,
+      "sha256": "db4d87dcde804a917b0755804035326169871d929e35b348e487bcb089542f54",
+      "kind": "text",
+      "lines": 6
+    },
+    {
+      "path": "assets/icons/page_insert_file.svg",
+      "bytes": 482,
+      "sha256": "b08c6c5c0e2e30bf7cd460046016ba7e25722a0ecff57ac78ed4ddd8ce1145e4",
+      "kind": "text",
+      "lines": 7
+    },
+    {
+      "path": "assets/icons/page_rotate_left.svg",
+      "bytes": 258,
+      "sha256": "04497c272b3cad189e6463c94dcd3508544c48651fab86170263da388aa063a8",
+      "kind": "text",
+      "lines": 4
+    },
+    {
+      "path": "assets/icons/page_rotate_right.svg",
+      "bytes": 263,
+      "sha256": "afd06a085a9a50afc2b0913148e4ddb6c72bbad53ed7c50d4a09e5594916a60a",
+      "kind": "text",
+      "lines": 4
+    },
+    {
+      "path": "assets/icons/page_view_grid.svg",
+      "bytes": 407,
+      "sha256": "7d183ff8ef491ff7b71600e6219426b4c3edc5b5e47ed7b8d820d4a9ebb61771",
+      "kind": "text",
+      "lines": 6
+    },
+    {
+      "path": "assets/icons/redo.svg",
+      "bytes": 258,
+      "sha256": "6f65047fd0c1109849ce04e075789595d7705dbb4b1b9d048b64fc72630e8cd4",
+      "kind": "text",
+      "lines": 4
+    },
+    {
+      "path": "assets/icons/reset.svg",
+      "bytes": 248,
+      "sha256": "b41d0099bfeef2b9b579de13e4500d316605ac4609531ad92ce7930623cc8d98",
+      "kind": "text",
+      "lines": 4
+    },
+    {
+      "path": "assets/icons/search_magnifier.svg",
+      "bytes": 247,
+      "sha256": "884381e758028779d6b56d45e47da9951f2f9645f13531d90135d2c60e16ffe3",
+      "kind": "text",
+      "lines": 4
+    },
+    {
+      "path": "assets/icons/settings_gear.svg",
+      "bytes": 845,
+      "sha256": "3dfb7e3699c24a88b9440ef8b34ff003eab05e1889d9542647500679b4d640e2",
+      "kind": "text",
+      "lines": 4
+    },
+    {
+      "path": "assets/icons/undo.svg",
+      "bytes": 253,
+      "sha256": "abc7bac68a7a80f624abfe0133d29c4f30bd8e15628a5fe14029b388d7dc63d2",
+      "kind": "text",
+      "lines": 4
+    },
+    {
+      "path": "assets/js/word_preview_interactive.js",
+      "bytes": 22091,
+      "sha256": "b008d69aa52f902e1b8bbaeea5fb7edcf307c29e9c683ae47cc64169d0b5f1ce",
+      "kind": "text",
+      "lines": 514
+    },
+    {
+      "path": "assets/logo/LOGO_DESIGN_GUIDE.md",
+      "bytes": 7211,
+      "sha256": "ac0848726a17a2214ac9f749230e83a8e83612b4a5df0e6e48ee006168706da2",
+      "kind": "text",
+      "lines": 268
+    },
+    {
+      "path": "assets/logo/README.md",
+      "bytes": 5702,
+      "sha256": "7b3057b6309c04e2fdda7c72350598aeca66cb371a6c8b713c9eadb049ca5634",
+      "kind": "text",
+      "lines": 202
+    },
+    {
+      "path": "assets/logo/export/1024/logo_dark_1024.png",
+      "bytes": 46328,
+      "sha256": "a0d1e9b484479dbe519a4e6246f63e1b9ea5f591ebe8368c1a4e79df1303a920",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/1024/logo_default_1024.png",
+      "bytes": 44930,
+      "sha256": "87a4b7a162f12a7a2178b13d8d0de58fbe65729e967a3548a6c0186130b68345",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/128/logo_dark_128.png",
+      "bytes": 3920,
+      "sha256": "25b6fe916936776b57e3ac0ac66c19d1b9aece8c0cdf2aa9eeb06ddf346de5e8",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/128/logo_default_128.png",
+      "bytes": 3875,
+      "sha256": "1c8df73919f286849a8e7a6a8a9cf732036fa4cd215dc480971dda2ad782f1c8",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/16/logo_dark_16.png",
+      "bytes": 559,
+      "sha256": "896ec5086a3f46865a0e8019ad4c443fa978db2b8757729130c2aa561fe5e274",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/16/logo_default_16.png",
+      "bytes": 529,
+      "sha256": "d4795363f94044342546da5e82bc95d1c42b24f85035a7dc7262e8fc4e6a5f92",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/24/logo_dark_24.png",
+      "bytes": 906,
+      "sha256": "e0610589209da778b0d1bc2c564c983fadbb46153673c26bc2a075d8312a76cd",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/24/logo_default_24.png",
+      "bytes": 866,
+      "sha256": "34b04e6a9811f0775ca8fcd57d09b26493bfea788e3fe663e651586d73879cc4",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/256/logo_dark_256.png",
+      "bytes": 8154,
+      "sha256": "71a739387d5dcc3257b7b837acd8fae94c6fb253b5d0f9347e2047b2c2456e26",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/256/logo_default_256.png",
+      "bytes": 8033,
+      "sha256": "1f482454ca309607b7cfa3a9162234cf63a9dc284401231fb3257d0ef22ff299",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/32/logo_dark_32.png",
+      "bytes": 1085,
+      "sha256": "ee2434703e96eb3c180400163c39f7fb0cc22763dd9c11dbb5813f199200861c",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/32/logo_default_32.png",
+      "bytes": 1022,
+      "sha256": "b0bc503ccd0f426ccdb7b52ff5fd0870d28fb0a3c42f1f7233641e28836203fd",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/48/logo_dark_48.png",
+      "bytes": 1614,
+      "sha256": "86c9943de44398129713d39bf1330d2b52d7d6a8b83a4d4e8826ff584bed4283",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/48/logo_default_48.png",
+      "bytes": 1526,
+      "sha256": "dbed8a2751aacff45e85aed60d4b9087eed19f75ffa3fc86a57c114715e9fbc4",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/512/logo_dark_512.png",
+      "bytes": 18349,
+      "sha256": "5f5a9983f9d1dac02980cf93ee634688446c3da941797c9a1f50f132ecb0638f",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/512/logo_default_512.png",
+      "bytes": 17862,
+      "sha256": "7d658aef0ca6f8234fcf79f8ba7e7ce7ac3b2c79ecbc6772c43176a3c7cb162c",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/64/logo_dark_64.png",
+      "bytes": 2046,
+      "sha256": "d0f2027cb3fcee423eeedd14b3992ef5f27928a6060140252b80fe0f49e7fe66",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/export/64/logo_default_64.png",
+      "bytes": 1992,
+      "sha256": "292002a07681a62eb48363a734ff0a3aaf86024892ef5e3a103094c118af935b",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/generate_icons.py",
+      "bytes": 12700,
+      "sha256": "a73eaca970c666b15d7ad63f91b2e898e7eae5d86cb02958ae591c7c0c771579",
+      "kind": "text",
+      "lines": 383,
+      "classes": 0,
+      "functions": 10
+    },
+    {
+      "path": "assets/logo/linux/privacyguard.png",
+      "bytes": 9376,
+      "sha256": "e9a368be7343e714d1b4555a6afd456ef662eb30e18738ba3e6ccd91475398b3",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/linux/privacyguard_128x128.png",
+      "bytes": 4170,
+      "sha256": "e33450325a92510a0b0db9584d6209a4a569f601d345c232e573345573f21226",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/linux/privacyguard_16x16.png",
+      "bytes": 541,
+      "sha256": "3397eb5f264c9296a0ea0bbecf475c1991a3b7696a1019f7f867e98285c438f8",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/linux/privacyguard_24x24.png",
+      "bytes": 887,
+      "sha256": "458da2711c034adb9fb5637999212cd5f6ceeb545060c782eaa6dcdfd448334b",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/linux/privacyguard_256x256.png",
+      "bytes": 9376,
+      "sha256": "e9a368be7343e714d1b4555a6afd456ef662eb30e18738ba3e6ccd91475398b3",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/linux/privacyguard_32x32.png",
+      "bytes": 1042,
+      "sha256": "30b22bb11dcbfe49c00bfb34943952681b63e24e8e7b4159b9285496cde93b34",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/linux/privacyguard_48x48.png",
+      "bytes": 1548,
+      "sha256": "d8f575a00e223e6bdddbdd24dd442e040aaedb591420b99aa6a9aa09c4f3b488",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/linux/privacyguard_512x512.png",
+      "bytes": 24466,
+      "sha256": "29d4fff78a91c6026d25479d51a43c1c084e75ee6b1ce45757bbc4edd85b716c",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/linux/privacyguard_64x64.png",
+      "bytes": 2037,
+      "sha256": "1328445583dbff533722cf8720435d0ba06a2652c9d321d62f77798ec2cc1d5b",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/macos/AppIcon.icns",
+      "bytes": 356593,
+      "sha256": "3be527bfaada345312a48b913c9b9bda8c0f695f56a677d5012ea6e4781e2d67",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/marketing/app_store_icon.png",
+      "bytes": 66827,
+      "sha256": "3c6ad8187998e33f5e6d049b556e1cf7cd0a03cfd8ac0d3c3f96fd1dc512e76e",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/marketing/banner_basic.png",
+      "bytes": 11416,
+      "sha256": "bfb5eb8e1d0aee0f7096102269520934364f4c34dd1b0beb4bd5245d72ebc537",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/logo/source/logo_dark.svg",
+      "bytes": 1198,
+      "sha256": "1d79f745e9b102c69ec588c0a3cd187cd4e69b6c4ac07db95e3f1af7470130c5",
+      "kind": "text",
+      "lines": 29
+    },
+    {
+      "path": "assets/logo/source/logo_master.svg",
+      "bytes": 1201,
+      "sha256": "3191d6282e6905d074e0c13f1a8df09b2f29c7b22d0b07a483dccdfc6c41ff4d",
+      "kind": "text",
+      "lines": 29
+    },
+    {
+      "path": "assets/logo/windows/app_icon.ico",
+      "bytes": 12577,
+      "sha256": "13e1cde8e90ffe92ef2c0d065af78603aa93b605df84d53a34150dbf8f0cbcbb",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/showcase/banner.svg",
+      "bytes": 2646,
+      "sha256": "2a09262b95e2e0d72b316e43568649a5a921d8496628c0aa53457baf46a1835d",
+      "kind": "text",
+      "lines": 19
+    },
+    {
+      "path": "assets/showcase/bookmarks.png",
+      "bytes": 90039,
+      "sha256": "252979755d2cb1a6862b4050f10882fbac8f8c46f9c9de4269a75bfb194b1d9d",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/showcase/home.png",
+      "bytes": 108188,
+      "sha256": "2139f21984a2cacbc58bb19c374095bd43241fe864c89c97b132ab6294d81c3b",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/showcase/pdf.png",
+      "bytes": 83790,
+      "sha256": "f31ac892eb4c42f3fa68b9b78daedc3a63438f5b3ba060acda23baec967b3818",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/showcase/social-preview.png",
+      "bytes": 108093,
+      "sha256": "7d67f6c696e2d767b7819e7b447f3d17a6312ba7e32cd4020a962d762fe837ed",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/showcase/word.png",
+      "bytes": 165808,
+      "sha256": "bced3b177d208dfae62d16acd12e32c026aba31d184cbef7be8330bc3bf8f5d3",
+      "kind": "binary"
+    },
+    {
+      "path": "assets/wx_qrcode.png",
+      "bytes": 27734,
+      "sha256": "741ad861d63675f7ded4ab7749846b966ae7e7a80a5f89a1e78d32b0c6ba3d62",
+      "kind": "binary"
+    },
+    {
+      "path": "config.json.template",
+      "bytes": 7973,
+      "sha256": "f57d1b073bde9f2552c18de8b725ad13d37037c356fdd6b6b554e3fe93fde04e",
+      "kind": "text",
+      "lines": 165
+    },
+    {
+      "path": "docs/archive/CODE_REVIEW_ANALYSIS_OPUS.md",
+      "bytes": 9629,
+      "sha256": "d211416232d1d936cea08775328f6e60700486a337df3fb71148ed3a499a59c5",
+      "kind": "text",
+      "lines": 346
+    },
+    {
+      "path": "docs/archive/CODE_REVIEW_REPORT202602172000_glm.md",
+      "bytes": 6631,
+      "sha256": "c8e4587da8b326d24c08236d9707696d1f64cd21d071dab1dd0c1d5dd9b6ede4",
+      "kind": "text",
+      "lines": 255
+    },
+    {
+      "path": "docs/archive/CRITICAL_FIXES_LOG.md",
+      "bytes": 3451,
+      "sha256": "3d54d8480ff6698dd27d8135eccf27ccca1a31a42bbfed662e2328eeb5459663",
+      "kind": "text",
+      "lines": 122
+    },
+    {
+      "path": "docs/archive/PROGRESS_WINDOWS_BUILD.md",
+      "bytes": 2727,
+      "sha256": "9cb0a451021ea967cc85ff6f259ac5bbab0548457085131374f408459d77fdb7",
+      "kind": "text",
+      "lines": 119
+    },
+    {
+      "path": "docs/archive/PROJECT_CLEANUP_REPORT.md",
+      "bytes": 3465,
+      "sha256": "9d97a272778de578ca177bc4e095fba89d9c119330ec889908b6d2e3bb1ba48d",
+      "kind": "text",
+      "lines": 130
+    },
+    {
+      "path": "docs/archive/RELEASE_SUMMARY_v37.0.4.md",
+      "bytes": 4005,
+      "sha256": "c90fd693f0fd10d8b86e12dbd3eb54da9fec1daa7c5332c5b2e7284b13240ee7",
+      "kind": "text",
+      "lines": 142
+    },
+    {
+      "path": "docs/archive/RELEASE_SUMMARY_v37.0.md",
+      "bytes": 6081,
+      "sha256": "646a49f7afdda6d0beeb5735a6d3985744623404b33300804a319a2a93aa223d",
+      "kind": "text",
+      "lines": 222
+    },
+    {
+      "path": "docs/archive/features/DUAL_OCR_ENGINE.md",
+      "bytes": 5551,
+      "sha256": "c9208100aa8508358d533650112da5de197c7f408397bedc3804cf78b4586d93",
+      "kind": "text",
+      "lines": 192
+    },
+    {
+      "path": "docs/archive/features/SECURITY_FEATURES.md",
+      "bytes": 3512,
+      "sha256": "84730428cdf3a7abfd181d687da44a433292b8ce4eb2e7bf19907338137a50d5",
+      "kind": "text",
+      "lines": 123
+    },
+    {
+      "path": "docs/archive/old_docs/CODE_IMPROVEMENTS.md",
+      "bytes": 10398,
+      "sha256": "23125d6042af40ba2c61061c2c09fa758abb8ae5ef557a6ac8ffece76ff96da3",
+      "kind": "text",
+      "lines": 405
+    },
+    {
+      "path": "docs/archive/old_docs/DAILY_PROGRESS_2026-02-08.md",
+      "bytes": 9106,
+      "sha256": "a3d5317a679c3548abe02f135bd7d23bdfbb97ce72b232a8e86d86535661641b",
+      "kind": "text",
+      "lines": 343
+    },
+    {
+      "path": "docs/archive/old_docs/DAILY_PROGRESS_2026-02-09.md",
+      "bytes": 4172,
+      "sha256": "3bde099c9cdc6613a44172fa4a0d664c4fbc26e0af1be8658d2b3c58c529be3c",
+      "kind": "text",
+      "lines": 181
+    },
+    {
+      "path": "docs/archive/old_docs/DEEP_ANALYSIS.md",
+      "bytes": 6292,
+      "sha256": "22ca7561a288fe0dee18038213a93afffa70b2ba8e9d50d454ad49d2b4e68e27",
+      "kind": "text",
+      "lines": 280
+    },
+    {
+      "path": "docs/archive/old_docs/IMPLEMENTATION_REPORT.md",
+      "bytes": 6136,
+      "sha256": "61ab94c1c1ead3643f58412e1104f8c19e1075480acaf1f899502ff2c9574d70",
+      "kind": "text",
+      "lines": 221
+    },
+    {
+      "path": "docs/archive/old_docs/IMPLEMENTATION_SUMMARY.md",
+      "bytes": 2274,
+      "sha256": "eabaa5a590eec75956b3cd9d12d9b0de65a17c4b8d6e26e55f8e0e5ea490ffd0",
+      "kind": "text",
+      "lines": 71
+    },
+    {
+      "path": "docs/archive/old_docs/IMPLEMENTATION_SUMMARY_v24.md",
+      "bytes": 5468,
+      "sha256": "41deac775aa3a1d4a911e3527da1be3d6f989b3bac20ab41ddbca24e78c6ade6",
+      "kind": "text",
+      "lines": 180
+    },
+    {
+      "path": "docs/archive/old_docs/PHASE4_IMPLEMENTATION_SUMMARY.md",
+      "bytes": 8433,
+      "sha256": "415f830c71c807ad3cc637b157c6e2774e22d156dfb4d2fde11fca9f2366e2ae",
+      "kind": "text",
+      "lines": 329
+    },
+    {
+      "path": "docs/archive/old_docs/PROGRESS_LOG.md",
+      "bytes": 2967,
+      "sha256": "0c244dc94fe31835a1d23b69a93d649826ee07becc85477acff40f868d41691c",
+      "kind": "text",
+      "lines": 93
+    },
+    {
+      "path": "docs/archive/old_docs/PROJECT_STATUS.md",
+      "bytes": 5205,
+      "sha256": "933f51f996adda03e22a3abb28d11d309eab079fbaca9811535744320f7c528b",
+      "kind": "text",
+      "lines": 197
+    },
+    {
+      "path": "docs/archive/old_docs/PROJECT_STATUS_V24.md",
+      "bytes": 4918,
+      "sha256": "193a7fa2cf71ed74020d6a30d2dc0796041a9055389f3289fa1ff5f562dab040",
+      "kind": "text",
+      "lines": 205
+    },
+    {
+      "path": "docs/archive/v19_records/NEXT_TIME_AFTER_v19.5.md",
+      "bytes": 3808,
+      "sha256": "960ac531df1fcfe52ed38d3ef855076beb5be3d6f48a81f2de3dd80c79addbae",
+      "kind": "text",
+      "lines": 162
+    },
+    {
+      "path": "docs/archive/v22_records/v22.1_修复说明.md",
+      "bytes": 3876,
+      "sha256": "4db3f5617a7e021c2155ffb779a2298855ce54259df15b78c0aafe4390feafa7",
+      "kind": "text",
+      "lines": 154
+    },
+    {
+      "path": "docs/archive/v22_records/v22.1_测试总结.md",
+      "bytes": 4725,
+      "sha256": "a33dc22f85508bfa1879b80e71ef48f4e46b74d93d829545098d37a8f3d160ad",
+      "kind": "text",
+      "lines": 172
+    },
+    {
+      "path": "docs/archive/v36.x/ASSESSMENT_REPORT.md",
+      "bytes": 2789,
+      "sha256": "3a20a75460ce15ce1b59154b03ddc9e90b55d5eca094e31e1d2dff2b72a6e4d9",
+      "kind": "text",
+      "lines": 122
+    },
+    {
+      "path": "docs/archive/v36.x/CRITICAL_FIXES.md",
+      "bytes": 2722,
+      "sha256": "c9342a650cbbfc09e39087cc1da7f99b5fead7f8ecb852b5f5dde7611c49e7c3",
+      "kind": "text",
+      "lines": 123
+    },
+    {
+      "path": "docs/archive/v36.x/PROGRESS_TRACKING.md",
+      "bytes": 4015,
+      "sha256": "cfb7d4b7718fbc6ed8d93fd5c0dbe9e91a4df7726eff13f02595109eb9003d79",
+      "kind": "text",
+      "lines": 163
+    },
+    {
+      "path": "docs/archive/v36.x/ROADMAP.md",
+      "bytes": 4104,
+      "sha256": "8f695570cf62dd08f6d3150bf2c7c53b007f741215b9b01113a3406b4230352d",
+      "kind": "text",
+      "lines": 205
+    },
+    {
+      "path": "docs/archive/合规性评估报告_v36.md",
+      "bytes": 848,
+      "sha256": "14e0065edc8b0727a92eb4c33cc92624d778500d5239c95e2dda263fdfa13ff6",
+      "kind": "text",
+      "lines": 30
+    },
+    {
+      "path": "docs/current/AGENT_CONTEXT.md",
+      "bytes": 17762,
+      "sha256": "3d3e4dc905491ee88d78c353c29156ef9d6188323677b5ff2f763fdb19676f39",
+      "kind": "text",
+      "lines": 221
+    },
+    {
+      "path": "docs/current/DEV_LOG.md",
+      "bytes": 344013,
+      "sha256": "8cdc980318ed2e82349e7690a731feeaedaf175360471391f4303419ddd293a6",
+      "kind": "text",
+      "lines": 8052
+    },
+    {
+      "path": "docs/current/MAIN_PY_REFACTOR_PLAN.md",
+      "bytes": 13331,
+      "sha256": "48044c4160d12a534176debc9f03e9de13bc4b0e3faa15e61ef167b93f08d563",
+      "kind": "text",
+      "lines": 394
+    },
+    {
+      "path": "docs/current/OPTIMIZATION_ROADMAP.md",
+      "bytes": 12862,
+      "sha256": "f2e9fd9dfc5f5bdf5358fa03ab69a50315580db417839ba3279e1c0dd3bf76d8",
+      "kind": "text",
+      "lines": 227
+    },
+    {
+      "path": "docs/current/PRIORITY_REMEDIATION_PLAN.md",
+      "bytes": 12780,
+      "sha256": "c2f6631f76bc70c819f2a6a972cb4f761f7490083d1cff6b57babb4bb56d3626",
+      "kind": "text",
+      "lines": 395
+    },
+    {
+      "path": "docs/current/PROJECT_STRUCTURE.md",
+      "bytes": 4180,
+      "sha256": "38d1c5781413b94d5d683dd3e20c3b098900210ad0a2f9f938f55f7bf1d545a3",
+      "kind": "text",
+      "lines": 145
+    },
+    {
+      "path": "docs/current/RELEASE_AUDIT_20261024.md",
+      "bytes": 13048,
+      "sha256": "4c09645a59c6bc069f96bdc6e9592c22b77d4e65df8a7c0ff82dc9bc881310be",
+      "kind": "text",
+      "lines": 118
+    },
+    {
+      "path": "docs/current/RELEASE_CHECKLIST.md",
+      "bytes": 2125,
+      "sha256": "be200799aaa824aa1f9cd692c7cbaf5e045d895a73528ef962860808222474ec",
+      "kind": "text",
+      "lines": 54
+    },
+    {
+      "path": "docs/current/REPOSITORY_AUDIT_20261102.md",
+      "bytes": 9315,
+      "sha256": "e23ec85c18737575baf4cc98661bda13cf0c710eae7376b2169fb18a3a7fb002",
+      "kind": "text",
+      "lines": 79
+    },
+    {
+      "path": "docs/current/STATUS.md",
+      "bytes": 120876,
+      "sha256": "17822594b9b870da5955e9decc80ae29cc2c61f60be8b07c4cb9156fed356bc6",
+      "kind": "text",
+      "lines": 2347
+    },
+    {
+      "path": "docs/current/TODO_WINDOWS_BUILD.txt",
+      "bytes": 945,
+      "sha256": "e458420c7c99dd69979091a6269dd5917dcd59245d0fd24234375b69410917a1",
+      "kind": "text",
+      "lines": 22
+    },
+    {
+      "path": "docs/current/V38_UI_REFACTOR_PLAN.md",
+      "bytes": 7627,
+      "sha256": "06ce9fc292cd4624bb7786e40e7009187baf54a641c4d063a06839b44152f5df",
+      "kind": "text",
+      "lines": 240
+    },
+    {
+      "path": "docs/current/audit_inventory_20261024.json",
+      "bytes": 52985,
+      "sha256": "c156c2fe191992228568a4904ed8ca8de561ce0a4f9f556e050509b6a74b4e85",
+      "kind": "text",
+      "lines": 1764
+    },
+    {
+      "path": "docs/diary/20260227_seal_detection_debug_diary.md",
+      "bytes": 9410,
+      "sha256": "00c6cbe7b93c1d7ba7efc00de164a8b022b6399a5815cbc5e2608a5efe1fb483",
+      "kind": "text",
+      "lines": 256
+    },
+    {
+      "path": "docs/diary/20260228_drag_drop_diary.md",
+      "bytes": 5551,
+      "sha256": "d608d6d39c8eba07946d2385d649985340cba81e5c5fe313c7903319f0f2a604",
+      "kind": "text",
+      "lines": 196
+    },
+    {
+      "path": "docs/diary/20260228_packaging_update.md",
+      "bytes": 1926,
+      "sha256": "4a91686e8bdc3c7355c3b89aa150388283ebfce611803e6ec13f3f8653924bb1",
+      "kind": "text",
+      "lines": 77
+    },
+    {
+      "path": "docs/diary/20260302_1630_word_replace_fusion_release_diary.md",
+      "bytes": 3924,
+      "sha256": "a4b3177e39b3f571581add2b4f66d9b35516288d3cc6b989d53f80dd0e36b4b1",
+      "kind": "text",
+      "lines": 71
+    },
+    {
+      "path": "docs/diary/20260309_2338_release_sync_diary.md",
+      "bytes": 7938,
+      "sha256": "e0fcf70c9266882da760d8e0a26f29a838b728637279079f0d8f0428d463b7a3",
+      "kind": "text",
+      "lines": 53
+    },
+    {
+      "path": "docs/diary/20260311_pyinstaller_packaging_fix_diary.md",
+      "bytes": 6902,
+      "sha256": "d9eb268eeb8a1a20f017302ecbe826f5a6661dd7c791add84c62155e92ba101a",
+      "kind": "text",
+      "lines": 219
+    },
+    {
+      "path": "docs/features/privacyguard_brand_icons_v38.html",
+      "bytes": 9467,
+      "sha256": "4647ebd735226812bdfe45709ca2a18b6552d54201025aeed5ba5fe8035c8ad7",
+      "kind": "text",
+      "lines": 290
+    },
+    {
+      "path": "docs/features/privacyguard_ui_concept_v38_logic_preserved_cn.html",
+      "bytes": 60730,
+      "sha256": "9f8bf60bc832dfa3700eb73f91a9542667d8e74b0f761833d8ac8856ac4549d9",
+      "kind": "text",
+      "lines": 1843
+    },
+    {
+      "path": "docs/features/privacyguard_ui_concept_v38_simple_cn.html",
+      "bytes": 56916,
+      "sha256": "f498086544ae8a7e2c51cc482e161b4b28995d49a321008e0daaa0b9438c2571",
+      "kind": "text",
+      "lines": 1854
+    },
+    {
+      "path": "docs/features/privacyguard_windows_ui_concept_v38.html",
+      "bytes": 55348,
+      "sha256": "cba25e22f9beca455984bc4f644b146b71d1c9f36dac55ee4e4d0f47019ad78d",
+      "kind": "text",
+      "lines": 1890
+    },
+    {
+      "path": "docs/guides/CLAUDE_CODE_TIPS.md",
+      "bytes": 7397,
+      "sha256": "d89c722aac7d0ac9e6b37dbfcadbd61a4b33ca2e512e66f8bad1ab453e854bcf",
+      "kind": "text",
+      "lines": 405
+    },
+    {
+      "path": "docs/guides/TESTING_GUIDE.md",
+      "bytes": 8621,
+      "sha256": "d5af8b1479248fc89c9f730e3727e552ccfe726eda61023e165c01dbceaab24f",
+      "kind": "text",
+      "lines": 247
+    },
+    {
+      "path": "docs/guides/USER_GUIDE.md",
+      "bytes": 12635,
+      "sha256": "7c65a7be321083de9bf9da91e7d7573c2fd16debf8ae0136ebd011a15901a823",
+      "kind": "text",
+      "lines": 324
+    },
+    {
+      "path": "docs/marketing/GITHUB_SHOWCASE.md",
+      "bytes": 2795,
+      "sha256": "b6cabef0b756d74170adbc0286bc6eddd97cc01df6af8f4a15b038132812c310",
+      "kind": "text",
+      "lines": 44
+    },
+    {
+      "path": "docs/marketing/repository-profile.json",
+      "bytes": 427,
+      "sha256": "6597c050ffe8e135143a53b6aadb03c003a422609725256a6a39e4b1ca6dce59",
+      "kind": "text",
+      "lines": 1
+    },
+    {
+      "path": "docs/marketing/开源宣传规划方案.md",
+      "bytes": 18907,
+      "sha256": "860ff0dba9531e08cddd153a448ecf2b7394eae333ad566a0fb983f0782a0d3e",
+      "kind": "text",
+      "lines": 556
+    },
+    {
+      "path": "docs/marketing/微信公众号文章_AI编程革命.md",
+      "bytes": 16758,
+      "sha256": "db549aafdb1e4513f46f48e65bd1c23564093036896517f1a13a402a4e35bfbf",
+      "kind": "text",
+      "lines": 550
+    },
+    {
+      "path": "docs/packaging/README.md",
+      "bytes": 3208,
+      "sha256": "21880c33ba8a8d8f1a9148e90e4e72ce526b0c9c7600d6751e4522660429dc99",
+      "kind": "text",
+      "lines": 73
+    },
+    {
+      "path": "docs/packaging/macos-packaging-guide.md",
+      "bytes": 5361,
+      "sha256": "d8edfe11761bd802a3492ce0b06d433def5be4c8bfebfb396f5a6a91a1d67c37",
+      "kind": "text",
+      "lines": 177
+    },
+    {
+      "path": "docs/packaging/windows-packaging-guide.md",
+      "bytes": 4605,
+      "sha256": "3da31a51b2757e2b8583b5579659dd6fbe5eb175929bcc1b8dbd7a2519527f8a",
+      "kind": "text",
+      "lines": 89
+    },
+    {
+      "path": "docs/合规性评估报告.md",
+      "bytes": 15300,
+      "sha256": "3d9fac746e88121ccd5e3239497a198cd9b07e4538c263546916fa0900250776",
+      "kind": "text",
+      "lines": 458
+    },
+    {
+      "path": "main.py",
+      "bytes": 497499,
+      "sha256": "4a3d85d385b0bca08d5c1aee3df26e716d246153c07c3be048e785634264847d",
+      "kind": "text",
+      "lines": 10206,
+      "classes": 7,
+      "functions": 245
+    },
+    {
+      "path": "packaging/OCR_PACKAGING.md",
+      "bytes": 4631,
+      "sha256": "396c2d1a40b5a761aba51c62b164633925c87b4574e0feaf8df247591bfc8422",
+      "kind": "text",
+      "lines": 102
+    },
+    {
+      "path": "packaging/README.md",
+      "bytes": 4711,
+      "sha256": "5ff12dcb563ae21a5a89036d8e290ee9583af12c4a8dc2d46a639a5a710fc2ae",
+      "kind": "text",
+      "lines": 106
+    },
+    {
+      "path": "packaging/macos/assets/PrivacyGuard.icns",
+      "bytes": 488117,
+      "sha256": "73169bc67ef0c45d46f1287df06b0ae0e348bf12fc2d388efce9b5f6f72d3cd0",
+      "kind": "binary"
+    },
+    {
+      "path": "packaging/macos/config/PrivacyGuard.spec",
+      "bytes": 16026,
+      "sha256": "e0a6505fe9a83ee0c8f1129a371ff895e6b7836108ea0992580e31914c3ea018",
+      "kind": "text",
+      "lines": 352
+    },
+    {
+      "path": "packaging/macos/config/entitlements.plist",
+      "bytes": 742,
+      "sha256": "a42e18a14013d2e927ce8a2745015b50dab0148241f6cbeaf972a9bc38f77f2a",
+      "kind": "text",
+      "lines": 22
+    },
+    {
+      "path": "packaging/macos/docs/MACOS_BUILD_GUIDE.md",
+      "bytes": 1733,
+      "sha256": "b90252e2d31c9064539cfa9a0e519bccb459a77f36b9ea7d15deaae5cdd2a3e8",
+      "kind": "text",
+      "lines": 40
+    },
+    {
+      "path": "packaging/macos/scripts/README.txt",
+      "bytes": 3665,
+      "sha256": "5059c283a502a28ac6e70b79dee4437af4097aed48daca77db6803febb2b1b36",
+      "kind": "text",
+      "lines": 74
+    },
+    {
+      "path": "packaging/macos/scripts/build_complete.sh",
+      "bytes": 8075,
+      "sha256": "4d2e42147f87a155f236d130e7827e16b8d20a859a83f4169cce0d95b97c9ac9",
+      "kind": "text",
+      "lines": 262
+    },
+    {
+      "path": "packaging/macos/scripts/build_macos_app.sh",
+      "bytes": 6998,
+      "sha256": "e9d4f6bd031e146599ba35854f614582ca3c1eb7c5fd96b29cb40660944d3cf0",
+      "kind": "text",
+      "lines": 262
+    },
+    {
+      "path": "packaging/macos/scripts/build_portable.sh",
+      "bytes": 1641,
+      "sha256": "bd526ed4a304800cd52e006cd1c6eaf9b248e9bc539f349b2320f04a695d890c",
+      "kind": "text",
+      "lines": 40
+    },
+    {
+      "path": "packaging/macos/scripts/check_macos_bundle.py",
+      "bytes": 4209,
+      "sha256": "2d3e4478fe97e293106e0eb61c0a1a1a5c0090b0ed7671b4529447d0b7a9568d",
+      "kind": "text",
+      "lines": 83,
+      "classes": 0,
+      "functions": 2
+    },
+    {
+      "path": "packaging/macos/scripts/notarize_macos_app.sh",
+      "bytes": 2682,
+      "sha256": "a53fd89ce531ae44c286dc8a548f87750ead290746670c6689c75adbf2874775",
+      "kind": "text",
+      "lines": 87
+    },
+    {
+      "path": "packaging/macos/scripts/sign_macos_app.sh",
+      "bytes": 2040,
+      "sha256": "9b497e7a0aec36c03fb134adbaf6ac05dba55476546733932ff7a0bd2499ffed",
+      "kind": "text",
+      "lines": 69
+    },
+    {
+      "path": "packaging/windows/assets/icon.ico",
+      "bytes": 35231,
+      "sha256": "9d3cf408db0031596bc2ab6a79034dd1dd60a3618cdc1dbd9e8e67c61d2b8391",
+      "kind": "binary"
+    },
+    {
+      "path": "packaging/windows/config/PrivacyGuard_Setup.iss",
+      "bytes": 5166,
+      "sha256": "f5be81d3772a35347b06e24d39dd0df92acc3c8b8a3b9be4386415f03dcaf2c6",
+      "kind": "text",
+      "lines": 134
+    },
+    {
+      "path": "packaging/windows/config/PrivacyGuard_windows.spec",
+      "bytes": 21537,
+      "sha256": "54b78898251bc9a98c6d710e495b8375f790f037af99ee5f87e2c8888ba0d8d4",
+      "kind": "text",
+      "lines": 459
+    },
+    {
+      "path": "packaging/windows/config/hook-privacyguard.py",
+      "bytes": 3539,
+      "sha256": "bf99a9c0e5049da1b1bda5474a40dd450b3a2923ba74b1e71eecb0b8e7ffcd09",
+      "kind": "text",
+      "lines": 81,
+      "classes": 0,
+      "functions": 0
+    },
+    {
+      "path": "packaging/windows/config/runtime_hook_privacyguard.py",
+      "bytes": 1183,
+      "sha256": "b81795936ec5e9096659b7ee1003a565162c935c79708aed62c6f06576a10212",
+      "kind": "text",
+      "lines": 27,
+      "classes": 0,
+      "functions": 0
+    },
+    {
+      "path": "packaging/windows/config/version_info.txt",
+      "bytes": 979,
+      "sha256": "77f9e36acea0d11662b8565d83c9df208dacb52c30857e0f17f7a4ee0ae550f7",
+      "kind": "text",
+      "lines": 33
+    },
+    {
+      "path": "packaging/windows/docs/WINDOWS_BUILD_GUIDE.md",
+      "bytes": 593,
+      "sha256": "5d37d6989582d4d3ca4a3699d8a544d54a3c9c9314177c0c2e86f7b7f2b7090a",
+      "kind": "text",
+      "lines": 12
+    },
+    {
+      "path": "packaging/windows/scripts/1_init_environment.bat",
+      "bytes": 1843,
+      "sha256": "6e4025b5a240c4da600755f99e93404bb875a267910090c86ae00fb13619832f",
+      "kind": "text",
+      "lines": 49
+    },
+    {
+      "path": "packaging/windows/scripts/2_build_exe.bat",
+      "bytes": 5800,
+      "sha256": "12f82fdcd90a7d6b7cb9e5efae583ab10848c6a93a0353cfc59868287f3f4000",
+      "kind": "text",
+      "lines": 200
+    },
+    {
+      "path": "packaging/windows/scripts/3_build_with_setup.bat",
+      "bytes": 5131,
+      "sha256": "5d5fa5e577d2b4d1e9fbbc42ec64caa7ebf4d5a3789d23d187b3097b36d68220",
+      "kind": "text",
+      "lines": 182
+    },
+    {
+      "path": "packaging/windows/scripts/4_create_installer_only.bat",
+      "bytes": 3332,
+      "sha256": "678a35905f1d405f2297d96b632854c46e7b79174b1bbd9eee64d3005a12a4db",
+      "kind": "text",
+      "lines": 121
+    },
+    {
+      "path": "packaging/windows/scripts/README.txt",
+      "bytes": 1579,
+      "sha256": "a1b73cb9422e16a9ff74f9e19b0853d20445038394431f6502ab3d9516890385",
+      "kind": "text",
+      "lines": 28
+    },
+    {
+      "path": "packaging/windows/scripts/build_complete.bat",
+      "bytes": 718,
+      "sha256": "4b66b37d11bca856e07fc330e559fe2b6b108c891d3ced6756e22dc3a61c1c70",
+      "kind": "text",
+      "lines": 17
+    },
+    {
+      "path": "packaging/windows/scripts/build_portable.py",
+      "bytes": 7677,
+      "sha256": "006ce823fd3701d4088095d04a9baf4f7e240efd805abe086777da904cd138f2",
+      "kind": "text",
+      "lines": 157,
+      "classes": 0,
+      "functions": 5
+    },
+    {
+      "path": "packaging/windows/scripts/check_vcredist.bat",
+      "bytes": 2497,
+      "sha256": "691f1748bdedd0e15a6d5203bebbc39c3e43e451af9719bd6030261416306a1f",
+      "kind": "text",
+      "lines": 88
+    },
+    {
+      "path": "packaging/windows/scripts/diagnose_onnxruntime.py",
+      "bytes": 6958,
+      "sha256": "311c7f945e5f7adf0441d51656d2480fb0372721c8545b4a7fee302b7fe804fa",
+      "kind": "text",
+      "lines": 207,
+      "classes": 0,
+      "functions": 8
+    },
+    {
+      "path": "packaging/windows/scripts/emergency_launcher.bat",
+      "bytes": 3155,
+      "sha256": "a36f741e3f61adf0b335ca46985fc639373fc8a6286541b42a483bd275c39015",
+      "kind": "text",
+      "lines": 124
+    },
+    {
+      "path": "packaging/windows/scripts/generate_version_info.py",
+      "bytes": 2018,
+      "sha256": "ff7f9a53bbea8649ddb4da35a837c8a7f1dcbee67325bd3acd03b70be954991c",
+      "kind": "text",
+      "lines": 66,
+      "classes": 0,
+      "functions": 3
+    },
+    {
+      "path": "packaging/windows/scripts/launcher_wrapper.bat",
+      "bytes": 1769,
+      "sha256": "ce3fc2f9dd07741c704da8b67bddf79e042cc465277ceb80f9fb82773b90bbed",
+      "kind": "text",
+      "lines": 51
+    },
+    {
+      "path": "packaging/windows/scripts/verify_dependencies.py",
+      "bytes": 11827,
+      "sha256": "264e9e3e35db58bce8360a3488f6442996721ab81cd0aeb6e8de05300a235131",
+      "kind": "text",
+      "lines": 302,
+      "classes": 0,
+      "functions": 6
+    },
+    {
+      "path": "privacyguard/__init__.py",
+      "bytes": 2169,
+      "sha256": "c4a5611bbef806293d0c92d880e79ca6139c0f8f2e06a1f571249b606d81a2e3",
+      "kind": "text",
+      "lines": 87,
+      "classes": 0,
+      "functions": 3
+    },
+    {
+      "path": "privacyguard/diagnostics.py",
+      "bytes": 5631,
+      "sha256": "5010e2216a5bbb6ad458cfa442cb8c11a61feacc4a3d29cafa5dfd855563ddf3",
+      "kind": "text",
+      "lines": 102,
+      "classes": 0,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/ocr/__init__.py",
+      "bytes": 1813,
+      "sha256": "4ca51e826f283dc8b65ade31fd668aef7d88a05e747b6a6acc98f8f485c73b03",
+      "kind": "text",
+      "lines": 51,
+      "classes": 0,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/ocr/base.py",
+      "bytes": 1596,
+      "sha256": "da191004865f1847f1f0be412f3bfccf86b6d294388c30d85a8ed3bb3839f848",
+      "kind": "text",
+      "lines": 66,
+      "classes": 3,
+      "functions": 3
+    },
+    {
+      "path": "privacyguard/ocr/manager.py",
+      "bytes": 1463,
+      "sha256": "047fec52876f6af883f7a9c995df4b9e61ad800fd70f4687868ae221ad44ecc5",
+      "kind": "text",
+      "lines": 46,
+      "classes": 1,
+      "functions": 4
+    },
+    {
+      "path": "privacyguard/ocr/mixed_pdf.py",
+      "bytes": 11994,
+      "sha256": "81a071425a640d5fcd96e8f628ffcd649e40cead2b4f66670d749b92d09fa9ad",
+      "kind": "text",
+      "lines": 258,
+      "classes": 0,
+      "functions": 6
+    },
+    {
+      "path": "privacyguard/ocr/model_paths.py",
+      "bytes": 625,
+      "sha256": "4e23d748caafa4f0485b2f5e73a140df2b647cb013a7325ade7cfde5c76030f9",
+      "kind": "text",
+      "lines": 19,
+      "classes": 0,
+      "functions": 1
+    },
+    {
+      "path": "privacyguard/ocr/person_name.py",
+      "bytes": 16357,
+      "sha256": "91c303122b7f7a0f6142a43b786de1dca1a65f538c931ee389f325eeb111568c",
+      "kind": "text",
+      "lines": 340,
+      "classes": 0,
+      "functions": 8
+    },
+    {
+      "path": "privacyguard/ocr/rapidocr.py",
+      "bytes": 9674,
+      "sha256": "ccacdc4028af140399215163d6f17cab1a0bfa7067cbaa8dac0854da6277ce33",
+      "kind": "text",
+      "lines": 198,
+      "classes": 1,
+      "functions": 4
+    },
+    {
+      "path": "privacyguard/ocr/seal_detection.py",
+      "bytes": 13857,
+      "sha256": "76cdc71edf1dbc30275dbf074fe0f7e831150ef7889e43a5fcd1bc2e3f137ffe",
+      "kind": "text",
+      "lines": 308,
+      "classes": 0,
+      "functions": 4
+    },
+    {
+      "path": "privacyguard/ocr/signature_detection.py",
+      "bytes": 10208,
+      "sha256": "14e3b5e080d4a8900f6cadc6767b8f7025fbeac11a7bbd8b9d8a051b37621c98",
+      "kind": "text",
+      "lines": 190,
+      "classes": 0,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/ocr/text_pdf.py",
+      "bytes": 19809,
+      "sha256": "736239c7d9aa2b5cb01d2d53b0fbdde5d1952c1c1cf496b029445e3fe4b1165c",
+      "kind": "text",
+      "lines": 474,
+      "classes": 0,
+      "functions": 13
+    },
+    {
+      "path": "privacyguard/report.py",
+      "bytes": 4220,
+      "sha256": "a4672b9dbf03cc99800bdcd3fcda82e211a12e2f3f6e33ca82815db9942b2e96",
+      "kind": "text",
+      "lines": 113,
+      "classes": 0,
+      "functions": 5
+    },
+    {
+      "path": "privacyguard/session_store.py",
+      "bytes": 8812,
+      "sha256": "7290f9ff8661aa484ddc518e1b8184ddc4dab402fdb561a9b515a0b3ec86bc82",
+      "kind": "text",
+      "lines": 222,
+      "classes": 1,
+      "functions": 13
+    },
+    {
+      "path": "privacyguard/trace_cleaner.py",
+      "bytes": 6927,
+      "sha256": "cd2927bae5f4e72afee84314d74649ecc7a26b8014fa27fd664d77fc237b085c",
+      "kind": "text",
+      "lines": 191,
+      "classes": 0,
+      "functions": 8
+    },
+    {
+      "path": "privacyguard/ui/__init__.py",
+      "bytes": 42,
+      "sha256": "e80cbd522f1b708e151a4e2649cfd7cead1d717507adca4730d6615dc570f7af",
+      "kind": "text",
+      "lines": 1,
+      "classes": 0,
+      "functions": 0
+    },
+    {
+      "path": "privacyguard/ui/dialogs/__init__.py",
+      "bytes": 1069,
+      "sha256": "08cd7974a83a0f6a8dcb5a941590d2ef0e59ea65acdd1c3327d4010139639444",
+      "kind": "text",
+      "lines": 25,
+      "classes": 0,
+      "functions": 0
+    },
+    {
+      "path": "privacyguard/ui/dialogs/donate_dialog.py",
+      "bytes": 3398,
+      "sha256": "563f5d1f08be3959e3c42be9fe1332af5ed77ce9ab8d44267cc27e130cf3461d",
+      "kind": "text",
+      "lines": 92,
+      "classes": 1,
+      "functions": 1
+    },
+    {
+      "path": "privacyguard/ui/dialogs/encrypt_dialog.py",
+      "bytes": 5107,
+      "sha256": "365241c483fdff8dcf35906caf9e9a8f405bd2faf536dcad913835fa2eb37cc2",
+      "kind": "text",
+      "lines": 129,
+      "classes": 1,
+      "functions": 6
+    },
+    {
+      "path": "privacyguard/ui/dialogs/feedback_dialog.py",
+      "bytes": 15577,
+      "sha256": "bc8be99d47873063ae776ad457e22656ae522753338a082b63dd30d7f005eb68",
+      "kind": "text",
+      "lines": 425,
+      "classes": 1,
+      "functions": 6
+    },
+    {
+      "path": "privacyguard/ui/dialogs/image_list_dialog.py",
+      "bytes": 4871,
+      "sha256": "43cbcc6584e385cce91530459d149c066bdbba9d31ef01ccf41b1e9a92b078a2",
+      "kind": "text",
+      "lines": 132,
+      "classes": 1,
+      "functions": 3
+    },
+    {
+      "path": "privacyguard/ui/dialogs/manual_region_dialog.py",
+      "bytes": 10396,
+      "sha256": "d251ac12f0037c7faa8bea0d20a843125fc868e4aecea1b73d314278584f0944",
+      "kind": "text",
+      "lines": 218,
+      "classes": 1,
+      "functions": 10
+    },
+    {
+      "path": "privacyguard/ui/dialogs/password_open_dialog.py",
+      "bytes": 7478,
+      "sha256": "653ecc6c900d0d523894982406fb0e3b50cb0868b3aa8ba7b282b44a6d2be145",
+      "kind": "text",
+      "lines": 182,
+      "classes": 1,
+      "functions": 7
+    },
+    {
+      "path": "privacyguard/ui/dialogs/settings_dialog.py",
+      "bytes": 50085,
+      "sha256": "213b8d4e64d12fb9546eebe8ac2012a5bbc5b983fbbd7a8e9459bace427de549",
+      "kind": "text",
+      "lines": 1077,
+      "classes": 1,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/ui/dialogs/trace_clean_dialog.py",
+      "bytes": 7682,
+      "sha256": "289754581925e1ea82efdb2fb01b2f5985696c360987bf97fed9b129fb97f932",
+      "kind": "text",
+      "lines": 179,
+      "classes": 2,
+      "functions": 9
+    },
+    {
+      "path": "privacyguard/ui/dialogs/word_replace_rules_dialog.py",
+      "bytes": 11189,
+      "sha256": "f6ce736b050b7f580d47bac6a84979fc8bf2e5d88af60b241ba672938d759ec0",
+      "kind": "text",
+      "lines": 265,
+      "classes": 1,
+      "functions": 8
+    },
+    {
+      "path": "privacyguard/ui/mixins/__init__.py",
+      "bytes": 545,
+      "sha256": "730569e1f1873ae58e3294409f5f8158b1c47291c70cadef7843b9112ab2515b",
+      "kind": "text",
+      "lines": 17,
+      "classes": 0,
+      "functions": 0
+    },
+    {
+      "path": "privacyguard/ui/mixins/bookmark_mixin.py",
+      "bytes": 14316,
+      "sha256": "d98c657091af08094caa8b5ea525f01c87783ccdea75df4a292fef51ace33714",
+      "kind": "text",
+      "lines": 301,
+      "classes": 1,
+      "functions": 16
+    },
+    {
+      "path": "privacyguard/ui/mixins/crop_mixin.py",
+      "bytes": 5592,
+      "sha256": "a25c6cdb0ef07339da7e74d139548a8911aa56030d0c05c199c78a772fa12cd2",
+      "kind": "text",
+      "lines": 113,
+      "classes": 1,
+      "functions": 3
+    },
+    {
+      "path": "privacyguard/ui/mixins/extract_mixin.py",
+      "bytes": 25601,
+      "sha256": "eabe7acfff9e714f4fff5f678df144781f26502dce1af60d8da13d17a6e3b29f",
+      "kind": "text",
+      "lines": 519,
+      "classes": 1,
+      "functions": 19
+    },
+    {
+      "path": "privacyguard/ui/mixins/page_view_mixin.py",
+      "bytes": 37247,
+      "sha256": "b52279682eb565ad9ec82ad87818a4b3a1bafcc64b4baa3ea65dee421104b845",
+      "kind": "text",
+      "lines": 772,
+      "classes": 1,
+      "functions": 27
+    },
+    {
+      "path": "privacyguard/ui/mixins/settings_actions_mixin.py",
+      "bytes": 21611,
+      "sha256": "4453d267d0fd346c7240ab8b581ef211e5f547a73bd6597ec50a1f11b9546f0d",
+      "kind": "text",
+      "lines": 444,
+      "classes": 1,
+      "functions": 26
+    },
+    {
+      "path": "privacyguard/ui/mixins/settings_layout_mixin.py",
+      "bytes": 32340,
+      "sha256": "c3a2dd8bec842cc222d7d927c3b93f707386895a8bc52849a43553a0a4670734",
+      "kind": "text",
+      "lines": 761,
+      "classes": 1,
+      "functions": 14
+    },
+    {
+      "path": "privacyguard/ui/mixins/word_preview_mixin.py",
+      "bytes": 39548,
+      "sha256": "4a9c53d7422206034c5009086216466754c407a2a659fcae72257c6adf6cb495",
+      "kind": "text",
+      "lines": 910,
+      "classes": 1,
+      "functions": 28
+    },
+    {
+      "path": "privacyguard/ui/panels/__init__.py",
+      "bytes": 297,
+      "sha256": "dd80458ffa4a2db963b721886db7e3875a8eb40eb5e0dbb4d21f83f5fa46b2f9",
+      "kind": "text",
+      "lines": 6,
+      "classes": 0,
+      "functions": 0
+    },
+    {
+      "path": "privacyguard/ui/panels/bookmark_side_panel.py",
+      "bytes": 13014,
+      "sha256": "b2ec68796d1cbb59577d77cee30d0d65eb8a559d6029d8183f27334ff43c9446",
+      "kind": "text",
+      "lines": 328,
+      "classes": 1,
+      "functions": 16
+    },
+    {
+      "path": "privacyguard/ui/panels/extract_side_panel.py",
+      "bytes": 8993,
+      "sha256": "a8dae6ab425af36788f420347f6f0511f1ce71c5004a62944746b31a4929e5df",
+      "kind": "text",
+      "lines": 205,
+      "classes": 1,
+      "functions": 10
+    },
+    {
+      "path": "privacyguard/ui/widgets.py",
+      "bytes": 22060,
+      "sha256": "980f8dfa3679f5b46c932be2978a11f400e437cb132e3dadcf7e1bada076d00c",
+      "kind": "text",
+      "lines": 464,
+      "classes": 3,
+      "functions": 18
+    },
+    {
+      "path": "privacyguard/utils/__init__.py",
+      "bytes": 1366,
+      "sha256": "d5640b376c98e2270bca30edd13f22bfd2b8dc0ba75176b71e0ebd465bba0a53",
+      "kind": "text",
+      "lines": 61,
+      "classes": 0,
+      "functions": 0
+    },
+    {
+      "path": "privacyguard/utils/app_paths.py",
+      "bytes": 690,
+      "sha256": "3a8739133938c7cbe3d70de870c61cca90ab4aa4a6ddc99fcef5526ec84ff704",
+      "kind": "text",
+      "lines": 21,
+      "classes": 0,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/utils/config.py",
+      "bytes": 26921,
+      "sha256": "4bb0153f00e38081ad7ecf6aaac3ac3e467adf007d58dd6082fe2fc0ab5e2004",
+      "kind": "text",
+      "lines": 650,
+      "classes": 4,
+      "functions": 27
+    },
+    {
+      "path": "privacyguard/utils/doc_converter.py",
+      "bytes": 7456,
+      "sha256": "12f2b41e658e6fb901a8a633ebe4f92f8381fdfe7557724ee6a3f53a3fbb14c8",
+      "kind": "text",
+      "lines": 196,
+      "classes": 0,
+      "functions": 4
+    },
+    {
+      "path": "privacyguard/utils/exceptions.py",
+      "bytes": 987,
+      "sha256": "47e0936e75978918c1d31288a9508cfc2755638c40f2b4b125fda44c8085ba2f",
+      "kind": "text",
+      "lines": 49,
+      "classes": 7,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/utils/helpers_bookmark.py",
+      "bytes": 6346,
+      "sha256": "abe2f0bc3a5f76bd7d47bf720794b0f9d396980698cd6c171fbe475f4bda3430",
+      "kind": "text",
+      "lines": 181,
+      "classes": 0,
+      "functions": 7
+    },
+    {
+      "path": "privacyguard/utils/helpers_pdf.py",
+      "bytes": 28788,
+      "sha256": "f78b9ae7ad6dcd800e185976aa9684e593c4ab182ce21ac545d9496ce28bb5e3",
+      "kind": "text",
+      "lines": 744,
+      "classes": 0,
+      "functions": 27
+    },
+    {
+      "path": "privacyguard/utils/helpers_ui.py",
+      "bytes": 15529,
+      "sha256": "4613ac7986f7e1ae0d67f200243aba882bfc47a931e93f3001ef840cd800b730",
+      "kind": "text",
+      "lines": 424,
+      "classes": 0,
+      "functions": 15
+    },
+    {
+      "path": "privacyguard/utils/helpers_word_doc.py",
+      "bytes": 7700,
+      "sha256": "f02bb9967547e4dd752c3f1ed218b259e23f32808b54ca662f97af7a8b3b46d1",
+      "kind": "text",
+      "lines": 225,
+      "classes": 0,
+      "functions": 8
+    },
+    {
+      "path": "privacyguard/utils/helpers_word_preview.py",
+      "bytes": 7345,
+      "sha256": "f534b27a91e91f937e2cb40a6d6795f0615c20cc5246ef942fbeaf51024da2b7",
+      "kind": "text",
+      "lines": 191,
+      "classes": 0,
+      "functions": 6
+    },
+    {
+      "path": "privacyguard/utils/helpers_word_rules.py",
+      "bytes": 18667,
+      "sha256": "f81d56e144805981c1c18d54e4ab5d38f566d35badcd9b2f5b259b430717670a",
+      "kind": "text",
+      "lines": 502,
+      "classes": 0,
+      "functions": 16
+    },
+    {
+      "path": "privacyguard/utils/html_sanitize.py",
+      "bytes": 6439,
+      "sha256": "d14f1d3d2b3f4b2df441b4d6a51788b3e45cc764dcfd81baef2d00ec340a36cc",
+      "kind": "text",
+      "lines": 171,
+      "classes": 0,
+      "functions": 5
+    },
+    {
+      "path": "privacyguard/utils/logger.py",
+      "bytes": 4530,
+      "sha256": "3edc408b4d10609920160120e19762ed3913819ecc887c8146212a434b427edf",
+      "kind": "text",
+      "lines": 125,
+      "classes": 0,
+      "functions": 4
+    },
+    {
+      "path": "privacyguard/utils/pdf_regions.py",
+      "bytes": 2544,
+      "sha256": "b29db1d3d62e9cdf794b1cfd268ff41c9cd3b344f1085ac3e9e20e1df6113582",
+      "kind": "text",
+      "lines": 55,
+      "classes": 0,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/utils/security.py",
+      "bytes": 5086,
+      "sha256": "e940911f1163d88ba40b1b1a2a5ef82a522ce6508c6fc5c756507cc15225d8e6",
+      "kind": "text",
+      "lines": 142,
+      "classes": 0,
+      "functions": 4
+    },
+    {
+      "path": "privacyguard/utils/temp_manager.py",
+      "bytes": 5682,
+      "sha256": "4dd0c71f7f8a1393bbf611acaf7adab600233582a82ffa061701b3cbf4dc5262",
+      "kind": "text",
+      "lines": 177,
+      "classes": 1,
+      "functions": 9
+    },
+    {
+      "path": "privacyguard/utils/watermark.py",
+      "bytes": 12881,
+      "sha256": "d7b57fa421f079d061e035f2f3faffbecbed7c0cad1cf720973df02ee5650685",
+      "kind": "text",
+      "lines": 325,
+      "classes": 0,
+      "functions": 11
+    },
+    {
+      "path": "privacyguard/utils/word_crypto.py",
+      "bytes": 3719,
+      "sha256": "ce1e893f2d4e8d4cd5533d8a3e98fe782fa5f6f4d28c52d91dd1851b72ad560a",
+      "kind": "text",
+      "lines": 115,
+      "classes": 0,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/utils/worker_lifecycle.py",
+      "bytes": 746,
+      "sha256": "c27ba38dc9e384ca5a7c161d6e7c65873fb81d2bb91f3fcb40e2b30a7bae5f48",
+      "kind": "text",
+      "lines": 24,
+      "classes": 0,
+      "functions": 1
+    },
+    {
+      "path": "privacyguard/workers/__init__.py",
+      "bytes": 1027,
+      "sha256": "8f6650c95c0437fffdd722b7d9f614181b26b549fa7f081fde1c4c5c75614700",
+      "kind": "text",
+      "lines": 38,
+      "classes": 0,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/workers/batch_replace_worker.py",
+      "bytes": 9278,
+      "sha256": "04217e8141545e4fded6e9699e36230016bd0f04795351c141ca76c252c292d1",
+      "kind": "text",
+      "lines": 228,
+      "classes": 1,
+      "functions": 12
+    },
+    {
+      "path": "privacyguard/workers/image_merge.py",
+      "bytes": 3280,
+      "sha256": "cbc3b2c9b0de69af3e92ac5defff6e500dee371dc759908a5465ab2082ca9a29",
+      "kind": "text",
+      "lines": 80,
+      "classes": 1,
+      "functions": 2
+    },
+    {
+      "path": "privacyguard/workers/ocr_worker.py",
+      "bytes": 68142,
+      "sha256": "4235ad6ea4b74bb40cd13ace6b3e5327750cd9cd4e966fe8f4806535022d396f",
+      "kind": "text",
+      "lines": 1335,
+      "classes": 2,
+      "functions": 27
+    },
+    {
+      "path": "privacyguard/workers/search_worker.py",
+      "bytes": 8261,
+      "sha256": "ef436b2d28349d36e331b8fd0b587a5a8becf55255ebcd2a34d42e4f45e4e7e1",
+      "kind": "text",
+      "lines": 174,
+      "classes": 1,
+      "functions": 4
+    },
+    {
+      "path": "privacyguard/workers/word_worker.py",
+      "bytes": 9853,
+      "sha256": "de3be6f5d0dc9244d2932871c2eb2c45db0f030c144307d9cf989493275491e4",
+      "kind": "text",
+      "lines": 211,
+      "classes": 1,
+      "functions": 7
+    },
+    {
+      "path": "requirements-dev.txt",
+      "bytes": 444,
+      "sha256": "29090688feaa8fb9d178c680bf66edb4dfd9a81a231a0b3e8a80aee223077374",
+      "kind": "text",
+      "lines": 13
+    },
+    {
+      "path": "requirements.txt",
+      "bytes": 574,
+      "sha256": "3931e80457324f22562dd1687e3f34e7d55898e70c7b79c485571717855903d9",
+      "kind": "text",
+      "lines": 32
+    },
+    {
+      "path": "restore_checkpoint.sh",
+      "bytes": 777,
+      "sha256": "6812ac3e9b08ed7b12528bd43aa1fea69b7183b87b5fe94a52964c83f864d2bf",
+      "kind": "text",
+      "lines": 34
+    },
+    {
+      "path": "rollback_journal.md",
+      "bytes": 76427,
+      "sha256": "fd3f2efd01dc2e998503424c3d3a035407ee394e481831443c178b0f899e098c",
+      "kind": "text",
+      "lines": 1041
+    },
+    {
+      "path": "ruff.toml",
+      "bytes": 917,
+      "sha256": "9c59efe021dbd9380a4d9c2c7525d15a06784ada1fe4ebd98336562a35ae8e69",
+      "kind": "text",
+      "lines": 25
+    },
+    {
+      "path": "scripts/audit_inventory.py",
+      "bytes": 2145,
+      "sha256": "62891ece06564840552aeb4a4a040a499f39629f82e0f5df21284d26a141159a",
+      "kind": "text",
+      "lines": 40,
+      "classes": 0,
+      "functions": 1
+    },
+    {
+      "path": "scripts/audit_publication.py",
+      "bytes": 3193,
+      "sha256": "31407cabbdd5cba8ad0a1b09596d64f54b0005b307ac642e71cc90c53bcc7cd1",
+      "kind": "text",
+      "lines": 73,
+      "classes": 0,
+      "functions": 3
+    },
+    {
+      "path": "scripts/check_progress.py",
+      "bytes": 7216,
+      "sha256": "e4e3b1933ac2e78e13b313cde1ad83a9f3f0007498f623d064bd200083f38417",
+      "kind": "text",
+      "lines": 235,
+      "classes": 1,
+      "functions": 13
+    },
+    {
+      "path": "scripts/create_showcase_samples.py",
+      "bytes": 2394,
+      "sha256": "747ccf04e07c38447c3da65e65bbdfc1b224bd88b1b99352dbf4a7c842014959",
+      "kind": "text",
+      "lines": 54,
+      "classes": 0,
+      "functions": 1
+    },
+    {
+      "path": "scripts/create_windows_buildkit.py",
+      "bytes": 4801,
+      "sha256": "e089e2fe096361e9a33f0bb937b45d170f0701a1edb2760317d916a4c3a9a7ed",
+      "kind": "text",
+      "lines": 107,
+      "classes": 0,
+      "functions": 3
+    },
+    {
+      "path": "scripts/eval_person_name_real.py",
+      "bytes": 5920,
+      "sha256": "98a622592f51ca6056834f28b7da860560d8af4dbc0ca001fe3d8001329960c3",
+      "kind": "text",
+      "lines": 160,
+      "classes": 0,
+      "functions": 3
+    },
+    {
+      "path": "scripts/quick_start.sh",
+      "bytes": 5451,
+      "sha256": "aa4be16889574417850dce096ca11e24b7f18e6c5adebb4d6af26cf68c02ae3d",
+      "kind": "text",
+      "lines": 213
+    },
+    {
+      "path": "scripts/run_regression.ps1",
+      "bytes": 734,
+      "sha256": "009ffdc3bc07fb9d4d72b5db3cdba7742c0f4345147f589bd75a0f96bb4edf26",
+      "kind": "text",
+      "lines": 15
+    },
+    {
+      "path": "scripts/run_regression.sh",
+      "bytes": 529,
+      "sha256": "851604937100369a4d581524c753ee372da58c23ed4c3ecadaecf34fbfe01d86",
+      "kind": "text",
+      "lines": 13
+    },
+    {
+      "path": "tests/__init__.py",
+      "bytes": 69,
+      "sha256": "284f201775091fc7b9d5748bb8c4a6adf44263823e6c35cdee2d02ecad22b99b",
+      "kind": "text",
+      "lines": 1,
+      "classes": 0,
+      "functions": 0
+    },
+    {
+      "path": "tests/e2e/create_test_pdf.py",
+      "bytes": 2034,
+      "sha256": "737fd4c772afd4ed39f573942041410e27a7e705bba8625e8db805f92e03a890",
+      "kind": "text",
+      "lines": 74,
+      "classes": 0,
+      "functions": 1
+    },
+    {
+      "path": "tests/integration/verify_scroll_fix.py",
+      "bytes": 8334,
+      "sha256": "4c670d248c5689d067dcc58d53d6d1920d6eb8ab9cdcdbf89055d26f3e8c8e7e",
+      "kind": "text",
+      "lines": 235,
+      "classes": 0,
+      "functions": 6
+    },
+    {
+      "path": "tests/integration/verify_word_format.py",
+      "bytes": 7193,
+      "sha256": "5087aef94a4c0b5ae02d96bbc99cf77c3987cd39615461e3abb6a4b38d1a4f11",
+      "kind": "text",
+      "lines": 209,
+      "classes": 0,
+      "functions": 4
+    },
+    {
+      "path": "tests/legacy/README.md",
+      "bytes": 424,
+      "sha256": "d143ea9e6cf55cd8159b3a5453ebba3445f1c706b95dc98529a7d44c86f045f3",
+      "kind": "text",
+      "lines": 8
+    },
+    {
+      "path": "tests/legacy/test_ocr_substring_precision_v2.py",
+      "bytes": 20356,
+      "sha256": "ed77d4e881f6f3eb65c71fc608d2723d3cb56268662ee2349636b3a9e6aec954",
+      "kind": "text",
+      "lines": 405,
+      "classes": 9,
+      "functions": 17
+    },
+    {
+      "path": "tests/legacy/test_ocr_substring_precision_v3.py",
+      "bytes": 29788,
+      "sha256": "1c0e2adabb37f87b057fae99a98373768b7f0ab7bd3443f49b034f58765ce01b",
+      "kind": "text",
+      "lines": 592,
+      "classes": 11,
+      "functions": 23
+    },
+    {
+      "path": "tests/reports/SCROLL_FIX_TEST_CHECKLIST.md",
+      "bytes": 3819,
+      "sha256": "244fc398c347ce6bd5646b3bbfd34c91bfe4f7a302610b50aca09c938395a58d",
+      "kind": "text",
+      "lines": 123
+    },
+    {
+      "path": "tests/reports/TESTING_CHECKLIST.md",
+      "bytes": 5688,
+      "sha256": "7b971b1e68c22acb46357269ef8d6318b0a65ce7b0a4e3e6796276b00e81edcb",
+      "kind": "text",
+      "lines": 227
+    },
+    {
+      "path": "tests/reports/TESTING_REPORT.md",
+      "bytes": 4642,
+      "sha256": "74083bedfa1027c4ec6c0a4c64617fa8ed28414e1d894f6de98138ba323f3e9d",
+      "kind": "text",
+      "lines": 201
+    },
+    {
+      "path": "tests/reports/TEST_LOG.md",
+      "bytes": 3411,
+      "sha256": "450b2aaf9e6eda09935263d598b9427f8fb98f7de5ab4832e4200e04b54d3f81",
+      "kind": "text",
+      "lines": 185
+    },
+    {
+      "path": "tests/reports/TEST_PLAN_v22_1.md",
+      "bytes": 4155,
+      "sha256": "bb2b752471bfa3d7c0bfc1e574a5d785adb233e2bbab792c11fe18d328701e47",
+      "kind": "text",
+      "lines": 158
+    },
+    {
+      "path": "tests/reports/TEST_REPORT_v31.md",
+      "bytes": 3657,
+      "sha256": "7073e747990816dcb71e12d1d7518157d49393b4138f1609b12954cd601fe1b2",
+      "kind": "text",
+      "lines": 131
+    },
+    {
+      "path": "tests/reports/TEST_RESULTS.md",
+      "bytes": 8987,
+      "sha256": "3d127425b2e8ce9c989ea4410649d7bf0d7b8348e153eb75cbd291bd5785720d",
+      "kind": "text",
+      "lines": 381
+    },
+    {
+      "path": "tests/reports/TEST_v19.5.md",
+      "bytes": 5592,
+      "sha256": "410bd78df7df3545343566bae047f545fb51f886ae0ba5374bcc5f1d748a9069",
+      "kind": "text",
+      "lines": 259
+    },
+    {
+      "path": "tests/reports/app_test_log.txt",
+      "bytes": 1563,
+      "sha256": "5e827a1c25fe5e1cb63d5b97f49991fa8d4f62374cc7597f9366bb520ceac027",
+      "kind": "text",
+      "lines": 57
+    },
+    {
+      "path": "tests/reports/v23.2_test_log.txt",
+      "bytes": 545,
+      "sha256": "a8fe0c4206e06edf861ee3b846460317ef89fb7327b2688d0f29425b05c43b07",
+      "kind": "text",
+      "lines": 21
+    },
+    {
+      "path": "tests/samples/images/test_image_1.png",
+      "bytes": 20527,
+      "sha256": "bd1aea2fac195c20f4f70513f503f1ae90f54eee90a72203ba5989429e86f6ae",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/samples/images/test_image_2.jpg",
+      "bytes": 45483,
+      "sha256": "4ad0bee73e290a61ff46353bc8cd7cfb0d4ac65661948f46c637156897d78178",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/samples/images/test_image_3.png",
+      "bytes": 15855,
+      "sha256": "6c5db8ce6129d42d36738c8ca5498c7ad4400efa993eccdd3cabe338d2c73894",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/samples/test_data.txt",
+      "bytes": 787,
+      "sha256": "656430829914185b6a43060d4d8c9c73b53c2914cec6ead57fd75247b61af39b",
+      "kind": "text",
+      "lines": 36
+    },
+    {
+      "path": "tests/samples/test_doc_sample.doc",
+      "bytes": 19456,
+      "sha256": "bc73ced3e204c8ef5ac0ad3530b27f242a678678743feb6f6c8d8ea3226bd82a",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/samples/test_doc_sample.docx",
+      "bytes": 36959,
+      "sha256": "f11bbac274798b39e6357be70a6bb0ae140c433a882e8124d79f34c9ea631596",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/samples/test_sample.pdf",
+      "bytes": 2569,
+      "sha256": "9ea4287e3079b235d14ea95a760d67918f139a6316a0650c1825f48e1599fb3e",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/samples/test_word.docx",
+      "bytes": 37008,
+      "sha256": "293b624d38edb4ed399483f64068f08702a162b2d2f51b91c75c3e9a85dfb60b",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/samples/test_word_redacted.docx",
+      "bytes": 36944,
+      "sha256": "a91089bd0920ba7094adb45931668f49c05d7cba422e0de25c0cc59f11df13e5",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/samples/test_word_sample.docx",
+      "bytes": 37058,
+      "sha256": "760f31a3f22a365ce2b375e5377d426f269257a03d5ecf3bb8de22ed41b69f13",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/samples/测试文档.docx",
+      "bytes": 37032,
+      "sha256": "05a47807082ff626b07a23124544990e7bf17dd4e0ee381a4f1f187db1209a6c",
+      "kind": "binary"
+    },
+    {
+      "path": "tests/scripts/quick_test.sh",
+      "bytes": 1787,
+      "sha256": "00b07933fec42969db500efa4c05537dbf6ac88428999b2539830a07b663739d",
+      "kind": "text",
+      "lines": 76
+    },
+    {
+      "path": "tests/scripts/test.sh",
+      "bytes": 5605,
+      "sha256": "165a048d2e057416b8bba551cf114a8b77f4bc688255979931ad4cc7794a5aee",
+      "kind": "text",
+      "lines": 188
+    },
+    {
+      "path": "tests/scripts/test_right_click.sh",
+      "bytes": 1254,
+      "sha256": "57bf8eee4bfe0894321b5efdf4c4bee7994165d3b853b958c59c3be7b63c44ca",
+      "kind": "text",
+      "lines": 50
+    },
+    {
+      "path": "tests/scripts/test_word_processor.py",
+      "bytes": 8702,
+      "sha256": "b09c8b7a92793cfdfcd64cc9cf363055a49f8d8020bb39b1662dfb19f7f28770",
+      "kind": "text",
+      "lines": 234,
+      "classes": 2,
+      "functions": 13
+    },
+    {
+      "path": "tests/unit/__init__.py",
+      "bytes": 74,
+      "sha256": "a62fae2c224a8b08affc0cff5ea27bff0a9a029e470b7578009b3ada2399e61b",
+      "kind": "text",
+      "lines": 1,
+      "classes": 0,
+      "functions": 0
+    },
+    {
+      "path": "tests/unit/test_address_rule.py",
+      "bytes": 10634,
+      "sha256": "dab6cbb9d758bc96ec664c23fc5ae8ecb7bfb204762f1a257c3d44d5679288b3",
+      "kind": "text",
+      "lines": 237,
+      "classes": 5,
+      "functions": 39
+    },
+    {
+      "path": "tests/unit/test_app_config.py",
+      "bytes": 3462,
+      "sha256": "1b5ad037aa271402948f59716423043be12df3cd78b58f780f534c9f7fa9b19d",
+      "kind": "text",
+      "lines": 84,
+      "classes": 1,
+      "functions": 5
+    },
+    {
+      "path": "tests/unit/test_batch_word_replace.py",
+      "bytes": 1785,
+      "sha256": "50eb4139f1010c840e76de4375eed054e712d5605af8d1624b3b8b15aa76aefa",
+      "kind": "text",
+      "lines": 49,
+      "classes": 1,
+      "functions": 2
+    },
+    {
+      "path": "tests/unit/test_birthdate_rule.py",
+      "bytes": 12073,
+      "sha256": "69bafcf06f82d3a73f6d505a1108b62a2346590a586ba3d92c8ab53f63a8ab78",
+      "kind": "text",
+      "lines": 275,
+      "classes": 6,
+      "functions": 46
+    },
+    {
+      "path": "tests/unit/test_bookmark.py",
+      "bytes": 8941,
+      "sha256": "0ef20de0e666693d58e2299442cb17bbc8c576fef93548b5031d750891210522",
+      "kind": "text",
+      "lines": 204,
+      "classes": 3,
+      "functions": 23
+    },
+    {
+      "path": "tests/unit/test_calculate_sub_rect_width_limit.py",
+      "bytes": 10990,
+      "sha256": "2b7c3a502b56bd1b590af604f1389933aca2310e715400919cc3ef574bf6bad1",
+      "kind": "text",
+      "lines": 203,
+      "classes": 1,
+      "functions": 13
+    },
+    {
+      "path": "tests/unit/test_config_alignment.py",
+      "bytes": 12976,
+      "sha256": "76a8bb4daf3ed056f618994b0ab0caeb74434270f49300443905fe0d749a62fa",
+      "kind": "text",
+      "lines": 236,
+      "classes": 2,
+      "functions": 19
+    },
+    {
+      "path": "tests/unit/test_convergence.py",
+      "bytes": 6350,
+      "sha256": "b1b6656c3c5557815e0fc1d802eaa398f8f2c4e0ea1e9fdb7504b8e86504f281",
+      "kind": "text",
+      "lines": 131,
+      "classes": 4,
+      "functions": 10
+    },
+    {
+      "path": "tests/unit/test_cp118_stability.py",
+      "bytes": 16377,
+      "sha256": "c1fc00ac643b21ba561a56dbbc0f0b8fda3fc1fb192cf9bb4568bf3311a3da83",
+      "kind": "text",
+      "lines": 390,
+      "classes": 9,
+      "functions": 33
+    },
+    {
+      "path": "tests/unit/test_custom_keyword_rules.py",
+      "bytes": 6284,
+      "sha256": "e787db7ca03b53ce9a4d0a8cafc90c612aa7d60bb8fc25d49396e45dac1c589c",
+      "kind": "text",
+      "lines": 143,
+      "classes": 2,
+      "functions": 13
+    },
+    {
+      "path": "tests/unit/test_doc_search.py",
+      "bytes": 7069,
+      "sha256": "0f0bb4f3802c146beb697539a8cd1114d4e5a9f7539c38d9b71dc65942837471",
+      "kind": "text",
+      "lines": 168,
+      "classes": 3,
+      "functions": 16
+    },
+    {
+      "path": "tests/unit/test_doc_temp_security.py",
+      "bytes": 3594,
+      "sha256": "fc58704558bbee04f4d7868e1bf336bd9ae2b26f618a78d5c2a509456334bd5a",
+      "kind": "text",
+      "lines": 79,
+      "classes": 1,
+      "functions": 3
+    },
+    {
+      "path": "tests/unit/test_extended_rules.py",
+      "bytes": 7019,
+      "sha256": "fca5d985c69b6f4cb9d572e88c4a44d53376d55b5d5d4dca6fe97f55af7d5f7f",
+      "kind": "text",
+      "lines": 171,
+      "classes": 6,
+      "functions": 28
+    },
+    {
+      "path": "tests/unit/test_extract_crop.py",
+      "bytes": 12440,
+      "sha256": "e7cdda1d8506ba58c190609a398518009e2f7ae2ae355264c593de5e6f17d1e8",
+      "kind": "text",
+      "lines": 295,
+      "classes": 5,
+      "functions": 25
+    },
+    {
+      "path": "tests/unit/test_fstring_safety.py",
+      "bytes": 2078,
+      "sha256": "61482bd534bef1ae8496cb264aac4a3c177fa84243f811a4be793d011d831bda",
+      "kind": "text",
+      "lines": 46,
+      "classes": 1,
+      "functions": 1
+    },
+    {
+      "path": "tests/unit/test_html_sanitize.py",
+      "bytes": 4770,
+      "sha256": "7b9a704f74fdbadc1fd895918161e7303a645c0977eb6acd2ddbc9fcfc4d13d1",
+      "kind": "text",
+      "lines": 107,
+      "classes": 1,
+      "functions": 16
+    },
+    {
+      "path": "tests/unit/test_idcard_pattern_v2.py",
+      "bytes": 5606,
+      "sha256": "efb51137eac35c5473907dcb2aed0fd46034e9bd480c69c5aa8be68d65c246ba",
+      "kind": "text",
+      "lines": 131,
+      "classes": 1,
+      "functions": 17
+    },
+    {
+      "path": "tests/unit/test_logger.py",
+      "bytes": 5995,
+      "sha256": "e7601528217fbb408702d4eafbfdddaf3dd047492bea26e58d0ea0b915c8ba46",
+      "kind": "text",
+      "lines": 161,
+      "classes": 4,
+      "functions": 15
+    },
+    {
+      "path": "tests/unit/test_luhn_validation.py",
+      "bytes": 12116,
+      "sha256": "cf34adafce51e5c24a350616289c3051452c8bacb9098d42deaa8adfb30b1a3c",
+      "kind": "text",
+      "lines": 277,
+      "classes": 4,
+      "functions": 20
+    },
+    {
+      "path": "tests/unit/test_manual_region_dialog.py",
+      "bytes": 3491,
+      "sha256": "e016cac56f1e265da9645f8f1ccc2a85d1534ffa2d19da317e5ffc352e56d3c6",
+      "kind": "text",
+      "lines": 78,
+      "classes": 1,
+      "functions": 6
+    },
+    {
+      "path": "tests/unit/test_migrated_pure_logic.py",
+      "bytes": 9480,
+      "sha256": "67fc90886f4d0044fadced210c25f6831570df9ca51c9e7cb04c18dcef1b7d63",
+      "kind": "text",
+      "lines": 220,
+      "classes": 4,
+      "functions": 23
+    },
+    {
+      "path": "tests/unit/test_mixed_pdf_ocr.py",
+      "bytes": 8701,
+      "sha256": "d5517fb6e6eb8e53f8a1b76b316e077f1d13db258e1325b4df0bdd22cafcbc1a",
+      "kind": "text",
+      "lines": 227,
+      "classes": 2,
+      "functions": 26
+    },
+    {
+      "path": "tests/unit/test_ocr_api.py",
+      "bytes": 2358,
+      "sha256": "d73aba3a0e81aa2f7f165f3abd8d45689446ddad0f794a05b37489fe62e8c6e4",
+      "kind": "text",
+      "lines": 65,
+      "classes": 1,
+      "functions": 3
+    },
+    {
+      "path": "tests/unit/test_ocr_dedup.py",
+      "bytes": 2126,
+      "sha256": "3b6fbb8285b7a6b83b0b1197e2a4a4da3bb323dd890508aa9ee29339cc453c38",
+      "kind": "text",
+      "lines": 57,
+      "classes": 1,
+      "functions": 6
+    },
+    {
+      "path": "tests/unit/test_ocr_substring_precision.py",
+      "bytes": 12730,
+      "sha256": "4a4629ae2522c4ee3c92e4f289561167ba5188d239a33394e8acac69e5a16ace",
+      "kind": "text",
+      "lines": 274,
+      "classes": 6,
+      "functions": 13
+    },
+    {
+      "path": "tests/unit/test_ocr_substring_precision_v4.py",
+      "bytes": 18271,
+      "sha256": "f029eac49a6bbb22113532f0fb2b88362f0cc8a671c4e3fcbbd314bcdf6b6bd7",
+      "kind": "text",
+      "lines": 380,
+      "classes": 5,
+      "functions": 14
+    },
+    {
+      "path": "tests/unit/test_ocr_substring_precision_v5.py",
+      "bytes": 11718,
+      "sha256": "1fd3ede3a6abc0d00398b192849dbc9432b302a89e3192f171e65e6eece01093",
+      "kind": "text",
+      "lines": 242,
+      "classes": 4,
+      "functions": 7
+    },
+    {
+      "path": "tests/unit/test_package_imports.py",
+      "bytes": 1436,
+      "sha256": "de66443339aaa6b782bcedbb08c312971eb3e57835796349adb09a7966da8f66",
+      "kind": "text",
+      "lines": 38,
+      "classes": 1,
+      "functions": 2
+    },
+    {
+      "path": "tests/unit/test_page_view_ops.py",
+      "bytes": 5686,
+      "sha256": "8a2c00cf441e05a654855bbaa841bb2c52ecdc83b91463fccdb8d90a29db21a7",
+      "kind": "text",
+      "lines": 153,
+      "classes": 4,
+      "functions": 22
+    },
+    {
+      "path": "tests/unit/test_path_validation.py",
+      "bytes": 6914,
+      "sha256": "5b0fc367fe53999360adce4e9f0ad791379c16be2b94fbac357dcf86b78601fe",
+      "kind": "text",
+      "lines": 130,
+      "classes": 1,
+      "functions": 13
+    },
+    {
+      "path": "tests/unit/test_pdf_encrypt.py",
+      "bytes": 2543,
+      "sha256": "ebf1775479f8b3bce9a99f2c2190ba5a3cf9e9dd7f07ebb8db237987e368efcb",
+      "kind": "text",
+      "lines": 62,
+      "classes": 1,
+      "functions": 5
+    },
+    {
+      "path": "tests/unit/test_pdf_password.py",
+      "bytes": 3199,
+      "sha256": "258473f4dbb625a408b8fcc9a20d6579d48813caa291c8105e9547acee5e5a37",
+      "kind": "text",
+      "lines": 94,
+      "classes": 1,
+      "functions": 6
+    },
+    {
+      "path": "tests/unit/test_pdf_text_hit_dedup.py",
+      "bytes": 7174,
+      "sha256": "3afb63673dd05b28aa13840f160358e1dbf15451c4b48e31e9fa6430a2ac782e",
+      "kind": "text",
+      "lines": 179,
+      "classes": 3,
+      "functions": 16
+    },
+    {
+      "path": "tests/unit/test_person_name.py",
+      "bytes": 15183,
+      "sha256": "7115fe8e957a3aec52a267dfce436bb130505c759427e4533ecdb365d7e9d910",
+      "kind": "text",
+      "lines": 333,
+      "classes": 14,
+      "functions": 49
+    },
+    {
+      "path": "tests/unit/test_person_name_pipelines.py",
+      "bytes": 10501,
+      "sha256": "352407c0bf1d31a98ef9bfb287c55af588ed0af56011a8a22a2e22ea405b25e1",
+      "kind": "text",
+      "lines": 265,
+      "classes": 6,
+      "functions": 26
+    },
+    {
+      "path": "tests/unit/test_redact_report.py",
+      "bytes": 3855,
+      "sha256": "8a9d22f5571d8c0787310e4abbbcf5554d0456a17f981a2e56944e8bcdea480b",
+      "kind": "text",
+      "lines": 88,
+      "classes": 2,
+      "functions": 10
+    },
+    {
+      "path": "tests/unit/test_release_audit.py",
+      "bytes": 8808,
+      "sha256": "652228f623071d240f16717fd38da7dd40e953fb6380a3bce801479bce828364",
+      "kind": "text",
+      "lines": 181,
+      "classes": 2,
+      "functions": 16
+    },
+    {
+      "path": "tests/unit/test_replace_text_fontsize.py",
+      "bytes": 6405,
+      "sha256": "d0be205257a00311652e503bddef85d1757cf92e0ec40bb57781342120e79283",
+      "kind": "text",
+      "lines": 129,
+      "classes": 2,
+      "functions": 9
+    },
+    {
+      "path": "tests/unit/test_seal_detection.py",
+      "bytes": 29726,
+      "sha256": "e9f26d0549d890d040b477f738a35358cbd37e1d869b92d79cc900b5bf6fe3b9",
+      "kind": "text",
+      "lines": 621,
+      "classes": 3,
+      "functions": 48
+    },
+    {
+      "path": "tests/unit/test_session_store.py",
+      "bytes": 5726,
+      "sha256": "129a1e71937e4df657c6ca55d63838c9ebe3d4958bd8b4f956ecf1d5392652a6",
+      "kind": "text",
+      "lines": 137,
+      "classes": 4,
+      "functions": 15
+    },
+    {
+      "path": "tests/unit/test_signature_detection.py",
+      "bytes": 6491,
+      "sha256": "04b6f9b46bc2bc541d6c1734770cb85c4579deaae066fdd0e03328effc255cbf",
+      "kind": "text",
+      "lines": 138,
+      "classes": 1,
+      "functions": 13
+    },
+    {
+      "path": "tests/unit/test_stability.py",
+      "bytes": 4037,
+      "sha256": "f70c00497890d4de2f683b139d22b24071d493a7a4314e9ac2687800c75cfc30",
+      "kind": "text",
+      "lines": 105,
+      "classes": 3,
+      "functions": 9
+    },
+    {
+      "path": "tests/unit/test_star_import_exports.py",
+      "bytes": 1858,
+      "sha256": "8c7ddc52a42e69d91aa2ebee20caf503c6b0115281eb004b9a3d2650c30c58dd",
+      "kind": "text",
+      "lines": 47,
+      "classes": 1,
+      "functions": 2
+    },
+    {
+      "path": "tests/unit/test_targeted_mask_scan.py",
+      "bytes": 5687,
+      "sha256": "a3cff4d0e31bb84102ae9d186c1148bcae42bfbadc6b7bd5bc8b402002cad969",
+      "kind": "text",
+      "lines": 130,
+      "classes": 4,
+      "functions": 19
+    },
+    {
+      "path": "tests/unit/test_toolbar_layout.py",
+      "bytes": 4503,
+      "sha256": "780c62faa2c8bf8de1342e7a4729bbf5e0ec91b19206049e046a1003eef4e7d2",
+      "kind": "text",
+      "lines": 109,
+      "classes": 2,
+      "functions": 7
+    },
+    {
+      "path": "tests/unit/test_trace_cleaner.py",
+      "bytes": 14067,
+      "sha256": "0d813d45ea8650006824306ae5f979ff92e3ccda9dc1f9190ab545af12427eb0",
+      "kind": "text",
+      "lines": 341,
+      "classes": 10,
+      "functions": 41
+    },
+    {
+      "path": "tests/unit/test_undo_redo.py",
+      "bytes": 7672,
+      "sha256": "f5a4cfd018f12218a96a00d4b3ab84a69984b1b405227ecb56eede4361212b28",
+      "kind": "text",
+      "lines": 173,
+      "classes": 3,
+      "functions": 12
+    },
+    {
+      "path": "tests/unit/test_windows_portable_builder.py",
+      "bytes": 5169,
+      "sha256": "8c88842100e681b5a7f1bd0c0fc74cd580462093cd7e7d00046020ec818220af",
+      "kind": "text",
+      "lines": 114,
+      "classes": 1,
+      "functions": 13
+    },
+    {
+      "path": "tests/unit/test_word_crypto.py",
+      "bytes": 4952,
+      "sha256": "44dbf951ec15fe7599ab4ff42061cc76d332fef97837a74c165b1cedd013c29d",
+      "kind": "text",
+      "lines": 138,
+      "classes": 3,
+      "functions": 13
+    },
+    {
+      "path": "tests/unit/test_word_header_footer_redaction.py",
+      "bytes": 4383,
+      "sha256": "351faaa5766b6192cb311435a0886ffe90c2c8f4b0ad63edbde35109ae9c88a5",
+      "kind": "text",
+      "lines": 100,
+      "classes": 1,
+      "functions": 5
+    },
+    {
+      "path": "tests/unit/test_word_hyperlink_alignment.py",
+      "bytes": 3779,
+      "sha256": "c47f67d68e1ba04eea655edb921b7f035656583f783d12c6a11f483be48f8431",
+      "kind": "text",
+      "lines": 84,
+      "classes": 1,
+      "functions": 5
+    },
+    {
+      "path": "tests/unit/test_word_replace_rules.py",
+      "bytes": 27409,
+      "sha256": "4a31519644ce543944d8303946785e2899daf7dd1db4bf378d4acbacad3f841c",
+      "kind": "text",
+      "lines": 597,
+      "classes": 4,
+      "functions": 59
+    },
+    {
+      "path": "tests/unit/test_worker_lifecycle.py",
+      "bytes": 11271,
+      "sha256": "23ce802d9da7498a6a10024cef7be7aaee9c8196947ccf91ab847430ebd2e155",
+      "kind": "text",
+      "lines": 279,
+      "classes": 6,
+      "functions": 26
+    },
+    {
+      "path": "tests/unit/test_worker_parent_compat.py",
+      "bytes": 3721,
+      "sha256": "b103ed17592d516a19bdd46a259839e2c1a799c071c982f5c4edbba992774673",
+      "kind": "text",
+      "lines": 87,
+      "classes": 1,
+      "functions": 8
+    },
+    {
+      "path": "theme.py",
+      "bytes": 2773,
+      "sha256": "904e69889e96a457cfde5e7be6a4794435aadf14bde49f13d09f5b6c4edef6ca",
+      "kind": "text",
+      "lines": 91,
+      "classes": 1,
+      "functions": 2
+    },
+    {
+      "path": "user-guides/用户使用手册.md",
+      "bytes": 28927,
+      "sha256": "55b25ff18c2e1d505503a04e7424d59b12c0b8d4288ce25ee0ec9908553ee9a6",
+      "kind": "text",
+      "lines": 971
+    },
+    {
+      "path": "version.txt",
+      "bytes": 7,
+      "sha256": "64103787a0eece9ad47ccd2ccce7a21e6b5c9887d6df3a77fafb3edd15d38873",
+      "kind": "text",
+      "lines": 1
+    }
+  ],
+  "file_count": 359,
+  "findings": []
+}

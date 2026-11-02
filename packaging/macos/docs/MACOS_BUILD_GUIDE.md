@@ -9,7 +9,7 @@ macOS 打包完整指南统一维护在：
 
 ## 当前打包基线
 
-- 当前版本：`v37.7.4`
+- 当前版本：`v40.1.1`（v40.1.1）
 - 版本来源：项目根目录 `version.txt`
 
 ---
@@ -32,8 +32,9 @@ macOS 打包完整指南统一维护在：
 
 - 详细参数、证书配置、公证流程请以 `docs/packaging/macos-packaging-guide.md` 为准。
 - 本文件只保留最小索引，避免与主文档重复维护。
-- 当前 active 打包说明已经统一到 `v37.7.4`。
+- 当前 active 打包说明已经统一到 `v40.1.1`。
 - 当前 macOS 打包脚本统一通过 `python3 -m PyInstaller` 执行，并使用 `build/.pyinstaller-cache`。
 - 2026-03-18 已在当前机器跑通到 `.app`；当前环境缺少 `create-dmg`，且 `hdiutil` 本次未成功生成 DMG，脚本已按回退逻辑复制 `releases/macos/PrivacyGuard.app`。
+- **已知限制（v40.1.1）**：macOS 端 `venvmac` 虚拟环境内的依赖仍为旧版 `rapidocr-onnxruntime==1.2.3`（PP-OCRv4），尚未升级到 `rapidocr==3.9.2`（PP-OCRv6）。后续更换 macOS 系统后需执行 `pip uninstall rapidocr-onnxruntime -y && pip install rapidocr==3.9.2` 再重新打包。
 
-最后同步：2026-03-18
+最后同步：2026-07-24

@@ -25,7 +25,6 @@ class TestFStringCSSSafety(unittest.TestCase):
             r'[ \t]*:'
         )
 
-        in_fstring = False
         for lineno, line in enumerate(lines, start=1):
             stripped = line.strip()
             # 简化检测：包含 f\" 或 f' 且含 CSS 关键字的行

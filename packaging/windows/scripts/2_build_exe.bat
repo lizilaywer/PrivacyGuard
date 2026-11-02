@@ -59,7 +59,7 @@ echo.
 call "%VENV_PATH%\Scripts\activate.bat"
 
 echo [PRE-CHECK] Generating version resource...
-python "%~dp0generate_version_info.py"
+"%VENV_PATH%\Scripts\python.exe" "%~dp0generate_version_info.py"
 if errorlevel 1 (
     echo [ERROR] Failed to generate version_info.txt
     pause
@@ -127,7 +127,7 @@ echo [2/4] Building executable (5-10 minutes)...
 echo    Please wait...
 echo.
 
-python -m PyInstaller --clean --noconfirm "%CONFIG_DIR%\PrivacyGuard_windows.spec"
+"%VENV_PATH%\Scripts\python.exe" -m PyInstaller --clean --noconfirm "%CONFIG_DIR%\PrivacyGuard_windows.spec"
 
 if errorlevel 1 (
     echo.

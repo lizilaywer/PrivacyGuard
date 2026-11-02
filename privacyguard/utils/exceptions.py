@@ -43,3 +43,7 @@ class MemoryLimitError(PrivacyAppError):
 class WorkerCancelledError(PrivacyAppError):
     """用户取消操作"""
     pass
+
+
+class OCRInspectionError(RuntimeError):
+    """An image could not be inspected; this is not a successful empty scan."""

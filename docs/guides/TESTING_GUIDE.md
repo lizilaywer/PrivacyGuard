@@ -1,344 +1,247 @@
-# PrivacyApp 测试报告
+# PrivacyGuard 测试指南
 
-**测试日期:** 2026-02-08
-**项目版本:** v19.0 Hybrid Stable (v7 Logic)
-**测试环境:** macOS 10.14+, Python 3.11.14
+> 本文档描述 PrivacyGuard 的测试架构、执行方式与编写规范。
+> 当前基线：v37.8.11 ｜ 回归：418 项（416 passed + 2 skipped）
 
----
-
-## 自动化测试结果
-
-### ✅ 通过的测试
-
-| 测试项 | 状态 | 详情 |
-|--------|------|------|
-| Python 语法检查 | ✓ 通过 | 代码无语法错误 |
-| 模块导入检查 | ✓ 通过 | 所有模块可正常导入 |
-| 依赖包检查 | ✓ 通过 | 所有依赖已安装 |
-| 测试文件检查 | ✓ 通过 | test_sample.pdf 已生成 |
-| 虚拟环境检查 | ✓ 通过 | Python 3.11.14 |
-| 已打包应用检查 | ✓ 通过 | PrivacyGuard.app 可用 |
-| PDF 处理测试 | ✓ 通过 | 文本提取功能正常 |
-| OCR 功能测试 | ✓ 通过 | RapidOCR 可正常识别 |
-
-### 依赖包版本
-
-```
-PyQt6                 6.10.2
-PyMuPDF               1.26.7
-opencv-python         4.13.0.92
-numpy                 2.4.2
-rapidocr-onnxruntime  1.4.4
-reportlab             4.4.9
-```
+最后更新：2026-08-01
 
 ---
 
-## 手动功能测试清单
+## 1. 测试架构
 
-### 1. 应用启动测试
+### 1.1 目录结构
 
-**启动方式 1 - 源码运行:**
+```
+tests/
+├── unit/               # 单元测试（参与 unittest discover，CI 与回归基线来源）
+│   ├── test_luhn_validation.py
+│   ├── test_seal_detection.py
+│   ├── test_signature_detection.py
+│   ├── test_mixed_pdf_ocr.py
+│   ├── test_pdf_text_hit_dedup.py
+│   ├── test_pdf_encrypt.py
+│   ├── test_undo_redo.py
+│   ├── test_redact_report.py
+│   ├── test_session_store.py
+│   ├── test_trace_cleaner.py
+│   ├── test_logger.py             # v37.8.11 P0-3 统一日志框架
+│   ├── test_worker_lifecycle.py   # v37.8.11 P2-3 Worker 线程生命周期
+│   └── ...                        # 当前 418 项基线
+├── legacy/              # 失效/陈旧测试（不参与 discover，仅保留历史）
+├── scripts/             # 辅助测试脚本（不参与 discover）
+├── e2e/                 # 端到端辅助脚本（不参与 discover）
+└── integration/         # 集成验证脚本（不参与 discover）
+```
+
+### 1.2 测试框架
+
+- **框架**：Python 标准库 `unittest`（不使用 pytest）
+- **发现机制**：`unittest discover -s tests/unit`，新测试文件自动纳入，清单永不漂移
+- **CI 平台**：`windows-latest`（GitHub Actions），`QT_QPA_PLATFORM=offscreen` 离屏运行
+
+### 1.3 当前基线
+
+| 指标 | 数值 |
+|------|------|
+| 总测试数 | 418 |
+| 通过 | 416 |
+| 跳过 | 2 |
+| 基线版本 | v37.8.11 |
+
+跳过的 2 项为 `test_real_pdf_seals_detected` 与 `test_real_pdf_black_fingerprint_detected`，依赖仓库内真实样本文件；样本缺失时自动 skip，印章/签名端到端语义由合成样本用例在任何机器上兑付。
+
+---
+
+## 2. 执行方式
+
+### 2.1 全量回归（推荐）
+
+```powershell
+# Windows
+powershell -ExecutionPolicy Bypass -File scripts/run_regression.ps1
+```
+
 ```bash
-cd "/Users/a49144/Desktop/codexhub/PrivacyGuardApp"
-source venv/bin/activate
-python main.py
+# macOS / Linux
+./scripts/run_regression.sh
 ```
 
-**启动方式 2 - 打包应用:**
+脚本内部执行 `unittest discover -s tests/unit -v`，自动发现全部用例。
+
+### 2.2 单模块执行
+
+```powershell
+# Windows
+.\venv_win\Scripts\python.exe -m unittest tests.unit.test_seal_detection -v
+```
+
 ```bash
-open "/Users/a49144/Desktop/codexhub/PrivacyGuardApp/dist/PrivacyGuard.app"
+# macOS
+./venvmac/bin/python3 -m unittest tests.unit.test_seal_detection -v
 ```
 
-**验证项:**
-- [ ] 应用正常启动,窗口显示
-- [ ] 界面元素完整加载
-- [ ] 控制台无严重错误
+### 2.3 语法检查
+
+```powershell
+.\venv_win\Scripts\python.exe -m compileall -q main.py privacyguard tests
+```
+
+### 2.4 静态检查（ruff）
+
+```powershell
+.\venv_win\Scripts\python.exe -m ruff check main.py privacyguard tests
+```
+
+ruff 配置见 `ruff.toml`（`select = ["E9", "F"]`，`ignore = ["F403", "F405"]`）。
 
 ---
 
-### 2. PDF 导入测试
+## 3. CI 流水线
 
-**测试文件:** `test_sample.pdf`
+CI 定义在 `.github/workflows/ci.yml`，触发条件为 push/PR 到 `main` 分支：
 
-**测试步骤:**
-1. 点击"📂 打开"按钮
-2. 选择 `test_sample.pdf`
-3. 观察加载过程
+| 步骤 | 命令 | 说明 |
+|------|------|------|
+| 依赖安装 | `pip install -r requirements.txt && pip install ruff` | 运行时依赖 + ruff |
+| Ruff lint | `python -m ruff check main.py privacyguard tests` | 静态检查（P2-3 新增） |
+| 编译检查 | `python -m compileall -q main.py privacyguard tests` | 语法检查 |
+| 回归测试 | `python -m unittest discover -s tests/unit -v` | `QT_QPA_PLATFORM=offscreen` |
+| 版本校验 | 版本一致性脚本 | version.txt → version_info.txt → main.py → __init__.py |
 
-**验证项:**
-- [ ] PDF 正常加载
-- [ ] 页数显示正确 (2页)
-- [ ] 页面内容正常显示
-- [ ] 翻页功能正常:
-  - [ ] 上一页按钮
-  - [ ] 下一页按钮
-  - [ ] 首页按钮
-  - [ ] 末页按钮
-  - [ ] 页码输入框
+提交前请确保本地通过上述全部检查。
 
 ---
 
-### 3. 智能脱敏测试
+## 4. 测试编写规范
 
-**测试步骤:**
-1. 加载 `test_sample.pdf`
-2. 点击"⚙️ 高级设置"
-3. 配置脱敏规则:
-   - [ ] 身份证号 (18位)
-   - [ ] 手机号码 (11位)
-   - [ ] 电子邮箱
-   - [ ] 银行卡号 (13-19位)
-   - [ ] 日期格式
-4. 点击"🔍 智能脱敏"
-5. 观察处理进度
+### 4.1 文件命名与放置
 
-**预期结果:**
-| 敏感信息类型 | 测试数据 | 应被识别 |
-|-------------|---------|---------|
-| 身份证号 | 340102199001011234 | ✓ |
-| 手机号码 | 13812345678 | ✓ |
-| 电子邮箱 | test@example.com | ✓ |
-| 银行卡号 | 6222021234567890123 | ✓ |
-| 银行卡号 | 621700123456789012 | ✓ |
-| 银行卡号 | 622200123456789012345 | ✓ |
-| 固定电话 | 021-12345678 | ✓ |
-| 日期 | 1990年1月1日 | ✓ |
-| 日期 | 2024-01-01 | ✓ |
+- 单元测试放 `tests/unit/test_<主题>.py`，会被 `discover` 自动纳入
+- 文件名用下划线分隔：`test_pdf_encrypt.py`、`test_worker_lifecycle.py`
+- 失效/陈旧测试归档到 `tests/legacy/`（不参与 discover）
 
-**验证项:**
-- [ ] 进度条正常显示
-- [ ] 所有敏感信息被标记
-- [ ] 标记位置准确
-- [ ] 控制台无错误信息
+### 4.2 Qt 依赖处理
 
----
+需要 PyQt6 的测试用 offscreen 平台 + 模块级 QApplication 单例：
 
-### 4. 手动标记测试
+```python
+import os
+import sys
+import unittest
 
-**测试步骤:**
-1. 在页面空白处按住鼠标拖拽
-2. 绘制矩形框
-3. 切换标记颜色 (黑色/白色)
-4. 右键点击矩形框删除
+os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-**验证项:**
-- [ ] 矩形框正确绘制
-- [ ] 矩形框位置准确
-- [ ] 颜色切换正常
-- [ ] 右键删除功能正常
-- [ ] 多个矩形框可共存
+try:
+    from PyQt6.QtWidgets import QApplication
+    _APP = QApplication.instance() or QApplication([])  # 模块级持有，防 GC
+    from privacyguard.workers import OCRWorker
+    HAS_DEPS = True
+except Exception:
+    HAS_DEPS = False
 
----
 
-### 5. 导出测试
+@unittest.skipUnless(HAS_DEPS, "PyQt6 依赖不可用")
+class TestXxx(unittest.TestCase):
+    ...
+```
 
-**测试步骤:**
-1. 完成脱敏标记
-2. 点击"💾 导出"按钮
-3. 选择保存位置和文件名
-4. 打开导出的 PDF 验证
+### 4.3 资源清理
 
-**验证项:**
-- [ ] 导出对话框正常显示
-- [ ] 文件保存成功
-- [ ] 导出的 PDF 可正常打开
-- [ ] 敏感信息已被涂黑/涂白
-- [ ] 非敏感信息保持原样
-- [ ] PDF 页数不变
+- 文件句柄、临时资源必须在 `tearDown` 或上下文管理器中关闭，避免 `ResourceWarning`
+- 使用 `tempfile.TemporaryDirectory()` 管理临时文件
+- Worker 测试中 `deleteLater()` 清理 QThread 对象
+
+### 4.4 Worker 线程测试模式
+
+- **实例化/信号/中断 API**：不需启动线程，直接验证类属性和方法存在性
+- **同步 run()**：直接调用 `worker.run()`（不经过 `start()`），在同一线程内执行，无需事件循环
+- **跨线程决策**：用 `threading.Thread` + `threading.Event` 测试 `provide_error_decision` 机制
+- 参考实现：`tests/unit/test_worker_lifecycle.py`
+
+### 4.5 真实样本测试
+
+- 依赖真实文件（如真实印章 PDF）的测试必须提供合成样本兜底
+- 样本缺失时用 `@unittest.skipUnless(os.path.exists(sample), "样本缺失")` 跳过
+- 合成样本用例在任何机器上都能验证端到端语义
 
 ---
 
-### 6. 双页模式测试
+## 5. 测试覆盖范围
 
-**测试步骤:**
-1. 勾选"📖 双页"选项
-2. 观察页面显示
-3. 翻页测试
+### 5.1 已覆盖的核心域
 
-**验证项:**
-- [ ] 两页内容同时显示
-- [ ] 页面布局合理
-- [ ] 翻页时正确切换页面对
-- [ ] 单/双页切换流畅
+| 域 | 测试文件 | 覆盖内容 |
+|----|---------|---------|
+| 规则校验 | test_luhn_validation | Luhn 校验位算法 |
+| 印章检测 | test_seal_detection | 多特征评分融合检测 |
+| 签名手印 | test_signature_detection | 红/黑双路径 + 暖色门控 |
+| 混合 PDF | test_mixed_pdf_ocr | 文本层 + 图片块 OCR |
+| PDF 去重 | test_pdf_text_hit_dedup | 重复命中不重复追加 |
+| PDF 加密 | test_pdf_encrypt | AES-256 加密导出 |
+| 撤销重做 | test_undo_redo | 快照栈深度与恢复 |
+| 脱敏报告 | test_redact_report | 规则分类 + 逐页详情 |
+| 会话恢复 | test_session_store | 崩溃安全草稿 |
+| 痕迹清理 | test_trace_cleaner | 白名单 realpath 守卫 |
+| 日志框架 | test_logger | init_logging 幂等 + 文件滚动 |
+| Worker 生命周期 | test_worker_lifecycle | 5 个 Worker 实例化/信号/中断/决策 |
+| Word 规则 | test_word_replace_rules | exact/regex 多字段替换 |
+| Word 批量 | test_batch_word_replace | 批量替换 + 冲突处理 |
+| 配置 | test_app_config, test_config_alignment | 配置持久化与一致性 |
+| 工具栏布局 | test_toolbar_layout | 溢出响应式 |
+| 页面视图 | test_page_view_ops | 旋转/插入/删除 |
+| 稳定性 | test_stability | 临时文件清理幂等 |
+| 包导入 | test_package_imports | 无 OCR 依赖安全导入 |
 
----
+### 5.2 手工验收清单
 
-### 7. 缩放功能测试
+自动化测试外的手工验证场景见 `docs/current/PRIORITY_REMEDIATION_PLAN.md` "手工验收清单"节，覆盖：
 
-**测试步骤:**
-1. 点击"➕"按钮放大
-2. 点击"➖"按钮缩小
-3. 使用 Ctrl+滚轮缩放
-4. 点击"🔁 适应"恢复默认
-
-**验证项:**
-- [ ] 缩放功能正常
-- [ ] 缩放范围在 50%-400%
-- [ ] 滚轮缩放响应灵敏
-- [ ] 恢复默认功能正常
-- [ ] 缩放后页面清晰
-
----
-
-### 8. 自定义规则测试
-
-**测试步骤:**
-1. 打开高级设置
-2. 添加自定义关键词:
-   - "张三"
-   - "北京市"
-   - "合同"
-3. 运行智能脱敏
-
-**验证项:**
-- [ ] 自定义规则可添加
-- [ ] 自定义关键词被识别
-- [ ] 识别结果准确
+- 安全与稳定性（非法路径拒绝、缺 OCR 依赖可用）
+- PDF（重复姓名不重复遮罩、图片 OCR 不退化）
+- Word（规则替换、智能脱敏、手动精确、撤回同步、长文档性能）
+- 设置与版本（保存重启生效、版本一致性）
 
 ---
 
-### 9. 图像增强测试 (扫描版 PDF)
+## 6. 性能基准
 
-**测试步骤:**
-1. 准备扫描版 PDF
-2. 在高级设置中勾选"开启图像增强"
-3. 运行智能脱敏
-
-**验证项:**
-- [ ] 图像增强选项可用
-- [ ] OCR 识别准确度提升
-- [ ] 处理时间合理
-
----
-
-## 异常场景测试
-
-### 1. 文件异常测试
-
-**测试用例:**
-- [ ] 尝试打开非 PDF 文件
-- [ ] 尝试打开损坏的 PDF 文件
-- [ ] 尝试打开加密的 PDF 文件
-- [ ] 尝试打开超大文件 (100+页)
-
-**预期行为:**
-- 显示友好的错误提示
-- 应用不崩溃
-- 控制台有详细错误日志
-
----
-
-### 2. 操作中断测试
-
-**测试用例:**
-- [ ] OCR 处理过程中点击关闭窗口
-- [ ] 快速连续翻页
-- [ ] 快速缩放
-- [ ] 处理过程中打开新文件
-
-**预期行为:**
-- 资源正确释放
-- 无内存泄漏
-- 应用响应正常
-
----
-
-### 3. 边界条件测试
-
-**测试用例:**
-- [ ] 空白 PDF
-- [ ] 单页 PDF
-- [ ] 超大尺寸页面
-- [ ] 旋转过的页面
-
-**预期行为:**
-- 正常处理或友好提示
-- 无崩溃或异常
-
----
-
-## 性能基准测试
-
-### 测试环境
-- CPU: Apple Silicon / Intel
-- 内存: 8GB+
-- Python: 3.11.14
-
-### 预期性能指标
-
-| 文件类型 | 页数 | OCR 处理时间 | 内存占用 |
+| 文件类型 | 页数 | 预期 OCR 时间 | 预期内存 |
 |---------|------|-------------|---------|
-| 文字版 PDF | 2页 | < 2秒 | ~150MB |
-| 文字版 PDF | 10页 | < 5秒 | ~200MB |
-| 扫描版 PDF | 2页 | < 10秒 | ~250MB |
-| 扫描版 PDF | 10页 | < 30秒 | ~400MB |
-| 文字版 PDF | 100页 | < 30秒 | ~500MB |
-
-**测试命令:**
-```bash
-time python main.py
-```
+| 文字版 PDF | 2 页 | < 2 秒 | ~150 MB |
+| 文字版 PDF | 10 页 | < 5 秒 | ~200 MB |
+| 扫描版 PDF | 2 页 | < 10 秒 | ~250 MB |
+| 扫描版 PDF | 10 页 | < 30 秒 | ~400 MB |
 
 ---
 
-## 已知问题
+## 7. 常见问题
 
-### 1. PyQt6 属性警告
-**现象:** 控制台显示 "Unknown property filter"
-**影响:** 无实际影响
-**状态:** PyQt6 与 macOS 集成的已知问题
+### 如何确认当前版本？
 
-### 2. OCR API 变化
-**现象:** RapidOCR 的 `ocr()` 方法在某些版本不可用
-**解决:** 使用直接调用方式: `ocr(image_path)`
-
----
-
-## 测试总结
-
-### 自动化测试
-- ✅ **8/8 测试通过**
-
-### 手动测试
-- 📋 需要人工验证的功能清单已完成
-
-### 建议
-1. 优先进行基础功能测试 (导入、脱敏、导出)
-2. 使用提供的 `test_sample.pdf` 进行测试
-3. 记录发现的问题和异常情况
-4. 验证所有改进点是否生效
-
----
-
-## 快速测试命令
-
-### 一键运行所有自动化测试
-```bash
-cd "/Users/a49144/Desktop/codexhub/PrivacyGuardApp"
-bash test.sh
+```powershell
+Get-Content version.txt
 ```
 
-### 启动应用
-```bash
-# 方式 1: 源码
-cd "/Users/a49144/Desktop/codexhub/PrivacyGuardApp"
-source venv/bin/activate
-python main.py
+### 回归出现失败怎么办？
 
-# 方式 2: 打包应用
-open "/Users/a49144/Desktop/codexhub/PrivacyGuardApp/dist/PrivacyGuard.app"
-```
+1. 阅读 `docs/current/STATUS.md` 顶部最新节
+2. 检查 `docs/current/PRIORITY_REMEDIATION_PLAN.md` 是否有已知问题
+3. 查看最新日志（`%TEMP%/privacyguard_logs/`）
+4. 如需回滚，参考 `ROLLBACK_GUIDE.md`
 
-### 生成测试 PDF
-```bash
-cd "/Users/a49144/Desktop/codexhub/PrivacyGuardApp"
-source venv/bin/activate
-python create_test_pdf.py
-```
+### ruff 报错怎么办？
 
----
+- `F401`（unused-import）：删除未用导入，或对 re-export 加 `# noqa: F401`
+- `F821`（undefined-name）：补全缺失导入——这是真实缺陷，必须修复
+- `F841`（unused-variable）：删除变量或改用 `_`
+- `F403/F405`（star import）：已全局忽略，新代码不应新增 star import
 
-**文档版本:** 1.0
-**创建日期:** 2026-02-08
-**适用版本:** PrivacyApp v19.0 Hybrid Stable (v7 Logic)
+### 如何添加新测试？
+
+1. 在 `tests/unit/` 下创建 `test_<主题>.py`
+2. 继承 `unittest.TestCase`
+3. 如需 PyQt6，按 §4.2 处理 offscreen + QApplication
+4. 方法名以 `test_` 开头
+5. 运行 `scripts/run_regression.ps1` 验证
+6. 新文件会被 `discover` 自动纳入，无需修改任何清单

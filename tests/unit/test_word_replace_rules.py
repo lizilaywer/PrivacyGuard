@@ -7,12 +7,16 @@ from main import (
     normalize_word_replace_rules,
     build_word_rule_matches,
     apply_word_rules_to_text,
+    validate_word_replace_rules,
     build_batch_result_rows,
     build_batch_filter_labels,
     build_batch_rule_summary_lines,
     filter_batch_result_rows,
     format_signed_percent,
     merge_word_matches_with_priority,
+    resolve_word_ocr_replacements,
+    split_targeted_search_terms,
+    rects_overlap_ratio,
     build_settings_hero_tags,
     build_toolbar_mode_labels,
     build_workbench_guidance,
@@ -25,6 +29,9 @@ from main import (
     build_word_panel_update_script,
     should_reload_word_panel,
     resolve_word_preview_image_suffix,
+    resolve_enabled_highlight_sources,
+    build_highlight_source_filter_script,
+    HIGHLIGHT_FILTER_SOURCES,
     WORD_PREVIEW_BLOCK_SELECTOR,
 )
 
@@ -88,6 +95,41 @@ class TestWordReplaceRules(unittest.TestCase):
         ]
         result = apply_word_rules_to_text(text, rules, "[默认]")
         self.assertEqual(result, "姓名某某，电话[手机号]")
+
+    def test_exact_match_is_case_insensitive(self):
+        """W3: exact 规则应忽略大小写，避免英文敏感词因大小写不同而漏脱。"""
+        text = "Email: Admin@Example.COM"
+        rules = [{"enabled": True, "mode": "exact", "find": "admin@example.com", "replace": "[邮箱]"}]
+        matches = build_word_rule_matches(text, rules, "[默认]")
+        self.assertEqual(len(matches), 1)
+        self.assertEqual(matches[0]["text"], "Admin@Example.COM")
+
+    def test_regex_match_is_case_insensitive(self):
+        """W3: regex 规则应忽略大小写，与 WordWorker._find_matches 保持一致。"""
+        text = "SECRET secret Secret"
+        rules = [{"enabled": True, "mode": "regex", "find": r"secret", "replace": "[密]"}]
+        matches = build_word_rule_matches(text, rules, "[默认]")
+        self.assertEqual(len(matches), 3)
+
+    def test_validate_reports_invalid_regex(self):
+        """W5: 启用的非法 regex 规则应被报告，附带行号与原文。"""
+        rules = [
+            {"enabled": True, "mode": "regex", "find": r"[unclosed", "replace": "X"},
+            {"enabled": True, "mode": "exact", "find": "[literal", "replace": "Y"},
+        ]
+        errors = validate_word_replace_rules(rules)
+        self.assertEqual(len(errors), 1)
+        self.assertEqual(errors[0]["index"], 0)
+        self.assertEqual(errors[0]["find"], r"[unclosed")
+
+    def test_validate_skips_disabled_and_valid_rules(self):
+        """W5: 禁用规则、合法正则与 exact 规则不应报错。"""
+        rules = [
+            {"enabled": False, "mode": "regex", "find": r"[bad", "replace": "X"},
+            {"enabled": True, "mode": "regex", "find": r"1[3-9]\d{9}", "replace": "Y"},
+            {"enabled": True, "mode": "exact", "find": "(literal)", "replace": "Z"},
+        ]
+        self.assertEqual(validate_word_replace_rules(rules), [])
 
     def test_merge_priority_rule_manual_ocr(self):
         text = "13812345678"
@@ -389,6 +431,166 @@ class TestWordReplaceRules(unittest.TestCase):
         self.assertIsNone(stub._word_scroll_sync_pending_ratio)
         self.assertEqual(stub._word_scroll_sync_last_ratios, {"original": None, "replaced": None})
         self.assertEqual(stub._word_scroll_sync_generation, 4)
+
+
+class TestHighlightSourceFilter(unittest.TestCase):
+    """预览高亮按来源（rule/manual/ocr）筛选的纯逻辑。"""
+
+    def test_resolve_none_means_all_enabled(self):
+        """None 视为全部启用（默认不筛选）。"""
+        self.assertEqual(resolve_enabled_highlight_sources(None),
+                         list(HIGHLIGHT_FILTER_SOURCES))
+
+    def test_resolve_normalizes_order_and_dedup(self):
+        """输出顺序固定为 rule/manual/ocr，并去重。"""
+        self.assertEqual(
+            resolve_enabled_highlight_sources(["ocr", "rule", "ocr"]),
+            ["rule", "ocr"],
+        )
+
+    def test_resolve_ignores_unknown_sources(self):
+        """非法/未知来源被忽略。"""
+        self.assertEqual(
+            resolve_enabled_highlight_sources(["rule", "bogus", ""]),
+            ["rule"],
+        )
+
+    def test_resolve_accepts_single_string(self):
+        """传入单个字符串也能正确归一化。"""
+        self.assertEqual(resolve_enabled_highlight_sources("manual"), ["manual"])
+
+    def test_resolve_empty_means_none_enabled(self):
+        """空选择意味着全部筛掉（与 None 区分）。"""
+        self.assertEqual(resolve_enabled_highlight_sources([]), [])
+
+    def test_filter_script_marks_disabled_sources(self):
+        """未启用的来源应出现在 enabled 辇外，脚本包含目标属性名。"""
+        script = build_highlight_source_filter_script(["rule"])
+        self.assertIn('"rule"', script)
+        self.assertNotIn('"ocr"', script)
+        self.assertIn("data-hl-filtered", script)
+        self.assertIn("mark[data-source]", script)
+
+    def test_filter_script_all_enabled_contains_all(self):
+        """全部启用时三个来源都在脚本中。"""
+        script = build_highlight_source_filter_script(None)
+        for source in HIGHLIGHT_FILTER_SOURCES:
+            self.assertIn(f'"{source}"', script)
+
+
+class TestResolveWordOcrReplacements(unittest.TestCase):
+    """cp63: 关键词行内替换（find|replace）优先于统一替换文本。"""
+
+    def _keyword_rules(self):
+        return [
+            {"enabled": True, "find": "原告", "replace": "上诉人"},
+            {"enabled": True, "find": "李四", "replace": ""},
+            {"enabled": False, "find": "王五", "replace": "王某"},
+        ]
+
+    def test_inline_replace_overrides_default(self):
+        """带 | 的关键词行：命中后使用该行替换文本。"""
+        ocr = [{"start": 0, "end": 2, "text": "原告", "replacement": "[已脱敏]"}]
+        resolved = resolve_word_ocr_replacements(ocr, self._keyword_rules(), "[已脱敏]")
+        self.assertEqual(resolved[0]["replacement"], "上诉人")
+
+    def test_no_pipe_falls_back_to_unified_text(self):
+        """不带 | 的关键词行：使用当前统一替换文本（实时值，非扫描时烘焙值）。"""
+        ocr = [{"start": 0, "end": 2, "text": "李四", "replacement": "[扫描时旧值]"}]
+        resolved = resolve_word_ocr_replacements(ocr, self._keyword_rules(), "[新统一]")
+        self.assertEqual(resolved[0]["replacement"], "[新统一]")
+
+    def test_disabled_rule_not_applied(self):
+        """未启用的关键词规则不参与行内替换。"""
+        ocr = [{"start": 0, "end": 2, "text": "王五", "replacement": "[已脱敏]"}]
+        resolved = resolve_word_ocr_replacements(ocr, self._keyword_rules(), "[已脱敏]")
+        self.assertEqual(resolved[0]["replacement"], "[已脱敏]")
+
+    def test_case_insensitive_english_keyword(self):
+        """英文关键词 IGNORECASE 命中时也能匹配行内替换。"""
+        rules = [{"enabled": True, "find": "Acme", "replace": "某公司"}]
+        ocr = [{"start": 0, "end": 4, "text": "ACME", "replacement": "[已脱敏]"}]
+        resolved = resolve_word_ocr_replacements(ocr, rules, "[已脱敏]")
+        self.assertEqual(resolved[0]["replacement"], "某公司")
+
+    def test_original_matches_not_mutated(self):
+        """原始扫描命中列表不被原地修改。"""
+        ocr = [{"start": 0, "end": 2, "text": "原告", "replacement": "[已脱敏]"}]
+        resolve_word_ocr_replacements(ocr, self._keyword_rules(), "[已脱敏]")
+        self.assertEqual(ocr[0]["replacement"], "[已脱敏]")
+
+    def test_empty_inputs(self):
+        """空命中/空规则的防御行为。"""
+        self.assertEqual(resolve_word_ocr_replacements([], self._keyword_rules(), "[x]"), [])
+        ocr = [{"start": 0, "end": 2, "text": "原告", "replacement": "[已脱敏]"}]
+        resolved = resolve_word_ocr_replacements(ocr, None, "[新统一]")
+        self.assertEqual(resolved[0]["replacement"], "[新统一]")
+
+    def test_word_rule_has_highest_priority_after_merge(self):
+        """同一段文本同时命中 Word 替换规则与关键词时，rule 源优先占位。"""
+        text = "原告张三"
+        word_rules = [{"enabled": True, "mode": "exact", "find": "原告", "replace": "[当事人]"}]
+        ocr = resolve_word_ocr_replacements(
+            [{"start": 0, "end": 2, "text": "原告", "replacement": "[已脱敏]"}],
+            self._keyword_rules(), "[已脱敏]"
+        )
+        merged = merge_word_matches_with_priority(text, word_rules, "[已脱敏]", ocr_matches=ocr)
+        first = [m for m in merged if m["start"] == 0][0]
+        self.assertEqual(first["source"], "rule")
+        self.assertEqual(first["replacement"], "[当事人]")
+
+    def test_inline_replace_survives_merge_without_word_rule(self):
+        """无 Word 替换规则时，行内替换文本随 ocr 源进入合并结果。"""
+        text = "原告张三"
+        ocr = resolve_word_ocr_replacements(
+            [{"start": 0, "end": 2, "text": "原告", "replacement": "[已脱敏]"}],
+            self._keyword_rules(), "[已脱敏]"
+        )
+        merged = merge_word_matches_with_priority(text, [], "[已脱敏]", ocr_matches=ocr)
+        first = [m for m in merged if m["start"] == 0][0]
+        self.assertEqual(first["source"], "ocr")
+        self.assertEqual(first["replacement"], "上诉人")
+
+
+class TestTargetedMaskHelpers(unittest.TestCase):
+    """cp65: 手动框选全文遮罩的纯函数辅助。"""
+
+    def test_split_terms_basic(self):
+        """按空白/换行拆分、去重、去空。"""
+        self.assertEqual(
+            split_targeted_search_terms("原告 被告\n原告  张三\n\n"),
+            ["原告", "被告", "张三"],
+        )
+
+    def test_split_terms_empty_and_invalid(self):
+        """空输入/非字符串返回空列表。"""
+        self.assertEqual(split_targeted_search_terms(""), [])
+        self.assertEqual(split_targeted_search_terms("   \n  "), [])
+        self.assertEqual(split_targeted_search_terms(None), [])
+
+    def test_overlap_ratio_identical(self):
+        """完全重叠 → 1.0。"""
+        from PyQt6.QtCore import QRectF
+        r = QRectF(10, 10, 100, 20)
+        self.assertAlmostEqual(rects_overlap_ratio(r, QRectF(r)), 1.0)
+
+    def test_overlap_ratio_disjoint(self):
+        """不相交 → 0.0。"""
+        from PyQt6.QtCore import QRectF
+        self.assertEqual(rects_overlap_ratio(QRectF(0, 0, 10, 10), QRectF(50, 50, 10, 10)), 0.0)
+
+    def test_overlap_ratio_partial_uses_smaller_area(self):
+        """部分重叠按较小矩形面积归一化。"""
+        from PyQt6.QtCore import QRectF
+        big = QRectF(0, 0, 100, 100)
+        small = QRectF(90, 0, 20, 10)  # 与 big 重叠 10x10=100，small 面积 200
+        self.assertAlmostEqual(rects_overlap_ratio(big, small), 0.5)
+
+    def test_overlap_ratio_none_defensive(self):
+        """None 入参防御返回 0.0。"""
+        from PyQt6.QtCore import QRectF
+        self.assertEqual(rects_overlap_ratio(None, QRectF(0, 0, 1, 1)), 0.0)
+        self.assertEqual(rects_overlap_ratio(QRectF(0, 0, 1, 1), None), 0.0)
 
 
 if __name__ == "__main__":

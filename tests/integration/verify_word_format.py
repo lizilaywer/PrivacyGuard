@@ -6,7 +6,6 @@ Word 文档格式保持验证脚本
 """
 
 import os
-import sys
 import tempfile
 from docx import Document
 from docx.shared import Pt, RGBColor

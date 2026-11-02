@@ -1,85 +1,28 @@
-================================================================================
-                    PrivacyGuard Windows 打包脚本说明
-================================================================================
+PrivacyGuard Windows 打包脚本说明
+当前基线：40.2.5；更新：2026-10-25；版本唯一来源：version.txt。
 
-当前发布基线：v37.7.4
-版本来源：`version.txt`
-输出目录：
-- `dist/`
-- `releases/windows/`
+首次打便携版：双击项目根目录 BUILD_WINDOWS_PORTABLE.bat。
+已有环境：运行本目录 build_complete.bat。
+要求 Windows 10/11 x64 + Python 3.11 x64 + VC++ 2015-2022 x64。
 
-构建 EXE 前会自动执行：
-- `generate_version_info.py`
-- 同步生成 `packaging/windows/config/version_info.txt`
-- 固定使用当前虚拟环境中的 `python -m PyInstaller`
-- 固定使用项目内缓存：`build\.pyinstaller-cache`
+build_complete.bat 调用 build_portable.py：全量测试、版本资源生成、依赖检查、
+原生 x64 构建、模型/运行库/版本校验、冻结自检、ZIP/CRC/SHA256/验证报告。
+任一步失败立即停止，不把失败中间产物当成发布包。
 
---------------------------------------------------------------------------------
- 1_init_environment.bat
---------------------------------------------------------------------------------
-作用：初始化 Windows 打包环境（推荐首次执行）
-- 检查 Python
-- 创建 `venv_win`（若仅有 `venv` 也会兼容提示）
-- 安装 requirements 和 PyInstaller
+产物：
+  dist/windows-portable/PrivacyGuard/PrivacyGuard.exe
+  releases/windows/PrivacyGuard-v40.2.5-Windows-Portable.zip
+  releases/windows/PrivacyGuard-v40.2.5-Windows-Portable.zip.sha256
+  releases/windows/PrivacyGuard-v40.2.5-Windows-Portable.validation.json
+缓存：build/windows-portable。不会删除其他平台或安装版产物。
 
---------------------------------------------------------------------------------
- 2_build_exe.bat
---------------------------------------------------------------------------------
-作用：构建便携版（不生成安装器）
-输出：
-- `dist/PrivacyGuard/PrivacyGuard.exe`
-- `dist/PrivacyGuard/launcher_wrapper.bat`
-- `releases/windows/PrivacyGuard-<version>.exe.sha256`
+1_init_environment.bat：新建 venv_win 并安装 requirements.txt / requirements-dev.txt。
+generate_version_info.py：生成 version_info.txt（40.2.5.0，禁止手编）。
+launcher_wrapper.bat：允许包内 VC++ DLL，不再仅查系统目录。
 
---------------------------------------------------------------------------------
-3_build_with_setup.bat
---------------------------------------------------------------------------------
-作用：构建 EXE + 安装程序（需 Inno Setup）
-输出：
-- `dist/PrivacyGuard/PrivacyGuard.exe`
-- `releases/windows/PrivacyGuard-<version>-Setup.exe`
-- 对应 `.sha256`
+保留旧流程：2_build_exe.bat、3_build_with_setup.bat、4_create_installer_only.bat，
+仍使用 dist/PrivacyGuard。它们不是本轮便携发布入口，未实机验证安装器。
 
-说明：脚本会将 `version.txt` 版本通过 `/DMyAppVersion=<version>` 注入
-`packaging/windows/config/PrivacyGuard_Setup.iss`，避免版本号漂移。
-
-正式发布时：
-- 便携版执行 `build_complete.bat`
-- 安装版执行 `3_build_with_setup.bat`
-
---------------------------------------------------------------------------------
- 4_create_installer_only.bat
---------------------------------------------------------------------------------
-作用：基于已有 dist 结果，仅生成安装程序
-
---------------------------------------------------------------------------------
- build_complete.bat
---------------------------------------------------------------------------------
-作用：完整构建（环境校验 + 构建 + 清理 + ZIP + SHA256）
-输出：
-- `releases/windows/PrivacyGuard-v<version>-Windows-Portable.zip`
-- `releases/windows/PrivacyGuard-v<version>-Windows-Portable.zip.sha256`
-
---------------------------------------------------------------------------------
- 其他脚本
---------------------------------------------------------------------------------
-- `generate_version_info.py`：从 `version.txt` 生成 Windows EXE 版本资源
-- `check_vcredist.bat`：VC++ 运行库检查
-- `diagnose_onnxruntime.py`：onnxruntime 诊断
-- `verify_dependencies.py`：构建前依赖校验
-- `launcher_wrapper.bat`：发布目录默认启动入口
-
-================================================================================
-本轮同步说明
-================================================================================
-
-- 安装器构建时通过 `/DMyAppVersion=<version>` 从 `version.txt` 注入版本号
-- 当前 EXE 版本资源：`37.7.4.0`
-- PyInstaller 打包模块导入失败修复已纳入当前 Windows 打包链路说明
-- 当前 Windows 打包脚本已统一改为使用当前环境中的 PyInstaller 和项目内缓存
-- `scripts/` 目录已清理历史兼容与解除阻止脚本，仅保留当前正式主链与必要诊断工具
-- 当前正式发布入口已收口为：
-  - 便携版：`build_complete.bat`
-  - 安装版：`3_build_with_setup.bat`
-
-最后更新：2026-03-18
+Windows 构建资料包只包含源码和资源，不是已编译的便携成品。
+详细操作：项目根目录 WINDOWS_BUILD_README.md。
+完整指南：docs/packaging/windows-packaging-guide.md。

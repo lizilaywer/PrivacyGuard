@@ -6,7 +6,7 @@
     "window": {
       "default_width": 1300,
       "default_height": 900,
-      "min_width": 900,
+      "min_width": 1120,
       "min_height": 600,
       "dialog_settings_width": 550,
       "dialog_settings_height": 700,
@@ -34,6 +34,16 @@
         "enabled": true,
         "description": "匹配日期格式"
       },
+      "出生年月": {
+        "pattern": "(?:出生年月[日]?|出生日期|出生于?)\\s*[:：]?\\s*(?:\\d{4}\\s*年\\s*\\d{1,2}\\s*月(?:\\s*\\d{1,2}\\s*日)?|\\d{4}[-./]\\d{1,2}(?:[-./]\\d{1,2})?)|(?:\\d{4}\\s*年\\s*\\d{1,2}\\s*月(?:\\s*\\d{1,2}\\s*日)?|\\d{4}[-./]\\d{1,2}(?:[-./]\\d{1,2})?)\\s*(?:出生|生(?![\\u4e00-\\u9fa5]))",
+        "enabled": true,
+        "description": "cp135: 出生信息+日期整体遮罩（出生年月：1990年1月1日 / 出生于1990年1月 / 1990年1月1日出生 / 1990年12月11日生）"
+      },
+      "住址": {
+        "pattern": "(?:住址|户籍地|住所地)\\s*[:：]?\\s*[\\u4e00-\\u9fa5A-Za-z\\d]*(?:栋|组|号|室)|(?:住址|户籍地|住所地)\\s*[:：]?\\s*[\\u4e00-\\u9fa5A-Za-z\\d]*\\d+(?![年月日\\d])|(?:(?:河北|山西|辽宁|吉林|黑龙江|江苏|浙江|安徽|福建|江西|山东|河南|湖北|湖南|广东|海南|四川|贵州|云南|陕西|甘肃|青海|台湾)省|(?:内蒙古自治区|广西壮族自治区|西藏自治区|宁夏回族自治区|新疆维吾尔自治区))[\\u4e00-\\u9fa5]{2,12}市[\\u4e00-\\u9fa5]{2,12}(?:区|县|旗)[\\u4e00-\\u9fa5A-Za-z\\d]*(?:栋|组|号|室)|(?:(?:河北|山西|辽宁|吉林|黑龙江|江苏|浙江|安徽|福建|江西|山东|河南|湖北|湖南|广东|海南|四川|贵州|云南|陕西|甘肃|青海|台湾)省|(?:内蒙古自治区|广西壮族自治区|西藏自治区|宁夏回族自治区|新疆维吾尔自治区))[\\u4e00-\\u9fa5]{2,12}市[\\u4e00-\\u9fa5]{2,12}(?:区|县|旗)[\\u4e00-\\u9fa5A-Za-z\\d]*\\d+(?![年月日\\d])",
+        "enabled": true,
+        "description": "cp135: 住址整体遮罩（住址/户籍地/住所地：… 或 省+市+区县 开头的地址，遮到 栋/组/号/室/数字 为止）"
+      },
       "电子邮箱": {
         "pattern": "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}",
         "enabled": true,
@@ -44,16 +54,65 @@
         "enabled": true,
         "description": "匹配13-19位银行卡号"
       },
+      "统一社会信用代码": {
+        "pattern": "(?<![0-9A-Za-z])[0-9A-HJ-NP-RTUWXY]{2}\\d{6}[0-9A-HJ-NP-RTUWXY]{10}(?![0-9A-Za-z])",
+        "enabled": true,
+        "description": "cp70: 18位统一社会信用代码，命中后经mod31-3校验位二次校验，误报极低"
+      },
+      "车牌号": {
+        "pattern": "[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼使领][A-HJ-NP-Z][A-HJ-NP-Z0-9]{4,5}[A-HJ-NP-Z0-9挂学警港澳]",
+        "enabled": true,
+        "description": "cp70: 中国车牌号（省份简称+字母+5位普通/6位新能源）"
+      },
+      "固定电话": {
+        "pattern": "(?<!\\d)0\\d{2,3}[-\\s]?\\d{7,8}(?:[-\\s]?\\d{1,4})?(?!\\d)",
+        "enabled": true,
+        "description": "cp70: 固定电话/座机（区号0开头+7-8位号码+可选分机）"
+      },
+      "护照号": {
+        "pattern": "(?<![A-Za-z0-9])[EGDSP]\\d{8}(?![A-Za-z0-9])",
+        "enabled": false,
+        "description": "cp70: 中国护照号（涉外案件）；默认关闭"
+      },
+      "港澳台通行证": {
+        "pattern": "(?<![A-Za-z0-9])[CcWw]\\d{8}(?![A-Za-z0-9])",
+        "enabled": false,
+        "description": "cp70: 港澳台通行证；默认关闭"
+      },
+      "车架号": {
+        "pattern": "(?<![A-Za-z0-9])[A-HJ-NPR-Z0-9]{17}(?![A-Za-z0-9])",
+        "enabled": false,
+        "description": "cp70: 车架号VIN（17位），命中后经第9位校验位二次校验；默认关闭"
+      },
+      "IP地址": {
+        "pattern": "(?<!\\d)(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)(?!\\d)",
+        "enabled": false,
+        "description": "cp70: IPv4地址；默认关闭"
+      },
       "印章": {
         "pattern": "__SEAL_DETECTION__",
         "enabled": false,
-        "description": "使用 OpenCV 自动检测并脱敏红色印章区域（基于颜色和形状分析）"
+        "description": "v37.7.19 cp51-cp56: 多特征融合检测红/蓝印章（颜色+形状+五角星+OCR文字验证）。已知限制：公章识别准确率有待提高（变形/淡色/复杂背景印章仍有漏检或误判），后续版本考虑引入深度学习模型"
+      },
+      "签名手印": {
+        "pattern": "__SIGNATURE_DETECTION__",
+        "enabled": false,
+        "description": "cp60: 自动检测并遮罩手写签名+按手印区域"
+      },
+      "称谓人名": {
+        "pattern": "PERSON_NAME_PATTERN_PLACEHOLDER",
+        "enabled": false,
+        "description": "cp_person_name: 识别称谓词（被告人/原告/辩护人等）后的人名并遮罩（发现即全页遮同名）；关闭时零开销。称谓词表可在 redaction.person_name_titles 自定义（首次启动时 pattern 由内置词表自动生成覆写）"
       }
     },
     "replacement_text": "[已脱敏]",
     "custom_keywords": "",
+    "custom_keyword_rules": [],
+    "manual_replace_prompt": true,
+    "bookmark_redact_enabled": false,
+    "person_name_titles": [],
     "scan": {
-      "default_level": 1.0,
+      "default_level": 1.5,
       "available_levels": [1.0, 1.5, 2.0],
       "level_labels": {
         "1.0": "普通 (1.0x)",

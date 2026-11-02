@@ -10,11 +10,15 @@ from pathlib import Path
 
 
 def _read_version():
+    """从统一版本文件读取版本号，失败返回 0.0.0。
+
+    version.txt 是版本号唯一来源，失败时不返回具体旧版本号避免误导。
+    """
     version_file = Path(__file__).resolve().parent.parent / "version.txt"
     try:
         return version_file.read_text(encoding="utf-8").strip()
     except OSError:
-        return "37.7.6"
+        return "0.0.0"
 
 
 __version__ = _read_version()
