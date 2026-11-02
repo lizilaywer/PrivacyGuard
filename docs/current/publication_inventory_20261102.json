@@ -66,15 +66,15 @@
     },
     {
       "path": "CONTRIBUTING.md",
-      "bytes": 8139,
-      "sha256": "516d5e0b6bd9e0a43ec9802382d09f76ef8a108b4da6f06766344f8c2756ee3d",
+      "bytes": 8128,
+      "sha256": "60e1cea903c2494cc9c7e2b6a9f5da5b42aacfbb734f0f5cb7fc9a4d0f997c91",
       "kind": "text",
-      "lines": 239
+      "lines": 238
     },
     {
       "path": "HOME_REDESIGN_PREVIEW.html",
-      "bytes": 22868,
-      "sha256": "a527d18964526fb2bdd15e8e53aca3d7e334a08c278d8b8fd10bd271e148d3fa",
+      "bytes": 22863,
+      "sha256": "7ac9982aaacd8933d5993020dc19a46e59f4a6570bb24a8f750b1399cc7a021d",
       "kind": "text",
       "lines": 345
     },
@@ -87,8 +87,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 8517,
-      "sha256": "17ff11070bb861a4ca75cf991f0c5e61368d77d82773cfcf152689f34e623692",
+      "bytes": 8508,
+      "sha256": "f6c15c15a326faf6e5dd20d7a7780652d8e34d6786a0d062b1feab41aec60809",
       "kind": "text",
       "lines": 144
     },
@@ -1017,10 +1017,10 @@
     },
     {
       "path": "docs/marketing/GITHUB_SHOWCASE.md",
-      "bytes": 2795,
-      "sha256": "b6cabef0b756d74170adbc0286bc6eddd97cc01df6af8f4a15b038132812c310",
+      "bytes": 2895,
+      "sha256": "36e1a41c07f7a346d4dae6be213d2d89fab64c6602b3b69bcdb3e77b7900f355",
       "kind": "text",
-      "lines": 44
+      "lines": 46
     },
     {
       "path": "docs/marketing/repository-profile.json",
@@ -1038,8 +1038,8 @@
     },
     {
       "path": "docs/marketing/微信公众号文章_AI编程革命.md",
-      "bytes": 16758,
-      "sha256": "db549aafdb1e4513f46f48e65bd1c23564093036896517f1a13a402a4e35bfbf",
+      "bytes": 16753,
+      "sha256": "021df39ec3bc5950f73d342213880fbc5d9369e936de42e8d3ad15cd3f3a7a39",
       "kind": "text",
       "lines": 550
     },
@@ -2734,8 +2734,8 @@
     },
     {
       "path": "user-guides/用户使用手册.md",
-      "bytes": 28927,
-      "sha256": "55b25ff18c2e1d505503a04e7424d59b12c0b8d4288ce25ee0ec9908553ee9a6",
+      "bytes": 28938,
+      "sha256": "c0e9b4392801daa558a930c5e91f4e99ce08f2014c6a3c327101c3ad3e206674",
       "kind": "text",
       "lines": 971
     },

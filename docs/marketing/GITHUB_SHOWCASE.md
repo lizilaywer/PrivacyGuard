@@ -2,6 +2,8 @@
 
 本文件中的文案可直接复制。仓库首页完整内容是根目录 `README.md`，英文版是 `README_EN.md`。图片使用仓库相对路径，复制到其他仓库时请一起复制 `assets/showcase/`。
 
+开发者账号：抖音、小红书、微信公众号统一名称为 **池州有个汪律师**。
+
 ## 仓库 About / Description
 
 PrivacyGuard 脱敏卫士｜先脱敏，再上传。律师实务驱动的本地 PDF / Word 脱敏工具：离线 OCR、手动框选、双栏预览、批量替换与 PDF 加密导出。Local-first document redaction for Windows & macOS.

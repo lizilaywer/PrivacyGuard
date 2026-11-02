@@ -222,8 +222,7 @@ fix: settings nav highlight not updating on scroll to bottom (OCR section)
 ## 9. 问题反馈与联系
 
 - Bug / 功能建议：通过 GitHub Issues 提交，附版本号、复现步骤、错误日志
-- 公众号：池州汪律的AI进化论
-- 抖音：池州有个汪律师
+- 抖音 / 小红书 / 微信公众号：池州有个汪律师
 
 提交 Issue 时请附：
 
