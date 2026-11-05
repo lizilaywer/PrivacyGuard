@@ -31,8 +31,8 @@
     },
     {
       "path": "AGENTS.md",
-      "bytes": 16431,
-      "sha256": "d975d506a85e0b50acda7728c2e23c4120cc564349a3dda73a882dc78049261f",
+      "bytes": 16469,
+      "sha256": "a02445a7cbcb6f4c52959732da575563ce22a3a0e2c5fbf2b4d69d0699a16110",
       "kind": "text",
       "lines": 319
     },
@@ -52,10 +52,10 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 153443,
-      "sha256": "9906810aef3b45b46f8a18a650d03e67340912edbec75c2c900c127732393150",
+      "bytes": 155129,
+      "sha256": "2dead25133c9bc3a5e2ba907b1f657c04dee7b9ab68471dd7d7a2a579ecab960",
       "kind": "text",
-      "lines": 2762
+      "lines": 2787
     },
     {
       "path": "CLAUDE.md",
@@ -88,14 +88,14 @@
     {
       "path": "README.md",
       "bytes": 8508,
-      "sha256": "f6c15c15a326faf6e5dd20d7a7780652d8e34d6786a0d062b1feab41aec60809",
+      "sha256": "a430bb080caa33ff5780fd3cdc3094d158a1bfecb02ba7c02f17bb248b5fb8cf",
       "kind": "text",
       "lines": 144
     },
     {
       "path": "README_EN.md",
       "bytes": 6364,
-      "sha256": "c80d81d0eac3584741b6a95cdb9fe734efc65b3326b3e302c8091f8cc03c30e9",
+      "sha256": "10927e5e52c0703fd447e3401bfa95e20017e3fc5a5f635c7cd11b8a97a96b7a",
       "kind": "text",
       "lines": 106
     },
@@ -842,10 +842,10 @@
     },
     {
       "path": "docs/current/DEV_LOG.md",
-      "bytes": 344013,
-      "sha256": "8cdc980318ed2e82349e7690a731feeaedaf175360471391f4303419ddd293a6",
+      "bytes": 345860,
+      "sha256": "f48efe2bb4f2c72c0df9d969d16bd42a2a7c679e746273b6451e66d3a0aca618",
       "kind": "text",
-      "lines": 8052
+      "lines": 8076
     },
     {
       "path": "docs/current/MAIN_PY_REFACTOR_PLAN.md",
@@ -898,10 +898,10 @@
     },
     {
       "path": "docs/current/STATUS.md",
-      "bytes": 120876,
-      "sha256": "17822594b9b870da5955e9decc80ae29cc2c61f60be8b07c4cb9156fed356bc6",
+      "bytes": 122149,
+      "sha256": "1867f87c5cf8b1fec21508b6350da7d45537f6996bdd7b368068167418cf8219",
       "kind": "text",
-      "lines": 2347
+      "lines": 2360
     },
     {
       "path": "docs/current/TODO_WINDOWS_BUILD.txt",
@@ -1073,10 +1073,10 @@
     },
     {
       "path": "main.py",
-      "bytes": 497499,
-      "sha256": "4a3d85d385b0bca08d5c1aee3df26e716d246153c07c3be048e785634264847d",
+      "bytes": 498336,
+      "sha256": "e6e7ffca1451f3fc5ef5d032cf1598b6bec376e19316ca896c82a12fb80aa36a",
       "kind": "text",
-      "lines": 10206,
+      "lines": 10217,
       "classes": 7,
       "functions": 245
     },
@@ -1123,8 +1123,8 @@
     },
     {
       "path": "packaging/macos/scripts/README.txt",
-      "bytes": 3665,
-      "sha256": "5059c283a502a28ac6e70b79dee4437af4097aed48daca77db6803febb2b1b36",
+      "bytes": 3721,
+      "sha256": "d3fe8c1d8397da0a231db96faec887b0f7897d549ee21eb6f0fdbb93220d8364",
       "kind": "text",
       "lines": 74
     },
@@ -1213,7 +1213,7 @@
     {
       "path": "packaging/windows/config/version_info.txt",
       "bytes": 979,
-      "sha256": "77f9e36acea0d11662b8565d83c9df208dacb52c30857e0f17f7a4ee0ae550f7",
+      "sha256": "5420e8e95592ec741055d61b7db796847fcc95456877c09cd993349f243196f7",
       "kind": "text",
       "lines": 33
     },
@@ -1255,7 +1255,7 @@
     {
       "path": "packaging/windows/scripts/README.txt",
       "bytes": 1579,
-      "sha256": "a1b73cb9422e16a9ff74f9e19b0853d20445038394431f6502ab3d9516890385",
+      "sha256": "2349b7ec17faf4ecb9e8e96fa85dd6e82f96bece0bde57ddbd4c5ffd6318541e",
       "kind": "text",
       "lines": 28
     },
@@ -1568,12 +1568,12 @@
     },
     {
       "path": "privacyguard/ui/mixins/bookmark_mixin.py",
-      "bytes": 14316,
-      "sha256": "d98c657091af08094caa8b5ea525f01c87783ccdea75df4a292fef51ace33714",
+      "bytes": 15385,
+      "sha256": "0319ad8c891a8fa2feb7e7ea2f8c744b15fca31453f6a4ee7a7310534522776a",
       "kind": "text",
-      "lines": 301,
+      "lines": 322,
       "classes": 1,
-      "functions": 16
+      "functions": 17
     },
     {
       "path": "privacyguard/ui/mixins/crop_mixin.py",
@@ -2580,6 +2580,15 @@
       "functions": 9
     },
     {
+      "path": "tests/unit/test_scan_export_state.py",
+      "bytes": 7486,
+      "sha256": "d1f0f7503e74d6182b3293aea5a94a42e3053190caae0640e77fdccdc60042f1",
+      "kind": "text",
+      "lines": 168,
+      "classes": 1,
+      "functions": 19
+    },
+    {
       "path": "tests/unit/test_seal_detection.py",
       "bytes": 29726,
       "sha256": "e9f26d0549d890d040b477f738a35358cbd37e1d869b92d79cc900b5bf6fe3b9",
@@ -2742,11 +2751,11 @@
     {
       "path": "version.txt",
       "bytes": 7,
-      "sha256": "64103787a0eece9ad47ccd2ccce7a21e6b5c9887d6df3a77fafb3edd15d38873",
+      "sha256": "93c5e75beb20c6a51787009a249fff0c682e9b4c3df6b5ad5dbc0601a905b481",
       "kind": "text",
       "lines": 1
     }
   ],
-  "file_count": 359,
+  "file_count": 360,
   "findings": []
 }

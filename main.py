@@ -9302,6 +9302,10 @@ sudo dnf install antiword
         accepted = merge_targeted_hits(deduplicate_rects(rects), existing_rects)
         manual_list.extend(accepted)
         self._targeted_hit_count += len(accepted)
+        # v40.2.6（用户反馈）：与 _on_ocr_page_result 同理——全文遮罩产生
+        # 命中即启用导出，堵住"重置→扫描类操作"后导出按钮灰死的同一路径缺口
+        if accepted and hasattr(self, "btn_save"):
+            self.btn_save.setEnabled(True)
         self._maybe_refresh_visible_page(page_num)
 
     def _on_targeted_scan_finished(self, _result):
@@ -9542,6 +9546,7 @@ sudo dnf install antiword
                 self._bookmark_redact_applied = True  # 动作驱动：面板未开过也置位
                 try:
                     self.refresh_bookmark_preview()
+                    self._enable_export_for_bookmark_redaction()
                 except Exception as e:
                     logger.warning("[书签] 扫描后刷新预览失败: %s", type(e).__name__)
 
@@ -9587,6 +9592,12 @@ sudo dnf install antiword
             existing = self.page_data[page_num]['ocr']
             existing.clear()
             existing.extend(deduped)
+            # v40.2.6（用户反馈）：扫描产生可导出的遮罩→启用导出按钮。
+            # 重置文档后导出被禁用，而扫描结果路径此前从不启用它——
+            # "重置→脱敏"后导出按钮保持灰色无法点击；与手动框选路径行为对齐
+            # （仅在确有命中时启用，零命中维持禁用）。
+            if deduped and hasattr(self, "btn_save"):
+                self.btn_save.setEnabled(True)
             if DEBUG_MODE and len(rects) != len(deduped):
                 logger.debug("[DEBUG] 页面%s: 去重前%s个矩形, 去重后%s个", page_num, len(rects), len(deduped))
             # cp47: 节流刷新当前可见页 canvas

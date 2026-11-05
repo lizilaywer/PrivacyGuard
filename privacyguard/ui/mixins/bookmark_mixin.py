@@ -117,6 +117,27 @@ class BookmarkMixin:
             return toc
         return redact_toc_titles(toc, rules)
 
+    def _enable_export_for_bookmark_redaction(self):
+        """扫描成功后，书签存在实际替换时恢复导出（不依赖面板已打开）。
+
+        使用与 save_pdf 相同的 TOC / 规则源；仅启用，不覆盖正文遮罩的
+        导出状态。读取或替换失败交由调用方处理，不在异常时放行。
+        """
+        doc = getattr(self, "doc", None)
+        if (doc is None or getattr(doc, "is_closed", False)
+                or not getattr(self, "bookmark_redact_enabled", False)
+                or not getattr(self, "_bookmark_redact_applied", False)):
+            return
+        panel = getattr(self, "bookmark_panel", None)
+        if getattr(self, "toc_edited", None) and panel is not None:
+            toc = panel.collect_toc()
+        else:
+            toc = doc.get_toc(simple=True)
+        if toc and redact_toc_titles(toc, self._collect_active_toc_rules()) != toc:
+            button = getattr(self, "btn_save", None)
+            if button is not None:
+                button.setEnabled(True)
+
     def apply_targeted_terms_to_bookmarks(self, terms, replace_text):
         """cp_bookmark: 手动框选"全文遮罩"时，把识别词也应用到书签标题。
 

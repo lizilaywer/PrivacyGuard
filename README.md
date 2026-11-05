@@ -9,7 +9,7 @@
 一个由中国基层律师从真实文书工作需求出发、借助 AI 持续开发的开源桌面工具。
 
 [![CI](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-40.2.5-167d89)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-40.2.7-167d89)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 [![Desktop](https://img.shields.io/badge/desktop-Windows%20%7C%20macOS-526479)](#下载与运行)
 [![Stars](https://img.shields.io/github/stars/lizilaywer/PrivacyGuard?style=social)](https://github.com/lizilaywer/PrivacyGuard/stargazers)

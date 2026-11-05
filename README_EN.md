@@ -9,7 +9,7 @@
 Built by a practicing lawyer in China, with AI assistance, for everyday document workflows.
 
 [![CI](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-40.2.5-167d89)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-40.2.7-167d89)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 
 [中文](README.md) · [Downloads](https://github.com/lizilaywer/PrivacyGuard/releases) · [Report an issue](https://github.com/lizilaywer/PrivacyGuard/issues) · [Contribute](CONTRIBUTING.md)

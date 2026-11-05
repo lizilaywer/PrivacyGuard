@@ -1,5 +1,5 @@
 PrivacyGuard Windows 打包脚本说明
-当前基线：40.2.5；更新：2026-10-25；版本唯一来源：version.txt。
+当前基线：40.2.7；更新：2026-11-05；版本唯一来源：version.txt。
 
 首次打便携版：双击项目根目录 BUILD_WINDOWS_PORTABLE.bat。
 已有环境：运行本目录 build_complete.bat。
@@ -11,13 +11,13 @@ build_complete.bat 调用 build_portable.py：全量测试、版本资源生成�
 
 产物：
   dist/windows-portable/PrivacyGuard/PrivacyGuard.exe
-  releases/windows/PrivacyGuard-v40.2.5-Windows-Portable.zip
-  releases/windows/PrivacyGuard-v40.2.5-Windows-Portable.zip.sha256
-  releases/windows/PrivacyGuard-v40.2.5-Windows-Portable.validation.json
+  releases/windows/PrivacyGuard-v40.2.7-Windows-Portable.zip
+  releases/windows/PrivacyGuard-v40.2.7-Windows-Portable.zip.sha256
+  releases/windows/PrivacyGuard-v40.2.7-Windows-Portable.validation.json
 缓存：build/windows-portable。不会删除其他平台或安装版产物。
 
 1_init_environment.bat：新建 venv_win 并安装 requirements.txt / requirements-dev.txt。
-generate_version_info.py：生成 version_info.txt（40.2.5.0，禁止手编）。
+generate_version_info.py：生成 version_info.txt（40.2.7.0，禁止手编）。
 launcher_wrapper.bat：允许包内 VC++ DLL，不再仅查系统目录。
 
 保留旧流程：2_build_exe.bat、3_build_with_setup.bat、4_create_installer_only.bat，
