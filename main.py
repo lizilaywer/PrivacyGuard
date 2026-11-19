@@ -1,4 +1,9 @@
 import sys
+if "--pg-regex-worker" in sys.argv:
+    from privacyguard.utils.regex_service import run_service
+    run_service()
+    raise SystemExit(0)
+
 import os
 import fitz  # PyMuPDF
 import re
@@ -23,6 +28,7 @@ logger = get_logger("main")
 from privacyguard.utils.temp_manager import TempFileManager
 from privacyguard.utils.app_paths import default_config_path, resource_root
 from privacyguard.utils.worker_lifecycle import defer_close_for_workers
+from privacyguard.ui.mixins.review_mixin import ReviewMixin
 from privacyguard.workers.image_merge import ImageMergeWorker
 from privacyguard.workers.word_worker import WordWorker as _ModularWordWorker
 from privacyguard.workers.ocr_worker import OCRWorker as _ModularOCRWorker
@@ -40,7 +46,7 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                              QGridLayout,
                              QHBoxLayout, QPushButton, QLabel, QFileDialog,
                              QScrollArea, QMessageBox, QProgressBar, QFrame,
-                             QDialog, QButtonGroup, QSizePolicy,
+                             QDialog, QButtonGroup, QSizePolicy, QCheckBox,
                              QTextBrowser, QLineEdit, QListWidget, QListWidgetItem,
                              QAbstractItemView, QTableWidget, QMenu,
                              QTableWidgetItem, QHeaderView)
@@ -630,6 +636,7 @@ class WebViewBridge(QObject):
                     QMessageBox.warning(self.main_window, "无法添加", "该区域与已有脱敏区域重叠")
                     return
 
+            self.main_window.capture_word_change()
             self.main_window.word_data[key]['manual'].append({
                 'start': start,
                 'end': end,
@@ -662,6 +669,7 @@ class WebViewBridge(QObject):
             return
 
         # 遍历所有 word_data，为每个包含该文本的位置添加脱敏
+        self.main_window.capture_word_change()
         for k, data in self.main_window.word_data.items():
             text = data['text']
             if not text:
@@ -712,6 +720,7 @@ class WebViewBridge(QObject):
                         self.remove_global_redaction(text_to_remove)
                     else:
                         # 精确模式：只删除当前项
+                        self.main_window.capture_word_change()
                         manual_list.pop(i)
                         self.main_window.render_word_preview()
                     return
@@ -722,6 +731,7 @@ class WebViewBridge(QObject):
         Args:
             text: 要删除的文本
         """
+        self.main_window.capture_word_change()
         count = 0
         for key, data in self.main_window.word_data.items():
             manual_list = data['manual']
@@ -786,7 +796,7 @@ _INTERACTIVE_JS_CODE = _load_js_asset('word_preview_interactive.js')
 
 
 # === 主窗口 ===
-class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixin, ExtractMixin, BookmarkMixin, QMainWindow):
+class MainWindow(ReviewMixin, PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixin, ExtractMixin, BookmarkMixin, QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f"{APP_NAME} v{VERSION} - Powered by li (汪立律师)")
@@ -842,6 +852,8 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
         self._toc_original = []  # 从 PDF 读取的原始 TOC（脱敏预览的基线）
         self._targeted_toc_rules = None  # 手动框选"全文遮罩"触发的临时书签规则
         self.word_doc = None  # Word 文档对象
+        self._word_input_source_path = None
+        self._pdf_modified = False
         self.file_path = ""
         self.current_page = 0
         self.zoom_level = 1.0
@@ -2007,6 +2019,10 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
         self.btn_search.setObjectName("toolbarSearchButton")
         self.btn_search.setIcon(QIcon(resource_path(os.path.join("assets", "icons", "search_magnifier.svg"))))
         self.toolbar_utility_layout.addWidget(self.btn_search)
+        self.btn_review = self.create_btn("", self.toggle_review, style="icon", tooltip="复核：定位、确认或排除某一处识别结果")
+        self.btn_review.setObjectName("toolbarReviewButton")
+        self.btn_review.setIcon(QIcon(resource_path(os.path.join("assets", "icons", "review.svg"))))
+        self.toolbar_utility_layout.addWidget(self.btn_review)
         # cp_bookmark: 书签按钮（书签图标），切换左侧书签面板；仅 PDF 模式有意义
         self.btn_bookmark = self.create_btn("", self.toggle_bookmark_panel, style="icon",
                                             tooltip="书签：查看/编辑 PDF 目录（跳转/增删改）")
@@ -2994,6 +3010,7 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
         self.search_panel = self._build_search_panel()
         self.search_panel.hide()
         content_row.addWidget(self.search_panel, 0)
+        self.setup_review()
 
         # v40.1.5：持久 PDF 显示区——content_row（单页 scroll / 页面视图容器互斥切换
         # 都在其内）与底部控制条同层；scroll.hide() 不再连坐隐藏底条
@@ -4624,6 +4641,7 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
             getattr(self, "btn_undo", None),     # cp83: 撤销/恢复图标按钮同尺寸
             getattr(self, "btn_redo", None),
             getattr(self, "btn_bookmark", None),  # v40.1.4（#7）：书签图标纳入统一尺寸
+            getattr(self, "btn_review", None),
             getattr(self, "btn_reset", None),     # v40.1.4（用户反馈）：全图标按钮统一方形
             getattr(self, "btn_fit", None),
             getattr(self, "btn_fit_utility", None),
@@ -5135,7 +5153,7 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
         if not hasattr(self, "toolbar"):
             return
 
-        width = self.width() or self.toolbar.width()
+        width = self.toolbar.width() or self.width()
         # Qt 返回的是逻辑像素宽度，这里不再额外按屏幕缩放除一次，
         # 否则 Retina / Windows 高缩放下会被过早判成窄布局。
         effective_width = width
@@ -5301,6 +5319,8 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
                 return
 
             # 屏幕可用宽度
+            from privacyguard.utils.toolbar_geometry import reserved_dock_width
+            dock_width = reserved_dock_width(self)
             avail = 0
             try:
                 screen = self.screen()
@@ -5322,21 +5342,21 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
             # cp85: 内容超出屏幕可用宽度 → 强制降到 narrow 档重刷一次
             # （narrow 档会缩文案 + 收纳取色/去水印/首末页进“更多”菜单），
             # 防止固定宽按钮在屏幕上限内仍装不下而重叠；标志防递归
-            if avail > 0 and needed > avail - 20:
+            if avail > 0 and needed > avail - dock_width - 20:
                 if not getattr(self, "_toolbar_forced_narrow", False):
                     self._toolbar_forced_narrow = True
                     self._toolbar_forced_narrow_needed = needed  # 自然档需求，供跨屏解除判据
                     self._refresh_toolbar_responsiveness()
                     return
             elif (getattr(self, "_toolbar_forced_narrow", False)
-                    and avail - 20 >= getattr(self, "_toolbar_forced_narrow_needed", 10**9)):
+                    and avail - dock_width - 20 >= getattr(self, "_toolbar_forced_narrow_needed", 10**9)):
                 # 换到更宽屏幕/缩放变化，自然档内容已可容纳 → 解除强制并重刷
                 self._toolbar_forced_narrow = False
                 self._refresh_toolbar_responsiveness()
                 return
 
             base_floor = getattr(self, "_base_min_window_width", 1100)
-            target = max(base_floor, needed)
+            target = max(base_floor, needed + dock_width)
             if avail > 0:
                 target = min(target, avail - 20)
             if int(target) != self.minimumWidth():
@@ -6138,6 +6158,7 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
                                      and self.doc_type == 'pdf')
         # cp81: 搜索按钮 PDF/Word 均可用；切模式时非目标模式自动收起面板
         self.btn_search.setVisible(is_pdf or is_word)
+        self.btn_review.setVisible(is_pdf or is_word)
         if not (is_pdf or is_word) and hasattr(self, "search_panel"):
             self.search_panel.hide()
         # cp_bookmark: 书签按钮仅 PDF 模式可见；切模式时收起面板
@@ -7207,7 +7228,7 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
             rules=self.word_replace_rules,
             default_replacement_text=self.replacement_text,
             title="Word 批量替换规则设置",
-            apply_text="开始批量替换"
+            apply_text="开始批量替换", file_paths=files
         )
         if rules_dlg.exec() != QDialog.DialogCode.Accepted:
             self._clear_info_bar_message()
@@ -7218,7 +7239,8 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
         self.word_replace_rules = rules_dlg.rules
         self.replacement_text = rules_dlg.default_replacement_text
         normalized_rules = normalize_word_replace_rules(self.word_replace_rules, self.replacement_text)
-        if not any(item.get("enabled", True) and item.get("find") for item in normalized_rules):
+        from privacyguard.utils.rule_templates import plan_has_rules
+        if not plan_has_rules(rules_dlg.file_plan, normalized_rules):
             QMessageBox.warning(self, "提示", "请至少启用一条 Word 替换规则后再开始批量替换。")
             self.batch_stage = "rule_setup"
             self._append_batch_log("当前未启用任何规则，批量替换尚未开始。", "warning")
@@ -7237,7 +7259,9 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
             "info"
         )
 
-        self.batch_worker = WordBatchReplaceWorker(files, normalized_rules, self.replacement_text, parent=self)
+        self.batch_worker = WordBatchReplaceWorker(files, normalized_rules, self.replacement_text, parent=self,
+                                                  file_plan=rules_dlg.file_plan,
+                                                  private_rule_mapping=rules_dlg.private_rule_mapping)
         self.active_worker = self.batch_worker
         self.active_task_type = "batch_replace"
         self._sync_ui_mode()
@@ -7625,6 +7649,8 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
 
     def _open_pdf_file(self, fname):
         """内部方法：打开 PDF 文件"""
+        self.reset_review()
+        self._pdf_modified = False
         # 关闭已打开的PDF文档（防止资源泄露）
         if self.doc:
             self.doc.close()
@@ -7758,53 +7784,16 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
             self.word_compare_user_hidden = False
             self.word_doc = Document(load_path)
             self.file_path = load_path  # cp113: 加密文档指向解密临时文件，预览/保存读取一致
+            self._word_input_source_path = fname
             self.word_open_password = word_pw
             self.doc_type = 'docx'
             self.doc = None  # 清空 PDF 文档对象
             self.page_data = {}
             self._word_scan_meta = None  # W8: 新文档重置扫描状态，避免沿用旧文档的完成标记
 
-            # 初始化 word_data 结构
-            self.word_data = {}
-            for idx, para in enumerate(self.word_doc.paragraphs):
-                self.word_data[f'paragraph_{idx}'] = {
-                    'type': 'paragraph',
-                    'index': idx,
-                    'text': paragraph_plain_text(para),
-                    'ocr': [],
-                    'manual': []
-                }
-
-            # 扫描表格
-            for table_idx, table in enumerate(self.word_doc.tables):
-                for row_idx, row in enumerate(table.rows):
-                    for cell_idx, cell in enumerate(row.cells):
-                        key = f'table_{table_idx}_cell_{row_idx}_{cell_idx}'
-                        self.word_data[key] = {
-                            'type': 'table_cell',
-                            'table': table_idx,
-                            'row': row_idx,
-                            'cell': cell_idx,
-                            'text': cell_plain_text(cell),
-                            'ocr': [],
-                            'manual': []
-                        }
-
-            # W2: 页眉/页脚也纳入脱敏范围（常见泄漏点：密级标注、单位名、作者）
-            for key, para in iter_word_header_footer_paragraphs(self.word_doc):
-                self.word_data[key] = {
-                    'type': 'header_footer_paragraph',
-                    'text': paragraph_plain_text(para),
-                    'ocr': [],
-                    'manual': []
-                }
-            for key, cell in iter_word_header_footer_cells(self.word_doc):
-                self.word_data[key] = {
-                    'type': 'header_footer_cell',
-                    'text': cell_plain_text(cell),
-                    'ocr': [],
-                    'manual': []
-                }
+            from privacyguard.utils.word_parts import build_word_data
+            self.word_data = build_word_data(self.word_doc)
+            self.load_word_review()
 
             # 启用按钮
             self.btn_scan.setEnabled(True)
@@ -7865,6 +7854,9 @@ class MainWindow(PageViewMixin, WordPreviewMixin, SettingsActionsMixin, CropMixi
                 # 使用转换后的文件打开
                 self.converted_temp_file = docx_path  # 保存临时文件路径以便后续清理
                 self._open_word_docx(docx_path)
+                if self.file_path == docx_path and self.word_doc is not None:
+                    self._word_input_source_path = fname
+                    self.load_word_review()
                 self._set_info_bar_message("📝 已完成 .doc 转换，现已进入 Word 替换工作台。")
         except (IOError, OSError, ValueError, RuntimeError) as e:
             QMessageBox.critical(self, "转换失败", f"无法转换 .doc 文件:\n{str(e)}")
@@ -8180,6 +8172,9 @@ sudo dnf install antiword
         self.btn_search_cancel.hide()
         status_row.addWidget(self.btn_search_cancel)
         v.addLayout(status_row)
+        self.search_normalize = QCheckBox("补充匹配：全半角、数字间空格/连字符")
+        self.search_normalize.setToolTip("只补充搜索候选，不自动添加或移除遮罩。请定位后人工判断。")
+        v.addWidget(self.search_normalize)
 
         self.search_results_list = QListWidget()
         self.search_results_list.setObjectName("searchResultsList")
@@ -8256,7 +8251,8 @@ sudo dnf install antiword
             total = 0
             for key, entry in (self.word_data or {}).items():
                 text = (entry or {}).get("text", "") or ""
-                for _idx, before, kw_text, after in collect_text_hits(text, keyword):
+                from privacyguard.utils.text_candidates import collect_search_hits
+                for _idx, before, kw_text, after in collect_search_hits(text, keyword, self.search_normalize.isChecked()):
                     self._append_search_result(("word", key), before, kw_text, after, "段落")
                     total += 1
             self.lbl_search_status.setText(f"找到 {total} 处" if total else "未找到匹配内容")
@@ -8266,14 +8262,14 @@ sudo dnf install antiword
             return
         # PDF：tobytes 快照交给 worker（与旋转/删页/去水印后状态一致）
         try:
-            pdf_bytes = self.doc.tobytes()
+            pdf_bytes = self.doc.tobytes(no_new_id=True)
         except Exception as e:
             self.lbl_search_status.setText(f"文档快照失败：{e}")
             return
         self.lbl_search_status.setText("正在搜索…")
         self.btn_search_cancel.show()
         self._search_hit_count = 0
-        worker = DocSearchWorker(pdf_bytes, keyword, self._search_ocr_cache, parent=self)
+        worker = DocSearchWorker(pdf_bytes, keyword, self._search_ocr_cache, parent=self, normalize=self.search_normalize.isChecked())
         worker.progress_signal.connect(self._on_search_progress)
         worker.hit_signal.connect(self._on_search_hit)
         worker.finished_signal.connect(self._on_search_finished)
@@ -8643,6 +8639,8 @@ sudo dnf install antiword
             pass
 
     def undo(self):
+        if getattr(self, "word_doc", None) is not None:
+            return self.word_review_undo()
         """cp83: 撤销上一步。栈顶为当前状态，弹出后恢复上一个。"""
         if len(self._undo_stack) < 2:
             return
@@ -8655,6 +8653,8 @@ sudo dnf install antiword
         self._set_info_bar_message("↶ 已撤销上一步")
 
     def redo(self):
+        if getattr(self, "word_doc", None) is not None:
+            return self.word_review_undo(redo=True)
         """cp83: 恢复到上一步（重做）。"""
         if not self._redo_stack:
             return
@@ -8735,6 +8735,9 @@ sudo dnf install antiword
         self._set_info_bar_message("↺ 已重置到初始状态")
 
     def _refresh_undo_redo_buttons(self):
+        if getattr(self, "word_doc", None) is not None:
+            self.refresh_word_review_buttons()
+            return
         """cp83/cp121: 按栈状态启用/禁用撤销/恢复/重置按钮。"""
         if hasattr(self, "btn_undo"):
             self.btn_undo.setEnabled(len(self._undo_stack) >= 2)
@@ -9588,6 +9591,9 @@ sudo dnf install antiword
         if page_num in self.page_data:
             # 去重：移除重复或高度重叠的矩形
             deduped = deduplicate_rects(rects)
+            if self.page_data[page_num].get("_review"):
+                from privacyguard.utils.review_decisions import pdf_review_hits, page_fingerprint
+                deduped = pdf_review_hits(self.page_data[page_num], deduped, page_fingerprint(self.doc[page_num]))
             # cp47: 原地更新 list，保持 canvas 持有的引用不变
             existing = self.page_data[page_num]['ocr']
             existing.clear()
@@ -9661,6 +9667,7 @@ sudo dnf install antiword
 
     def word_scan_finished(self, results):
         """Word 文档扫描完成（v36.5: 线程安全）"""
+        self.capture_word_change()
         results_copy = dict(results)
         scan_meta = results_copy.pop('__scan_meta__', None)
 
@@ -9740,13 +9747,21 @@ sudo dnf install antiword
         if self.doc:
             app.setStyleSheet(self._get_file_dialog_style())
             try:
-                fname, _ = QFileDialog.getSaveFileName(self, "保存 PDF", "", "PDF Files (*.pdf)")
+                fname, pdf_filter = QFileDialog.getSaveFileName(self, "保存 PDF", "", "PDF Files (*.pdf);;PDF 更多导出方式 (*.pdf)")
             finally:
                 app.setStyleSheet(original_style)
 
             if fname:
                 # cp114: 加密 PDF 若缺编辑权限，弹窗输入 owner 密码解锁
                 if not self._ensure_edit_permission():
+                    return
+                from privacyguard.ui.dialogs.pdf_export_options_dialog import choose_pdf_export_policy
+                try:
+                    pdf_policy, hidden_report = choose_pdf_export_policy(self, self.doc, pdf_filter)
+                except (ValueError, RuntimeError) as error:
+                    QMessageBox.critical(self, "无法完成导出清点", str(error))
+                    return
+                if pdf_policy is None:
                     return
                 # O1: 扫描完整性校验 —— 若曾启动智能扫描但未覆盖全部页面，
                 # 未扫描页可能仍含未脱敏的敏感信息，必须警告并二次确认，避免“以为脱了其实没脱”。
@@ -9914,8 +9929,13 @@ sudo dnf install antiword
                     encrypt_kwargs = build_encrypt_save_kwargs(
                         self.pdf_open_password, self.pdf_edit_password)
                     save_kwargs.update(encrypt_kwargs)
+                    from privacyguard.utils.pdf_sanitize import prepare_pdf_output
+                    prepared = prepare_pdf_output(doc_save, pdf_policy)
+                    if prepared is not doc_save:
+                        doc_save.close()
+                        doc_save = prepared
                     from privacyguard.utils.export_transaction import save_verified_pdf
-                    save_verified_pdf(doc_save, fname, save_kwargs, self.page_data, self.file_path)
+                    save_verified_pdf(doc_save, fname, save_kwargs, self.page_data, self.file_path, policy=pdf_policy)
                     encrypted = bool(encrypt_kwargs)
 
                     # 安全审计 v40.1: 导出成功后删除该文件的会话草稿（含未脱敏原文 pdfsnap）。
@@ -9947,6 +9967,7 @@ sudo dnf install antiword
                         encrypted=encrypted,
                         now_str=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     )
+                    report_text += "\n\n" + hidden_report
                     box = QMessageBox(self)
                     box.setIcon(QMessageBox.Icon.Information)
                     box.setWindowTitle(title)
@@ -10022,66 +10043,18 @@ sudo dnf install antiword
             # 打开副本进行修改
             new_doc = Document(temp_file)
 
-            def _apply_saved_matches_to_para(key, para):
-                data = self.word_data.get(key)
-                if not data:
-                    return
-                merged = merge_word_matches_with_priority(
-                    data.get("text", ""),
-                    self.word_replace_rules,
-                    self.replacement_text,
-                    manual_matches=data.get("manual", []),
-                    # cp63: 保存与预览同源：关键词行内替换优先于统一替换文本
-                    ocr_matches=resolve_word_ocr_replacements(
-                        data.get("ocr", []),
-                        getattr(self, "custom_keyword_rules", None),
-                        self.replacement_text
-                    )
-                )
-                if merged:
-                    replace_matches_in_paragraph(
-                        para, merged, text_offset=0,
-                        fallback_replacement_text=self.replacement_text
-                    )
-
-            def _apply_saved_matches_to_cell(key, cell):
-                data = self.word_data.get(key)
-                if not data:
-                    return
-                merged = merge_word_matches_with_priority(
-                    data.get("text", ""),
-                    self.word_replace_rules,
-                    self.replacement_text,
-                    manual_matches=data.get("manual", []),
-                    # cp63: 保存与预览同源：关键词行内替换优先于统一替换文本
-                    ocr_matches=resolve_word_ocr_replacements(
-                        data.get("ocr", []),
-                        getattr(self, "custom_keyword_rules", None),
-                        self.replacement_text
-                    )
-                )
-                replace_matches_in_cell(cell, merged, self.replacement_text)
-
-            # 遍历段落进行 run 级别的文本替换
-            for para_idx, para in enumerate(new_doc.paragraphs):
-                _apply_saved_matches_to_para(f'paragraph_{para_idx}', para)
-
-            # 遍历表格进行 run 级别的文本替换
-            for table_idx, table in enumerate(new_doc.tables):
-                for row_idx, row in enumerate(table.rows):
-                    for cell_idx, cell in enumerate(row.cells):
-                        key = f'table_{table_idx}_cell_{row_idx}_{cell_idx}'
-                        _apply_saved_matches_to_cell(key, cell)
-
-            # W2: 页眉/页脚的段落与表格单元格（与打开时共用 key 方案）
-            for key, para in iter_word_header_footer_paragraphs(new_doc):
-                _apply_saved_matches_to_para(key, para)
-            for key, cell in iter_word_header_footer_cells(new_doc):
-                _apply_saved_matches_to_cell(key, cell)
+            from privacyguard.utils.word_parts import apply_word_data
+            from privacyguard.ui.dialogs.word_coverage_dialog import confirm_word_coverage
+            coverage_notes = apply_word_data(new_doc, self.word_data, self.word_replace_rules,
+                                              self.replacement_text, self.custom_keyword_rules)
+            QApplication.restoreOverrideCursor()
+            if not confirm_word_coverage(self, coverage_notes):
+                return
+            QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
 
             # 保存文档
             from privacyguard.utils.export_transaction import save_verified_docx
-            save_verified_docx(new_doc, fname, self.file_path)
+            save_verified_docx(new_doc, fname, [self.file_path, self._word_input_source_path])
 
             QApplication.restoreOverrideCursor()
             box_w = QMessageBox(self)
@@ -10122,7 +10095,8 @@ sudo dnf install antiword
 if __name__ == "__main__":
     if "--self-test" in sys.argv:
         from privacyguard.diagnostics import run_self_test
-        sys.exit(run_self_test(MainWindow))
+        report_arg = next((arg for arg in sys.argv[1:] if arg.startswith("--self-test-report=")), None)
+        sys.exit(run_self_test(MainWindow, report_arg.split("=", 1)[1] if report_arg else None))
     # v37.8.11 P0-3: 初始化统一日志框架（幂等，控制台+文件双通道）
     init_logging()
 

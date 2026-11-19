@@ -13,6 +13,19 @@ from privacyguard.utils.export_validation import verify_pdf_export, verify_docx_
 
 
 class TestAtomicExport(unittest.TestCase):
+    def test_protects_original_and_decrypted_working_copy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            original = Path(directory)/'encrypted.docx'
+            working = Path(directory)/'decrypted.docx'
+            original.write_bytes(b'ENCRYPTED_ORIGINAL')
+            working.write_bytes(b'DECRYPTED_WORKING')
+            for target in (original, working):
+                with self.assertRaises(ExportValidationError):
+                    with AtomicExport(target, [original, working]):
+                        self.fail('source must not be opened for writing')
+            self.assertEqual(original.read_bytes(), b'ENCRYPTED_ORIGINAL')
+            self.assertEqual(working.read_bytes(), b'DECRYPTED_WORKING')
+
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)

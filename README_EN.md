@@ -9,7 +9,7 @@
 Built by a practicing lawyer in China, with AI assistance, for everyday document workflows.
 
 [![CI](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-40.2.8-167d89)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-40.3.0-167d89)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 
 [中文](README.md) · [Downloads](https://github.com/lizilaywer/PrivacyGuard/releases) · [Report an issue](https://github.com/lizilaywer/PrivacyGuard/issues) · [Contribute](CONTRIBUTING.md)
@@ -45,7 +45,7 @@ Screenshots show v40.2.5 running from source on Windows with entirely fictional 
 
 Visit [Releases](https://github.com/lizilaywer/PrivacyGuard/releases) and read the platform, architecture, checksums, and known issues for each artifact. Source and published binaries may have different versions. **The historical v40.2.3 Windows artifact must not be distributed.**
 
-The v40.2.5 macOS portable build targets Apple Silicon / macOS 14+, uses ad-hoc signing, and is not notarized. It is not an Intel or Universal2 build. Download availability is determined by the release assets. This repository update publishes source and showcase materials, not new binaries.
+The macOS portable target is Apple Silicon / macOS 14+, ad-hoc signed and not notarized. It is not Intel or Universal2. Download availability is determined by release assets; [the current validation record](docs/current/UPGRADE_COMPLETION_20261119.md) states which source and native candidates were actually checked.
 
 ### Run from source (64-bit Python 3.11)
 
@@ -78,11 +78,15 @@ PDF extraction does **not** automatically apply the source workbench masks. Reop
 
 ## Known limitations
 
-- Word hyperlink text, nested tables, images, text boxes, comments, revisions, footnotes/endnotes, and hidden parts are not comprehensively covered. Word images are not OCR-redacted. Word export does not re-encrypt the document.
-- PDF region redaction is not complete file sanitization: metadata, embedded attachments, form values, and actions need separate checks.
-- Search can miss image text on mixed pages. Search results are not evidence that a file contains no sensitive information.
+- Word scan/write/batch now share a content map covering hyperlink text/targets, nested tables, notes, textboxes, comments, revision/hidden/field text and properties. Arbitrary Office extensions, image pixels, embedded objects/macros, data bindings and external resources still need separate review. Word export does not re-encrypt the document.
+- PDF export explicitly offers layout preservation, supported hidden-component cleanup and pixel-only reconstruction. Complex cleanup is blocked; pixel output loses selectable text, bookmarks, form values and signatures. It cannot detect unselected sensitive content.
+- Mixed-page search now inspects image blocks and binds its bounded session cache to document/model versions. Optional width/digit-separator search and current-page OCR/QR inspection produce manual candidates, not automatic clearance.
 - Recovery snapshots and decrypted temporary files can contain original content. They are permission-restricted, not encrypted.
-- OCR and rule detection can miss or incorrectly mark content. Chinese name rules are not general-purpose NER. User regex patterns have no execution timeout.
+- OCR and rule detection can miss or incorrectly mark content. Chinese name rules are not general-purpose NER. Word replacement regex uses a bounded subprocess; other legacy custom scan regex is outside that protection. Default OCR models/dependencies remain unchanged.
+
+Version 40.3 adds a collapsible position-scoped review panel with undo/local drafts, bounded JSON templates, explicit per-file plans and optional exact-term numbering. [Validation and package status](docs/current/UPGRADE_COMPLETION_20261119.md) distinguish source checks, native package checks and remaining limitations.
+
+![Version 40.3 review panel with fictional content](assets/showcase/review-v40.3.png)
 
 See the [repository review](docs/current/REPOSITORY_AUDIT_20261102.md) and [release audit](docs/current/RELEASE_AUDIT_20261024.md) for evidence and priorities. This is an assisted redaction tool, not a guarantee of anonymization.
 

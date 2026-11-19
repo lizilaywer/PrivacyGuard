@@ -121,6 +121,12 @@ def verify_docx_export(path, expected_document):
                 saved_bytes = package.read(str(part.partname).lstrip('/'))
                 if hashlib.sha256(saved_bytes).digest() != hashlib.sha256(part.blob).digest():
                     raise ExportValidationError("Word 导出内容检查未通过，未保存文件。")
+                if part.rels:
+                    rel_bytes = package.read(str(part.partname.rels_uri).lstrip('/'))
+                    if rel_bytes != part.rels.xml:
+                        raise ExportValidationError("Word 导出关系目标检查未通过，未保存文件。")
+            if package.read("_rels/.rels") != expected_document.part.package.rels.xml:
+                raise ExportValidationError("Word 主文档关系检查未通过，未保存文件。")
         restored = Document(path)
         if len(restored.part.package.parts) != len(expected_parts):
             raise ExportValidationError("Word 导出部件检查未通过，未保存文件。")

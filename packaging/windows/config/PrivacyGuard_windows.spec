@@ -8,7 +8,6 @@ import sys
 sys.setrecursionlimit(sys.getrecursionlimit() * 5)  # 修复 onnxruntime 递归深度问题
 
 import os
-import glob
 from PyInstaller.utils.hooks import (
     copy_metadata,
     collect_all,
@@ -132,23 +131,11 @@ bs4_datas.extend(lxml_datas)
 bs4_binaries.extend(lxml_binaries)
 bs4_hiddenimports.extend(lxml_hiddenimports)
 
-# 额外收集 onnxruntime 的动态库（关键修复）
-extra_onnx_binaries = collect_dynamic_libs('onnxruntime')
-
-# 收集 VC++ 运行时 DLL（关键：解决 DLL 初始化失败）
+# collect_all above already resolves ONNX Runtime from the active import path.
+# Scanning site-packages independently can mix binaries from a second version.
 vcrt_binaries = []
-import site
 
-# 方法1: 从 site-packages 收集 onnxruntime 的 DLL
-for site_path in site.getsitepackages():
-    onnx_path = os.path.join(site_path, 'onnxruntime')
-    if os.path.exists(onnx_path):
-        for dll_pattern in ['*.dll', '*.pyd']:
-            dlls = glob.glob(os.path.join(onnx_path, '**', dll_pattern), recursive=True)
-            for dll in dlls:
-                vcrt_binaries.append((dll, os.path.dirname(dll).replace(site_path, '').strip(os.sep)))
-
-# 方法2: 从系统目录收集 VC++ 运行时 DLL（确保打包包含）
+# 从系统目录收集 VC++ 运行时 DLL（确保打包包含）
 vc_dlls = [
     'vcruntime140.dll',
     'vcruntime140_1.dll',
@@ -163,8 +150,7 @@ for dll_name in vc_dlls:
         vcrt_binaries.append((dll_path, '.'))
         print(f"[INFO] Including system DLL: {dll_name}")
 
-# 方法3: 尝试从 Python 安装目录收集 VC++ DLL
-import sysconfig
+# 尝试从 Python 安装目录收集 VC++ DLL
 python_base = os.path.dirname(sys.executable)
 for dll_name in vc_dlls:
     # 检查 DLLs 目录
@@ -236,7 +222,6 @@ privacyguard_hiddenimports = list(set(privacyguard_hiddenimports))
 print(f"[INFO] Total privacyguard hidden imports after dedup: {len(privacyguard_hiddenimports)}")
 
 print(f"[INFO] Collected {len(onnx_binaries)} onnxruntime binaries")
-print(f"[INFO] Collected {len(extra_onnx_binaries)} extra onnxruntime libs")
 print(f"[INFO] Collected {len(vcrt_binaries)} VC++ runtime files")
 print(f"[INFO] Collected {len(numpy_binaries)} numpy binaries")
 print(f"[INFO] Collected {len(numpy_hiddenimports)} numpy hidden imports")
@@ -261,7 +246,7 @@ a = Analysis(
     # privacyguard.ocr.rapidocr 的相对导入在"无父包"上下文执行直接 ImportError
     # （v40.2.3 打包实测即崩于此；mac spec 一直是对的，本行对齐之）
     pathex=[project_root, current_dir],
-    binaries=onnx_binaries + rapid_binaries + extra_onnx_binaries + vcrt_binaries + pyqt6_binaries + numpy_binaries + bs4_binaries + msoff_binaries + rapidocr_dep_binaries + yaml_binaries + antlr4_binaries + mammoth_binaries + psutil_binaries + tqdm_binaries + cobble_binaries,
+    binaries=onnx_binaries + rapid_binaries + vcrt_binaries + pyqt6_binaries + numpy_binaries + bs4_binaries + msoff_binaries + rapidocr_dep_binaries + yaml_binaries + antlr4_binaries + mammoth_binaries + psutil_binaries + tqdm_binaries + cobble_binaries,
     datas=[
         # 包含主题文件
         (os.path.join(project_root, 'theme.py'), '.'),
@@ -424,6 +409,12 @@ a.binaries = [b for b in a.binaries if not (
     and b[0].replace('\\', '/').rsplit('/', 1)[-1].lower() in _crt_dll_names
 )]
 print(f"[INFO] Removed {_crt_before - len(a.binaries)} legacy VC++ CRT copies from PyQt6/Qt6/bin")
+
+# Qt links to the Windows system ICU ABI. Libraries found in an unrelated
+# application's PATH can share these names but lack the Windows exports.
+_system_icu = {'icu.dll', 'icuin.dll', 'icuuc.dll'}
+a.binaries = [entry for entry in a.binaries
+              if os.path.basename(entry[0]).lower() not in _system_icu]
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 

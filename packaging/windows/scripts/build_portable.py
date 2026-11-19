@@ -1,6 +1,8 @@
 """Native Windows x64 release builder. Never cross-compile or hide a failed gate."""
 
 import hashlib
+import importlib.util
+from importlib.metadata import version as distribution_version
 import json
 import os
 import re
@@ -43,6 +45,8 @@ def validate_bundle(app_dir, version):
             continue
         if not path.is_file():
             continue
+        if path.name.lower() in {"icu.dll", "icuin.dll", "icuuc.dll"}:
+            errors.append(f"Bundled file shadows Windows system ICU: {path.relative_to(app_dir)}")
         if path.name == "config.json" or path.suffix in {".log", ".pdfsnap", ".pgdraft"}:
             errors.append(f"Private runtime data: {path.relative_to(app_dir)}")
         if path.suffix.lower() in {".exe", ".dll", ".pyd"}:
@@ -60,6 +64,24 @@ def validate_bundle(app_dir, version):
         if not (app_dir / name).is_file() and not (internal / name).is_file():
             errors.append(f"Missing portable VC++ runtime: {name}")
     return {"version": version, "target": "Windows-x64", "binary_count": binaries, "errors": errors}
+
+
+def verify_onnx_binaries(source, bundled):
+    """Reject missing or mixed-version native libraries before the smoke test."""
+    def hashes(directory):
+        result = {}
+        for path in directory.iterdir():
+            if path.is_file() and path.suffix.lower() in {".dll", ".pyd"}:
+                with path.open("rb") as handle:
+                    result[path.name] = hashlib.file_digest(handle, "sha256").hexdigest()
+        return result
+
+    expected = hashes(source)
+    if not {"onnxruntime.dll", "onnxruntime_pybind11_state.pyd"}.issubset(expected):
+        raise RuntimeError("Build interpreter lacks the required Windows ONNX Runtime libraries")
+    if hashes(bundled) != expected:
+        raise RuntimeError("Bundled ONNX Runtime libraries differ from the build interpreter")
+    return expected
 
 
 def archive_bundle(app_dir, destination):
@@ -99,6 +121,14 @@ def build():
     version = (root / "version.txt").read_text(encoding="utf-8").strip()
     if not re.fullmatch(r"\d+\.\d+\.\d+", version):
         raise ValueError("Invalid version.txt")
+    requirements = (root / "requirements.txt").read_text(encoding="utf-8")
+    pinned_ort = re.search(r"^onnxruntime==([^\s]+)$", requirements, re.MULTILINE)
+    if not pinned_ort or distribution_version("onnxruntime") != pinned_ort.group(1):
+        raise RuntimeError("Build with the ONNX Runtime version pinned in requirements.txt")
+    ort_spec = importlib.util.find_spec("onnxruntime")
+    if ort_spec is None or ort_spec.origin is None:
+        raise RuntimeError("ONNX Runtime package path is unavailable")
+    ort_source = Path(ort_spec.origin).parent / "capi"
     work = root / "build/windows-portable"
     dist = root / "dist/windows-portable"
     app = dist / "PrivacyGuard"
@@ -108,6 +138,11 @@ def build():
         raise FileExistsError(f"Release already exists: {destination}")
     work.mkdir(parents=True, exist_ok=True)
     env = dict(os.environ, PYTHONUTF8="1", PYINSTALLER_CONFIG_DIR=str(work / "pyinstaller-cache"))
+    # Avoid collecting a same-named DLL from an unrelated desktop program.
+    windows_dir = Path(os.environ.get("SystemRoot", r"C:\Windows"))
+    env["PATH"] = os.pathsep.join(str(path) for path in (
+        Path(sys.executable).parent, Path(sys.base_prefix), windows_dir / "System32", windows_dir,
+    ))
 
     def run(args, timeout=None, test=False):
         print("[RUN] " + subprocess.list2cmdline([str(a) for a in args]), flush=True)
@@ -126,7 +161,7 @@ def build():
     # Only this target is cleaned; macOS and installer outputs remain untouched.
     if app.exists():
         shutil.rmtree(app)
-    run([py, "-m", "PyInstaller", "--clean", "--noconfirm", "--workpath", work,
+    run([py, "-m", "PyInstaller", "--noconfirm", "--workpath", work,
          "--distpath", dist, "packaging/windows/config/PrivacyGuard_windows.spec"])
     for name in ("LICENSE", "README.md"):
         shutil.copy2(root / name, app / name)
@@ -139,13 +174,26 @@ def build():
     (work / "validation.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
     if report["errors"]:
         raise RuntimeError("Bundle validation failed:\n" + "\n".join(report["errors"]))
-    run([app / "PrivacyGuard.exe", "--self-test"], timeout=180, test=True)
+    ort_hashes = verify_onnx_binaries(ort_source, app / "_internal" / "onnxruntime" / "capi")
+    with tempfile.TemporaryDirectory(prefix="isolated-self-test-", dir=work) as profile:
+        self_test_env = dict(env, APPDATA=profile, LOCALAPPDATA=profile,
+                             QT_QPA_PLATFORM="windows", QTWEBENGINE_CHROMIUM_FLAGS="--disable-gpu")
+        self_test_report = Path(profile) / "result.json"
+        result = subprocess.run([app / "PrivacyGuard.exe", "--self-test", f"--self-test-report={self_test_report}"],
+                                cwd=root, env=self_test_env, timeout=180, check=False)
+        if not self_test_report.is_file():
+            raise RuntimeError(f"Frozen self-test stopped before recording results (exit {result.returncode})")
+        smoke = json.loads(self_test_report.read_text(encoding="utf-8"))
+        print(json.dumps(smoke, ensure_ascii=False), flush=True)
+        if result.returncode or smoke.get("status") != "ok" or smoke.get("version") != version:
+            raise RuntimeError("Frozen self-test failed; no release archive created")
     report = validate_bundle(app, version)
     if report["errors"]:
         raise RuntimeError("Post-launch validation failed:\n" + "\n".join(report["errors"]))
     archive_bundle(app, destination)
     release_report = destination.with_suffix(".validation.json")
-    release_report.write_text(json.dumps(dict(report, frozen_self_test="passed"), indent=2), encoding="utf-8")
+    release_report.write_text(json.dumps(dict(report, frozen_self_test="passed", onnxruntime=pinned_ort.group(1),
+                                              onnx_binaries_sha256=ort_hashes), indent=2), encoding="utf-8")
     print(f"[OK] Validated Windows portable release: {destination}", flush=True)
 
 

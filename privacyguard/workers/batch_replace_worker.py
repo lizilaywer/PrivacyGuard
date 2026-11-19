@@ -15,16 +15,8 @@ from privacyguard.utils.exceptions import ConversionError
 from privacyguard.utils.doc_converter import convert_doc_to_docx as _shared_convert_doc_to_docx
 from privacyguard.utils.helpers_word_rules import (
     normalize_word_replace_rules,
-    build_word_rule_matches,
 )
-from privacyguard.utils.helpers_word_doc import (
-    paragraph_plain_text,
-    replace_matches_in_paragraph,
-    cell_plain_text,
-    replace_matches_in_cell,
-    iter_word_header_footer_paragraphs,
-    iter_word_header_footer_cells,
-)
+
 
 
 class WordBatchReplaceWorker(QThread):
@@ -35,7 +27,7 @@ class WordBatchReplaceWorker(QThread):
     file_error_signal = pyqtSignal(int, str, str)    # index, input_path, error_msg
     finished_signal = pyqtSignal(dict)               # summary
 
-    def __init__(self, file_paths, rules, default_replacement_text, parent=None):
+    def __init__(self, file_paths, rules, default_replacement_text, parent=None, file_plan=None, private_rule_mapping=False):
         # v40.1.4 修复：补 parent 形参——main.py 调用点（批量替换）传 parent=self，
         # 此前模块层无此形参导致构造即 TypeError（与 OCRWorker 同款潜伏 Bug）。
         super().__init__(parent)
@@ -46,6 +38,9 @@ class WordBatchReplaceWorker(QThread):
         self._decision_event = threading.Event()
         self._decision_lock = threading.Lock()
         self._temp_dirs = []
+        from privacyguard.utils.rule_templates import validate_file_plan
+        self.file_plan = validate_file_plan(self.file_paths, file_plan, self.rules) if file_plan is not None else None
+        self.private_rule_mapping = private_rule_mapping or file_plan is not None
 
     def provide_error_decision(self, decision):
         """主线程调用：为当前错误设置决策（skip/stop）。"""
@@ -71,7 +66,9 @@ class WordBatchReplaceWorker(QThread):
             "success": [],
             "failed": [],
             "stopped": False,
-            "rules": list(self.rules),
+            "rules": [] if self.private_rule_mapping else list(self.rules),
+            "skipped": [],
+            "private_rule_mapping": self.private_rule_mapping,
         }
 
         try:
@@ -83,9 +80,16 @@ class WordBatchReplaceWorker(QThread):
 
                 current_name = os.path.basename(file_path)
                 self.progress_signal.emit(idx, total, current_name)
+                from privacyguard.utils.rule_templates import canonical_file
+                file_rules = self.file_plan.get(canonical_file(file_path)) if self.file_plan is not None else self.rules
+                if file_rules is None:
+                    summary["skipped"].append(file_path)
+                    self.progress_signal.emit(idx + 1, total, current_name)
+                    continue
 
                 try:
-                    output_path, replace_stats = self._process_single_file(file_path)
+                    output_path, replace_stats = (self._process_single_file(file_path, file_rules=file_rules)
+                                                 if self.file_plan is not None else self._process_single_file(file_path))
                     summary["success"].append({
                         "input": file_path,
                         "output": output_path,
@@ -110,12 +114,12 @@ class WordBatchReplaceWorker(QThread):
                 finally:
                     self.progress_signal.emit(idx + 1, total, current_name)
 
-            summary["processed"] = len(summary["success"]) + len(summary["failed"])
+            summary["processed"] = len(summary["success"]) + len(summary["failed"]) + len(summary["skipped"])
             self.finished_signal.emit(summary)
         finally:
             self._cleanup_temp_dirs()
 
-    def _process_single_file(self, file_path):
+    def _process_single_file(self, file_path, file_rules=None):
         from docx import Document
 
         is_safe, error_msg = validate_safe_path(file_path, allowed_extensions=[".doc", ".docx"])
@@ -131,71 +135,20 @@ class WordBatchReplaceWorker(QThread):
             raise ConversionError("不支持的文件格式", f"{file_path}")
 
         doc = Document(source_docx)
-        replace_stats = self._apply_rules_to_document(doc)
+        replace_stats = self._apply_rules_to_document(doc, file_rules=file_rules)
         output_path = self._build_output_path(file_path)
         from privacyguard.utils.export_transaction import save_verified_docx
-        save_verified_docx(doc, output_path, file_path)
+        save_verified_docx(doc, output_path, [file_path, source_docx])
         return output_path, replace_stats
 
-    def _apply_rules_to_document(self, doc):
-        rule_counts = {}
-        total_replacements = 0
-
-        def _collect_match_counts(matches):
-            nonlocal total_replacements
-            if not matches:
-                return
-            total_replacements += len(matches)
-            for match in matches:
-                try:
-                    rule_index = int(match.get("rule_index", -1))
-                except (TypeError, ValueError, AttributeError):
-                    continue
-                if rule_index < 0:
-                    continue
-                rule_counts[rule_index] = rule_counts.get(rule_index, 0) + 1
-
-        def _process_para(para):
-            text = paragraph_plain_text(para)
-            if not text:
-                return
-            matches = build_word_rule_matches(text, self.rules, self.default_replacement_text)
-            if matches:
-                _collect_match_counts(matches)
-                replace_matches_in_paragraph(para, matches, text_offset=0,
-                                             fallback_replacement_text=self.default_replacement_text)
-
-        def _process_cell(cell):
-            cell_text = cell_plain_text(cell)
-            if not cell_text:
-                return
-            cell_matches = build_word_rule_matches(cell_text, self.rules, self.default_replacement_text)
-            if not cell_matches:
-                return
-            _collect_match_counts(cell_matches)
-            replace_matches_in_cell(cell, cell_matches, self.default_replacement_text)
-
-        for para in doc.paragraphs:
-            _process_para(para)
-
-        for table in doc.tables:
-            for row in table.rows:
-                for cell in row.cells:
-                    _process_cell(cell)
-
-        # W2: 页眉/页脚也纳入批量替换范围
-        for _key, para in iter_word_header_footer_paragraphs(doc):
-            _process_para(para)
-        for _key, cell in iter_word_header_footer_cells(doc):
-            _process_cell(cell)
-
-        return {
-            "total_replacements": total_replacements,
-            "rule_counts": [
-                {"rule_index": rule_index, "count": count}
-                for rule_index, count in sorted(rule_counts.items())
-            ],
-        }
+    def _apply_rules_to_document(self, doc, file_rules=None):
+        from privacyguard.utils.word_parts import apply_word_rules, map_word_content
+        from privacyguard.utils.export_transaction import ExportValidationError
+        risks = map_word_content(doc).risks
+        unsupported = [key for key in risks if not key.startswith("\u4fee\u8ba2")]
+        if unsupported:
+            raise ExportValidationError("\u6279\u91cf\u6587\u4ef6\u542b\u672a\u8986\u76d6\u5185\u5bb9\uff0c\u8bf7\u5355\u72ec\u6253\u5f00\u590d\u6838\u3002")
+        return apply_word_rules(doc, self.rules if file_rules is None else file_rules, self.default_replacement_text)
 
     def _build_output_path(self, file_path):
         base_path = os.path.splitext(file_path)[0]

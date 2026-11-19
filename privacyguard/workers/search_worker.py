@@ -9,7 +9,6 @@ import cv2
 
 from PyQt6.QtCore import QThread, pyqtSignal
 
-from privacyguard.utils.helpers_pdf import collect_text_hits
 from privacyguard.utils.logger import get_logger
 
 logger = get_logger("search_worker")
@@ -31,7 +30,7 @@ class DocSearchWorker(QThread):
     finished_signal = pyqtSignal(int)        # 总命中数（取消时为已找到数）
     error_signal = pyqtSignal(str)
 
-    def __init__(self, pdf_bytes, keyword, ocr_cache, parent=None):
+    def __init__(self, pdf_bytes, keyword, ocr_cache, parent=None, normalize=False):
         # v40.1.4 修复：补 parent 形参——main.py 调用点传 parent=self（防 GC 销毁
         # 运行中线程的微秒级竞态），此前模块层无此形参导致全文搜索构造即 TypeError。
         super().__init__(parent)
@@ -40,6 +39,7 @@ class DocSearchWorker(QThread):
         # 会话级 OCR 文本缓存 dict 引用（页码 -> 识别文本）；GIL 下单键读写原子，
         # 主线程仅在 worker 结束后的下次搜索读取
         self.ocr_cache = ocr_cache
+        self.normalize = normalize
 
     def _ocr_page_text(self, page, engine):
         """全页 2x 渲染后 OCR，按阅读顺序拼接行文本。
@@ -93,82 +93,67 @@ class DocSearchWorker(QThread):
         return "\n".join(parts), spans
 
     def run(self):
+        from privacyguard.ocr.search_content import (bind_document_cache, bind_model_cache,
+                                                     cache_result, ocr_search_regions)
+        from privacyguard.ocr.mixed_pdf import collect_embedded_image_clip_rects
+        from privacyguard.utils.text_candidates import collect_search_hits
         doc = None
         total_hits = 0
+        success = True
         try:
+            bind_document_cache(self.ocr_cache, self.pdf_bytes)
             doc = fitz.open(stream=self.pdf_bytes, filetype="pdf")
-            total = len(doc)
-            engine = None  # 懒加载：全文字层文档不碰 OCR
-            for i in range(total):
+            engine = None
+            model_bound = False
+            for i, page in enumerate(doc):
                 if self.isInterruptionRequested():
                     break
-                self.progress_signal.emit(i + 1, total)
-                page = doc[i]
-                text = (page.get_text() or "").strip()
-                spans = None  # cp82: OCR 页行区间→矩形映射；文字层页用 search_for
-                if text:
-                    hits = collect_text_hits(text, self.keyword)
-                    if not hits:
-                        continue
-                    # cp82: 文字层命中矩形：search_for 按页面顺序返回，与文本命中
-                    # 顺序逐个配对；旋转页乘 rotation_matrix 转 display 坐标
-                    rects = []
-                    try:
-                        found = page.search_for(self.keyword) or []
-                        for rr in found:
-                            rr = fitz.Rect(rr)
-                            if getattr(page, "rotation", 0):
-                                rr = (rr * page.rotation_matrix)
-                                rr.normalize()
-                            rects.append((rr.x0, rr.y0, rr.width, rr.height))
-                    except Exception:
-                        rects = []
-                    for n, (_idx, before, kw_text, after) in enumerate(hits):
-                        rect_t = rects[n] if n < len(rects) else None
-                        self.hit_signal.emit(i, before, kw_text, after, rect_t)
+                self.progress_signal.emit(i+1, len(doc))
+                text = page.get_text() or ""
+                if text.strip():
+                    used = {}
+                    for _idx, before, value, after in collect_search_hits(text, self.keyword, self.normalize):
+                        found = page.search_for(value) or []
+                        occurrence = used.get(value.casefold(), 0)
+                        used[value.casefold()] = occurrence+1
+                        rect = found[occurrence] if occurrence < len(found) else None
+                        if rect is not None and page.rotation:
+                            rect = (rect * page.rotation_matrix).normalize()
+                        bounds = (rect.x0, rect.y0, rect.width, rect.height) if rect is not None else None
+                        self.hit_signal.emit(i, before, value, after, bounds)
                         total_hits += 1
+                image_clips = collect_embedded_image_clip_rects(page.get_text("dict"))
+                mixed = bool(text.strip())
+                if mixed and not image_clips:
                     continue
-                # 扫描页：缓存 → OCR（cp82 缓存结构 {'text','spans'}）
+                if not mixed and i not in self.ocr_cache and not image_clips and not page.get_drawings():
+                    continue
+                if not model_bound:
+                    bind_model_cache(self.ocr_cache)
+                    model_bound = True
                 cached = self.ocr_cache.get(i)
                 if cached is None:
                     if engine is None:
-                        try:
-                            from privacyguard.ocr.rapidocr import RapidOCREngine
-                            eng = RapidOCREngine()
-                            engine = eng if eng.is_available() else False
-                        except Exception as e:
-                            logger.warning("[cp81] OCR 引擎加载失败: %s: %s", type(e).__name__, e)
-                            engine = False
-                    if engine:
-                        try:
-                            ocr_text, ocr_spans = self._ocr_page_text(page, engine)
-                        except Exception as e:
-                            logger.warning("[cp81] 页 %s OCR 失败: %s: %s", i, type(e).__name__, e)
-                            ocr_text, ocr_spans = "", []
-                    else:
-                        ocr_text, ocr_spans = "", []
-                    cached = {"text": ocr_text, "spans": ocr_spans}
-                    self.ocr_cache[i] = cached
-                if isinstance(cached, dict):
-                    text = cached.get("text", "")
-                    spans = cached.get("spans") or []
-                else:
-                    text = str(cached)  # 防御：旧结构（纯文本）降级为无矩形
-                    spans = []
-                for _idx, before, kw_text, after in collect_text_hits(text, self.keyword):
-                    rect_t = None
-                    for s, e, r_t in spans:
-                        if s <= _idx < e:
-                            rect_t = r_t
-                            break
-                    self.hit_signal.emit(i, before, kw_text, after, rect_t)
+                        from privacyguard.ocr.rapidocr import RapidOCREngine
+                        engine = RapidOCREngine()
+                        if not engine.is_available():
+                            raise RuntimeError("OCR unavailable")
+                    ocr_text, spans = ocr_search_regions(page, engine, mixed, self.isInterruptionRequested)
+                    cached = {"text": ocr_text, "spans": spans, "mixed": mixed}
+                    cache_result(self.ocr_cache, i, cached)
+                text = cached.get("text", "") if isinstance(cached, dict) else str(cached)
+                spans = cached.get("spans", []) if isinstance(cached, dict) else []
+                for index, before, value, after in collect_search_hits(text, self.keyword, self.normalize):
+                    bounds = next((r for start, end, r in spans if start <= index < end), None)
+                    self.hit_signal.emit(i, before, value, after, bounds)
                     total_hits += 1
-        except Exception as e:
-            self.error_signal.emit(f"{type(e).__name__}: {e}")
+        except InterruptedError:
+            pass
+        except Exception as error:
+            success = False
+            self.error_signal.emit("搜索未完成（" + type(error).__name__ + "），请复核未检视的图片区域。")
         finally:
             if doc is not None:
-                try:
-                    doc.close()
-                except Exception:
-                    pass
-        self.finished_signal.emit(total_hits)
+                doc.close()
+        if success:
+            self.finished_signal.emit(total_hits)

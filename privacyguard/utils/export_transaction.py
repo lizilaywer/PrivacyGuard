@@ -34,13 +34,17 @@ class AtomicExport:
     def _check_source(self):
         if not self.source_path:
             return
-        source = os.path.realpath(self.source_path)
         target = os.path.realpath(self.destination)
-        same = os.path.normcase(source) == os.path.normcase(target)
-        if not same and os.path.exists(source) and self.destination.exists():
-            same = os.path.samefile(source, self.destination)
-        if same:
-            raise ExportValidationError("请另存为新文件，保留原始文档。")
+        sources = self.source_path if isinstance(self.source_path, (list, tuple)) else [self.source_path]
+        for candidate in sources:
+            if not candidate:
+                continue
+            source = os.path.realpath(candidate)
+            same = os.path.normcase(source) == os.path.normcase(target)
+            if not same and os.path.exists(source) and self.destination.exists():
+                same = os.path.samefile(source, self.destination)
+            if same:
+                raise ExportValidationError("请另存为新文件，保留原始文档。")
 
     def __enter__(self):
         self._check_source()
@@ -75,13 +79,21 @@ class AtomicExport:
                 pass  # retain restrictive mode on an occupied temporary file
 
 
-def save_verified_pdf(document, destination, save_kwargs, page_data, source_path=None):
+def save_verified_pdf(document, destination, save_kwargs, page_data, source_path=None, policy="preserve"):
     """Atomic PDF save with closed-handle reopen verification; returns check count."""
     from .export_validation import verify_pdf_export
 
     with AtomicExport(destination, source_path) as output:
         document.save(str(output.path), **save_kwargs)
         checked = verify_pdf_export(output.path, document, page_data, save_kwargs)
+        if policy != "preserve":
+            import fitz
+            from .pdf_sanitize import verify_pdf_policy
+            with fitz.open(output.path) as saved:
+                password = save_kwargs.get("owner_pw") or save_kwargs.get("user_pw")
+                if password and saved.authenticate(password) <= 0:
+                    raise ExportValidationError("无法认证并复查导出文件。")
+                verify_pdf_policy(saved, policy)
         output.commit()
         return checked
 

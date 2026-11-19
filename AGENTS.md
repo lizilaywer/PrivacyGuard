@@ -7,9 +7,9 @@ This file is the primary development guide for Codex and other coding agents wor
 ## Project Overview
 
 **Project**: PrivacyGuard 脱敏卫士  
-**Current Version**: v40.2.8
-**Last Updated**: 2026-11-18
-**Status**: PDF/Word 导出重开复查与原子提交；OCR 字符定位候选未通过扩大样本门槛，默认关闭，保留旧算法。第一批实施证据见 docs/current/UPGRADE_EXECUTION_20261118.md。当前仅更新源码，现有 macOS 便携包仍为 v40.2.5；Word/PDF 隐藏内容边界仍保留；v40.2.3 Windows 包仍不可分发。
+**Current Version**: v40.3.0
+**Last Updated**: 2026-11-19
+**Status**: 后续稳健升级已接入：PDF 隐藏部件清点/显式净化/纯图导出，Word 共用 XML 内容映射，位置复核与草稿，模板及逐文件计划，正则进程超时，本页补查和混合页搜索。发布验证与剩余边界见 docs/current/UPGRADE_COMPLETION_20261119.md。OCR 字符候选仍默认关闭；3.10.0 试验未证实识别收益，保留原版本与模型；v40.2.3 Windows 包仍不可分发。
 
 PrivacyGuard is a Python + PyQt6 desktop application for intelligent redaction of PDF and Word documents.
 

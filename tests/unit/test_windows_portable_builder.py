@@ -51,9 +51,27 @@ class TestWindowsPortableBuilder(unittest.TestCase):
         self.assertEqual(report["errors"], [])
         self.assertEqual(report["binary_count"], 4)
 
+    def test_rejects_mixed_onnx_native_versions(self):
+        source = self.root / "onnx-source"
+        source.mkdir()
+        bundle = self.internal / "onnxruntime" / "capi"
+        bundle.mkdir(parents=True)
+        names = ("onnxruntime.dll", "onnxruntime_providers_shared.dll", "onnxruntime_pybind11_state.pyd")
+        for name in names:
+            (source / name).write_bytes(name.encode("ascii"))
+            (bundle / name).write_bytes(name.encode("ascii"))
+        self.assertEqual(set(builder.verify_onnx_binaries(source, bundle)), set(names))
+        (bundle / "onnxruntime_providers_shared.dll").write_bytes(b"native library from another version")
+        with self.assertRaisesRegex(RuntimeError, "differ from the build interpreter"):
+            builder.verify_onnx_binaries(source, bundle)
+
     def test_rejects_non_x64_dll(self):
         write_pe(self.internal / "bad.dll", 0x14C)
         self.assertTrue(any("Non-x64" in e for e in builder.validate_bundle(self.app, "40.2.5")["errors"]))
+
+    def test_rejects_library_that_shadows_windows_icu(self):
+        write_pe(self.internal / 'icuuc.dll')
+        self.assertTrue(any('system ICU' in error for error in builder.validate_bundle(self.app, '40.2.5')['errors']))
 
     def test_rejects_truncated_pe(self):
         (self.app / "PrivacyGuard.exe").write_bytes(b"MZ")

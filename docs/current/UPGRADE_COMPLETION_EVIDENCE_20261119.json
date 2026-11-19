@@ -1,0 +1,49 @@
+{
+  "date": "2026-11-19",
+  "version": "40.3.0",
+  "baseline_public_commit": "f81a8eb8bc045b77fcb329306601c46c6b379a29",
+  "regression": {
+    "discovered": 849,
+    "passed": 846,
+    "skipped": 3
+  },
+  "ocr_runtime_trial": {
+    "stable": "3.9.2",
+    "candidate": "3.10.0",
+    "onnxruntime": "1.27.0",
+    "synthetic_cases": 24,
+    "targets": 96,
+    "recognized_stable": 96,
+    "recognized_candidate": 96,
+    "outputs_identical": true,
+    "models_identical": true,
+    "stable_warm_p50_ms": 763.9689999632537,
+    "candidate_warm_p50_ms": 751.1380999349058,
+    "adopted": false,
+    "reason": "No recognition improvement established; one timing run is not a performance certification"
+  },
+  "model_sha256": {
+    "PP-OCRv6_det_small.onnx": "090f04abcd9d9a7498bc4ebf677e4cb9bdce1fe4197ddb7e529f1ef44e1ff94f",
+    "ch_ppocr_mobile_v2.0_cls_mobile.onnx": "e47acedf663230f8863ff1ab0e64dd2d82b838fceb5957146dab185a89d6215c",
+    "PP-OCRv6_rec_small.onnx": "6f327246b50388f3c176ae304bd95767ea6dc0c9ae92153ef8cbe210b3c14884"
+  },
+  "native_checks": {
+    "pdf_export_policies": true,
+    "pdf_word_review_undo_redo_rescan": true,
+    "word_reopen_review_restore": true,
+    "source_hashes_unchanged": true,
+    "narrow_toolbar_no_overlap": true,
+    "inspection_confirm_undo": true,
+    "windowed_frozen_regex_timeout_restart": true,
+    "offline_selftest": true,
+    "encrypted_original_and_working_copy_guard": true
+  },
+  "release_checks": "pending",
+  "export_recheck": {
+    "files": 120,
+    "pages": 300,
+    "targets": 1200,
+    "source_hashes_verified": 120,
+    "reopened": 120
+  }
+}

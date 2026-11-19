@@ -68,7 +68,8 @@ class WordWorker(QThread):
                     break  # 保留已处理结果
 
                 text = output[key].get('text', '')
-                output[key]['ocr'] = self._find_matches(text, person_names)
+                from privacyguard.utils.review_decisions import word_review_hits
+                output[key]['ocr'] = word_review_hits(output[key], self._find_matches(text, person_names))
 
                 processed += 1
                 # B1: last_emit_time 只在真正发射时才更新（由 _emit_progress 返回）

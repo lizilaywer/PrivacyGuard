@@ -100,7 +100,7 @@ class SessionStore:
                 "pdf_snap": os.path.basename(snap_file) if snap_file else None,
                 # page_data 快照：{页码(str): {"ocr": [[x,y,w,h,replace]...], ...}}
                 "page_data": {
-                    str(pn): {k: [list(t) for t in items]
+                    str(pn): {k: ([list(t) for t in items] if k in ("ocr", "manual") else items)
                               for k, items in entry.items()}
                     for pn, entry in (page_data_snapshot or {}).items()
                 },
@@ -150,7 +150,7 @@ class SessionStore:
             restored = {}
             for pn_str, entry in (draft.get("page_data") or {}).items():
                 restored[int(pn_str)] = {
-                    k: [tuple(t) for t in items] for k, items in entry.items()
+                    k: ([tuple(t) for t in items] if k in ("ocr", "manual") else items) for k, items in entry.items()
                 }
             draft["page_data"] = restored
         except (ValueError, TypeError, AttributeError):

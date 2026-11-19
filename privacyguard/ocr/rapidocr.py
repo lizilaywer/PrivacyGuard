@@ -179,17 +179,19 @@ class RapidOCREngine(BaseOCREngine):
             return results
 
         if boxes is None or txts is None:
-            # P2: output 既非 v3 RapidOCROutput 也非 v1 tuple —— 可能是 API 变更。
-            # 静默返回空会让全 app OCR 零结果却看似"干净无命中"（漏脱风险）。
-            # 仅在 output 非空时告警（空 output 是正常的空白页情形）。
-            if output is not None:
-                logger.warning("[RapidOCR] 无法识别的 OCR 输出结构，返回空结果: %s",
-                               type(output).__name__)
-            return results
+            if output is None or (hasattr(output, 'boxes') and hasattr(output, 'txts')
+                                  and boxes is None and txts is None):
+                return results  # canonical empty result, including blank tiles
+            if isinstance(output, tuple) and output and (output[0] is None or
+                    isinstance(output[0], (list, tuple)) and len(output[0]) == 0):
+                return results  # legacy empty result
+            raise OCRInspectionError("OCR 返回结构不完整，当前区域未完成检视。")
 
         # v3.x 处理：boxes/txts/scores 三个平行序列
         # boxes 是 ndarray shape (N, 4, 2)，转换为 list of lists 以兼容下游代码
         n = len(txts)
+        if len(boxes) != n:
+            raise OCRInspectionError("OCR 文字与坐标数量不一致，当前区域未完成检视。")
         for i in range(n):
             text = txts[i]
             try:

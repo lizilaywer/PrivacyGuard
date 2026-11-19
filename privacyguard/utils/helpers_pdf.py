@@ -375,6 +375,9 @@ def snapshot_page_data(page_data):
                                float(rect.width()), float(rect.height()), replace))
             snap_entry[key] = tuples
         snap[pn] = snap_entry
+        if entry.get("_review"):
+            import copy
+            snap_entry["_review"] = copy.deepcopy(entry["_review"])
     return snap
 
 
@@ -393,6 +396,9 @@ def restore_page_data(snapshot_pd):
                 entry[key].append({'rect': QRectF(x, y, w, h),
                                    'replace_text': replace or ''})
         result[pn] = entry
+        if snap_entry.get("_review"):
+            from .review_decisions import valid_pdf_decisions
+            entry["_review"] = valid_pdf_decisions(snap_entry["_review"])
     return result
 
 

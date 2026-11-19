@@ -63,3 +63,39 @@ jobs:
           print('privacyguard.__version__: OK (reads version.txt)')
           print('=== ALL VERSION SOURCES CONSISTENT ===')
           "
+
+  macos-portable-check:
+    # Only explicit release commits build a frozen candidate. No auto-publish.
+    if: github.event_name == 'push' && startsWith(github.event.head_commit.message, 'release:')
+    needs: test
+    runs-on: macos-15
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    env:
+      QT_QPA_PLATFORM: offscreen
+      QTWEBENGINE_CHROMIUM_FLAGS: --disable-gpu
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          architecture: arm64
+      - name: Install pinned release environment
+        run: |
+          python -m venv venv_macos_release
+          venv_macos_release/bin/python -m pip install -r requirements.txt -r requirements-dev.txt
+      - name: Build and verify native bundle
+        run: bash packaging/macos/scripts/build_portable.sh
+      - name: Independent Word reopen check
+        run: |
+          brew install --cask libreoffice
+          venv_macos_release/bin/python scripts/verify_word_interop.py --soffice /Applications/LibreOffice.app/Contents/MacOS/soffice --report releases/macos/PrivacyGuard-word-interop.json
+      - name: Recheck signed bundle
+        run: codesign --verify --deep --strict dist/macos-portable/PrivacyGuard.app
+      - name: Preserve verified candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-verified-candidate
+          path: releases/macos/PrivacyGuard-*
+          retention-days: 7

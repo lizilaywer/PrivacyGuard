@@ -9,7 +9,7 @@
 一个由中国基层律师从真实文书工作需求出发、借助 AI 持续开发的开源桌面工具。
 
 [![CI](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-40.2.8-167d89)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-40.3.0-167d89)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 [![Desktop](https://img.shields.io/badge/desktop-Windows%20%7C%20macOS-526479)](#下载与运行)
 [![Stars](https://img.shields.io/github/stars/lizilaywer/PrivacyGuard?style=social)](https://github.com/lizilaywer/PrivacyGuard/stargazers)
@@ -27,6 +27,23 @@ PrivacyGuard 把**智能扫描、手动补充、预览检查和导出**放进同
 它来自实际工作中的需要，也欢迎更多使用者带着匿名样本、问题和改进一起参与。
 
 ## 看看实际界面
+
+### v40.3：自动复查，按需打开复核栏
+
+常用操作仍是“打开 → 脱敏 → 复核 → 导出”。新增的侧栏平时收起，可定位、确认或只排除某一处，并支持撤销；小字/二维码补查只生成候选，确认后才加遮罩。
+
+![v40.3 复核栏，使用虚构文档](assets/showcase/review-v40.3.png)
+
+<details>
+<summary>查看三种导出方式与规则模板</summary>
+
+![PDF 导出方式与附加内容清点](assets/showcase/export-options-v40.3.png)
+
+![规则模板与逐文件设置入口](assets/showcase/templates-v40.3.png)
+
+普通导出保持熟悉流程；发现附件、链接、表单等时才提示选择。模板可导入/导出，逐文件规则与精确词编号均为可选。详细例子见 [v40.3 快速说明](user-guides/v40.3安全升级快速说明.md)。
+
+</details>
 
 以下为 **v40.2.5 Windows 源码运行实拍**，文档由脚本生成，内容全部虚构。页面遮罩属于编辑预览，实际脱敏结果以导出并复核的文件为准。
 
@@ -67,7 +84,7 @@ PrivacyGuard 把**智能扫描、手动补充、预览检查和导出**放进同
 
 - **Windows**：使用对应发布页提供的已验证便携包。历史 **v40.2.3 Windows 包不可分发**，请勿使用或转发。
 - **macOS**：v40.2.5 便携构建目标为 Apple Silicon / macOS 14+，非 Intel / Universal2。构建采用 ad-hoc 签名，未做 Apple 公证；实际可下载资产以 Releases 为准。
-- 本轮更新发布源码与展示素材，不新增二进制发行包，也不把源码 BuildKit 当作可直接运行的软件。
+- v40.3.0 源码、便携候选包与平台验证状态见 [升级验收记录](docs/current/UPGRADE_COMPLETION_20261119.md)；只有通过原生验证的包才可分发，BuildKit 是源码资料包。
 
 ### 从源码运行（Python 3.11，64 位）
 
@@ -104,10 +121,10 @@ py -3.11 -m venv venv_win
 
 这是辅助脱敏工具，不能保证任意文档自动达到匿名化要求。
 
-- **Word**：超链接中的可见文字、嵌套表格、图片、文本框、批注、修订、脚注尾注及隐藏部件等，尚未得到统一完整处理；Word 图片不做 OCR 脱敏。导出 Word 不重新加密。
-- **PDF**：选定区域的内容移除不等于全文件净化。元数据、附件、表单值和动作等仍需另行检查。
+- **Word**：扫描和写出共用 XML 内容映射，已补充超链接、嵌套表格、脚注尾注、文本框、批注、修订/隐藏/字段文字及属性；不代表所有 Office 扩展都已覆盖。图片像素、嵌入对象/宏、数据绑定和外部资源仍需另行处理；导出不重新加密。
+- **PDF**：默认保持版式，不全面净化附加内容；可选择清理已支持的属性/链接/附件/动作，复杂内容会阻止该模式。纯图模式只复制最终页面像素，会丢失选字、书签、表单和签名功能，不能替代人工检查漏选区域。
 - **本机残留**：恢复草稿、结构快照和解密临时文件可能含原文，采用权限限制但不是加密存储；处理完成后可使用痕迹清理。
-- **规则与性能**：称谓算法不是通用 NER；用户正则无执行超时，避免导入未经检查的复杂规则。
+- **规则与性能**：称谓算法不是通用 NER。Word 替换规则的正则已设置独立进程时间预算；其他历史自定义扫描正则不在该保护范围，仍应避免未经检查的复杂规则。OCR 默认模型/依赖不变，补查按需执行，不宣称任意文档零漏识别。
 
 完整证据、优先级和后续方向见 [本轮仓库审查](docs/current/REPOSITORY_AUDIT_20261102.md) 和 [发布安全审计](docs/current/RELEASE_AUDIT_20261024.md)。
 

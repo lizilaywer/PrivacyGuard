@@ -1,28 +1,29 @@
 """Word 多字段替换规则对话框（会话级规则，可导入/导出）"""
-import json
 import re
 
 from PyQt6.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QLabel, QPushButton,
     QLineEdit, QTableWidget, QTableWidgetItem, QHeaderView,
-    QFileDialog, QMessageBox,
+    QMessageBox,
 )
 from PyQt6.QtCore import Qt
 
 from privacyguard.utils.helpers_word_rules import (
     normalize_word_replace_rules,
-    validate_word_replace_rules,
 )
+from privacyguard.ui.mixins.template_actions_mixin import TemplateActionsMixin
 
-WORD_RULE_SCHEMA_VERSION = 1
+WORD_RULE_SCHEMA_VERSION = 2
 
 
-class WordReplaceRulesDialog(QDialog):
+class WordReplaceRulesDialog(TemplateActionsMixin, QDialog):
     """Word 多字段替换规则对话框（会话级规则，可导入/导出）。"""
 
     def __init__(self, parent=None, rules=None, default_replacement_text="[已脱敏]",
-                 title="替换规则设置", apply_text="应用规则"):
+                 title="替换规则设置", apply_text="应用规则", file_paths=None):
         super().__init__(parent)
+        from privacyguard.ui.office_style import apply_office_style
+        apply_office_style(self)
         self.setWindowTitle(title)
         self.resize(780, 520)
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
@@ -35,6 +36,7 @@ class WordReplaceRulesDialog(QDialog):
         header = QLabel("支持精确(exact)和正则(regex)两种模式。执行顺序：精确优先，其次正则；同模式按规则顺序。")
         header.setWordWrap(True)
         main_layout.addWidget(header)
+        self.setup_template_controls(main_layout, file_paths)
 
         default_row = QHBoxLayout()
         default_row.addWidget(QLabel("默认替换文本:"))
@@ -74,8 +76,8 @@ class WordReplaceRulesDialog(QDialog):
         btn_del.clicked.connect(self.remove_selected_rule)
         btn_up.clicked.connect(lambda: self.move_selected_rule(-1))
         btn_down.clicked.connect(lambda: self.move_selected_rule(1))
-        btn_import.clicked.connect(self.import_rules_json)
-        btn_export.clicked.connect(self.export_rules_json)
+        btn_import.clicked.connect(self.import_template)
+        btn_export.clicked.connect(self.export_template)
 
         footer = QHBoxLayout()
         footer.addStretch()
@@ -150,6 +152,8 @@ class WordReplaceRulesDialog(QDialog):
         errors = []
         rules = []
         default_text = self.input_default_text.text().strip() or "[已脱敏]"
+        if self.table.rowCount() > 200 or len(default_text) > 2048:
+            return [], default_text, ["最多 200 条规则，替换文字最多 2048 字。"]
 
         for row in range(self.table.rowCount()):
             enabled_item = self.table.item(row, 0)
@@ -161,6 +165,9 @@ class WordReplaceRulesDialog(QDialog):
             mode = mode_item.text().strip().lower() if mode_item else "exact"
             find_text = find_item.text().strip() if find_item else ""
             replace_text = replace_item.text() if replace_item else ""
+            if len(find_text) > 2048 or len(replace_text) > 2048:
+                errors.append(f"第 {row+1} 行文字过长（上限 2048 字）")
+                continue
 
             if mode not in ("exact", "regex"):
                 errors.append(f"第 {row + 1} 行模式无效：{mode}（仅支持 exact/regex）")
@@ -171,7 +178,7 @@ class WordReplaceRulesDialog(QDialog):
             if enabled and mode == "regex" and validate_regex:
                 try:
                     re.compile(find_text)
-                except re.error as e:
+                except (re.error, RecursionError, OverflowError) as e:
                     errors.append(f"第 {row + 1} 行正则无效：{e}")
                     continue
             if not replace_text:
@@ -193,73 +200,15 @@ class WordReplaceRulesDialog(QDialog):
             QMessageBox.warning(self, "规则校验失败", "\n".join(errors))
             return
 
+        rules = self.prepare_template_result(rules)
+        if rules is None:
+            return
         self.rules = rules
         self.default_replacement_text = default_text
         self.accept()
 
     def import_rules_json(self):
-        fname, _ = QFileDialog.getOpenFileName(self, "导入替换规则", "", "JSON 文件 (*.json)")
-        if not fname:
-            return
-
-        try:
-            with open(fname, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            if not isinstance(data, dict):
-                raise ValueError("JSON 根节点必须为对象")
-
-            default_text = str(data.get("default_replacement_text", self.input_default_text.text().strip() or "[已脱敏]"))
-            rules = data.get("rules", [])
-            if not isinstance(rules, list):
-                raise ValueError("rules 字段必须为数组")
-
-            normalized = normalize_word_replace_rules(rules, default_text)
-
-            self.input_default_text.setText(default_text)
-            self.table.setRowCount(0)
-            for rule in normalized:
-                self.add_rule_row(rule)
-            if self.table.rowCount() == 0:
-                self.add_rule_row()
-
-            # W5: 导入后立即校验非法正则，避免"已导入但运行时静默漏脱"
-            regex_errors = validate_word_replace_rules(normalized)
-            if regex_errors:
-                detail = "\n".join(
-                    f"第 {err['index'] + 1} 条正则无效：{err['find']} → {err['error']}"
-                    for err in regex_errors
-                )
-                QMessageBox.warning(
-                    self, "导入完成（含无效正则）",
-                    f"已导入 {len(normalized)} 条规则，但以下正则无效，将不会生效，请修正后再应用：\n{detail}"
-                )
-            else:
-                QMessageBox.information(self, "导入成功", f"已导入 {len(normalized)} 条规则")
-        except (OSError, IOError, ValueError, json.JSONDecodeError) as e:
-            QMessageBox.critical(self, "导入失败", f"无法导入规则文件：\n{e}")
+        return self.import_template()
 
     def export_rules_json(self):
-        rules, default_text, errors = self._collect_rules_from_table(validate_regex=True)
-        if errors:
-            QMessageBox.warning(self, "无法导出", "\n".join(errors))
-            return
-
-        fname, _ = QFileDialog.getSaveFileName(self, "导出替换规则", "word_replace_rules.json", "JSON 文件 (*.json)")
-        if not fname:
-            return
-
-        if not fname.lower().endswith(".json"):
-            fname = fname + ".json"
-
-        payload = {
-            "version": WORD_RULE_SCHEMA_VERSION,
-            "default_replacement_text": default_text,
-            "rules": rules
-        }
-        try:
-            with open(fname, "w", encoding="utf-8") as f:
-                json.dump(payload, f, ensure_ascii=False, indent=2)
-            QMessageBox.information(self, "导出成功", f"规则已导出到：\n{fname}")
-        except (OSError, IOError, ValueError) as e:
-            QMessageBox.critical(self, "导出失败", f"无法导出规则文件：\n{e}")
+        return self.export_template()

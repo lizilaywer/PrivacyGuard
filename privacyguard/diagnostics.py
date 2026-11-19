@@ -8,7 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 
-def run_self_test(window_factory=None):
+def run_self_test(window_factory=None, report_path=None):
     import cv2
     import fitz
     import mammoth
@@ -26,6 +26,7 @@ def run_self_test(window_factory=None):
     from privacyguard.utils.helpers_word_doc import replace_matches_in_paragraph
 
     checks = {}
+    report = {"status": "failed", "version": __version__, "checks": checks}
     try:
         # No network is permitted, including an implicit first-use model download.
         with patch.object(socket.socket, "connect", side_effect=RuntimeError("Network forbidden in self-test")):
@@ -65,6 +66,30 @@ def run_self_test(window_factory=None):
                                 if saved.xref_is_stream(xref) and secret in saved.xref_stream(xref).lower():
                                     raise AssertionError("Extracted PDF retained hidden source")
                 checks["pdf_vector_region_security"] = True
+                from privacyguard.utils.guarded_regex import find_spans, _service
+                if find_spans(r"1[3-9]\d{9}", "PHONE 13812345678") != [[6,17]]:
+                    raise AssertionError("Isolated regex process failed")
+                _service.close()
+                checks["isolated_regex_worker"] = True
+                from privacyguard.utils.word_parts import apply_word_rules
+                from privacyguard.utils.export_transaction import save_verified_docx, save_verified_pdf
+                rich = Document()
+                rich.add_paragraph("SECRET KEEP")
+                rich.core_properties.author = "SECRET"
+                apply_word_rules(rich, [{"enabled":True,"mode":"exact","find":"SECRET","replace":"REMOVED"}], "REMOVED")
+                save_verified_docx(rich, root/"verified.docx")
+                if "SECRET" in Document(root/"verified.docx").core_properties.author:
+                    raise AssertionError("Word property redaction failed")
+                from privacyguard.utils.pdf_sanitize import prepare_pdf_output
+                with fitz.open() as hidden_pdf:
+                    hidden_pdf.new_page().insert_text((20,40), "KEEP")
+                    hidden_pdf.embfile_add("hidden.txt", b"SECRET_ATTACHMENT")
+                    rebuilt = prepare_pdf_output(hidden_pdf, "raster")
+                    try:
+                        save_verified_pdf(rebuilt, root/"raster.pdf", {"garbage":4}, {}, policy="raster")
+                    finally:
+                        rebuilt.close()
+                checks["verified_word_and_pixel_pdf_exports"] = True
                 img = np.full((180, 900, 3), 255, dtype=np.uint8)
                 cv2.putText(img, "PHONE 13812345678", (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.7, (0, 0, 0), 3)
                 recognized = "".join(r.text for r in RapidOCREngine().recognize(img))
@@ -88,8 +113,7 @@ def run_self_test(window_factory=None):
                     checks["mainwindow_and_docx_open_close"] = True
         if not all(checks.values()):
             raise AssertionError("One or more smoke checks failed")
-        print(json.dumps({"status": "ok", "version": __version__, "checks": checks}, ensure_ascii=False))
-        return 0
+        report["status"] = "ok"
     except Exception as exc:
         detail = f"{type(exc).__name__}: {exc}"
         try:
@@ -98,5 +122,9 @@ def run_self_test(window_factory=None):
                 detail += "\n[engine] " + RapidOCREngine._shared_last_error[-3000:]
         except Exception:
             pass
-        print(json.dumps({"status": "failed", "checks": checks, "error": detail}, ensure_ascii=False))
-        return 1
+        report["error"] = detail
+    payload = json.dumps(report, ensure_ascii=False)
+    if report_path is not None:
+        Path(report_path).write_text(payload + "\n", encoding="utf-8")
+    print(payload)
+    return int(report["status"] != "ok")

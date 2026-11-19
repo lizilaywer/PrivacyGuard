@@ -155,15 +155,21 @@ def build_word_rule_matches(text, rules, default_replacement_text="[已脱敏]")
                 continue
 
             pattern = re.escape(rule["find"]) if target_mode == "exact" else rule["find"]
+            if target_mode == "regex" and len(pattern) > 2048:
+                from .guarded_regex import RuleBudgetError
+                raise RuleBudgetError("正则过长，请缩短至 2048 字以内。")
             try:
                 # W3: 与 WordWorker._find_matches 保持一致，忽略大小写以避免英文敏感词漏脱
                 compiled = re.compile(pattern, re.IGNORECASE)
-            except re.error:
+            except (re.error, RecursionError, OverflowError):
                 continue
 
-            for matched in compiled.finditer(text):
-                start = matched.start()
-                end = matched.end()
+            if target_mode == "regex":
+                from .guarded_regex import find_spans
+                spans = find_spans(pattern, text)
+            else:
+                spans = ((m.start(), m.end()) for m in compiled.finditer(text))
+            for start, end in spans:
                 if start >= end:
                     continue
                 if _range_overlaps(start, end, occupied_ranges):
@@ -172,7 +178,7 @@ def build_word_rule_matches(text, rules, default_replacement_text="[已脱敏]")
                 selected.append({
                     "start": start,
                     "end": end,
-                    "text": matched.group(0),
+                    "text": text[start:end],
                     "replacement": rule["replace"],
                     "mode": target_mode,
                     "rule_index": rule_index,
@@ -235,7 +241,7 @@ def validate_word_replace_rules(rules):
             continue
         try:
             re.compile(find_text)
-        except re.error as exc:
+        except (re.error, RecursionError, OverflowError) as exc:
             errors.append({"index": idx, "find": find_text, "error": str(exc)})
     return errors
 
@@ -466,6 +472,10 @@ def build_batch_summary_text(stage, total_selected, replacement_preview, *,
         ]
 
         summary = last_summary or {}
+        if summary.get("private_rule_mapping"):
+            lines.append("逐文件规则/编号映射仅保留在本次会话，不写入报告。")
+        if summary.get("skipped"):
+            lines.append(f"按计划跳过：{len(summary['skipped'])} 个")
         success_items = summary.get("success", []) if isinstance(summary, dict) else []
         failed_items = summary.get("failed", []) if isinstance(summary, dict) else []
         summary_rules = summary.get("rules", default_rules) if isinstance(summary, dict) else default_rules

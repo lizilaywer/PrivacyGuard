@@ -30,6 +30,9 @@ QT_QPA_PLATFORM=offscreen "$PY" -m unittest discover -s tests/unit -t . -p 'test
 # PyInstaller already signs nested Mach-O binaries; seal the final immutable bundle.
 codesign --force --sign - "$APP"
 codesign --verify --deep --strict "$APP"
+QT_QPA_PLATFORM=offscreen QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu \
+    "$APP/Contents/MacOS/PrivacyGuard" --self-test \
+    "--self-test-report=$OUT/PrivacyGuard-$VERSION-macOS-arm64-self-test.json"
 ZIP="$OUT/PrivacyGuard-$VERSION-macOS-arm64-portable.zip"
 if [ -e "$ZIP" ]; then
     echo "Release already exists, refusing to overwrite: $ZIP" >&2

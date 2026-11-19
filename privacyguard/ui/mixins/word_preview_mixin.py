@@ -214,7 +214,8 @@ class WordPreviewMixin:
 
         self._word_tagged_html = tagged_html
         self._word_preview_document_html = document_html
-        self._word_replaced_document_html = document_html
+        from privacyguard.utils.word_preview_extra import replaced_preview_base
+        self._word_replaced_document_html = self._inject_interactive_html(replaced_preview_base(tagged_html), scroll_restore_script)
         self._word_preview_ready = False
         self._word_replaced_ready = False
 
@@ -775,6 +776,8 @@ class WordPreviewMixin:
 
                 for tag_name in target_tags:
                     candidates = _index.get((tag_name, normalized_original))
+                    while candidates and (candidates[0].get('data-key') or candidates[0].find(attrs={'data-key': True})):
+                        candidates.pop(0)
                     if candidates:
                         element = candidates.pop(0)
                         element['data-key'] = key
@@ -782,6 +785,8 @@ class WordPreviewMixin:
                         element['data-word-block'] = '1'
                         break
 
+            from privacyguard.utils.word_preview_extra import append_unmapped_blocks
+            append_unmapped_blocks(soup, text_blocks)
             return str(soup)
 
         except (ImportError, AttributeError, TypeError, ValueError) as e:
