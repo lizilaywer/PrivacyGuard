@@ -6,8 +6,8 @@
 
 ## 当前打包基线
 
-- 当前应用版本：`v40.2.5`
-- 版本标识：`40.2.5`
+- 当前应用版本：`v40.3.0`
+- 版本标识：`40.3.0`
 - 版本唯一来源：项目根目录 `version.txt`
 
 ---
@@ -31,7 +31,7 @@
 - 安装器默认版本在 `packaging/windows/config/PrivacyGuard_Setup.iss`
 - 便携脚本通过 `python -m PyInstaller` 绑定当前虚拟环境，缓存位于 `build/windows-portable/pyinstaller-cache`
 - 便携中间产物 `dist/windows-portable/PrivacyGuard`；旧安装器仍使用 `dist/PrivacyGuard`
-- 门禁包含全量回归、版本/离线模型/x64 DLL/隐私检查、冻结自检和 ZIP CRC/SHA256
+- 构建采用 `requirements.txt` 固定的 ONNX Runtime。脚本核对本机库的 SHA256，检查 DLL 架构、隐私、冻结自检和 ZIP CRC/SHA256。
 - Mac 提供 `Windows-BuildKit.zip` 源码资料包，Windows 可运行成品须在 Windows 执行构建，未宣称跨平台构建成功
 
 ### macOS

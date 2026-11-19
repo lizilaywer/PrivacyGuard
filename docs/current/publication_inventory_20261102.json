@@ -87,8 +87,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 9840,
-      "sha256": "3d9748929a5de7b16378a3d86e88ae2a1707cd833eaba1cb1e0138ad6771f35c",
+      "bytes": 9911,
+      "sha256": "4b1d1869a70fd004239867bf9452947371e496c97a66e722ff4446f47d4cf8ce",
       "kind": "text",
       "lines": 161
     },
@@ -867,8 +867,8 @@
     },
     {
       "path": "docs/current/DEV_LOG.md",
-      "bytes": 348034,
-      "sha256": "a40eda7e51a774a495e55ca92aca66be0766b4634eb4a7b9f1047ac57987b767",
+      "bytes": 348097,
+      "sha256": "a2a480f6fea9b43eb3ddd247a3b38104d5cc7d94201b79abd18f97ae0fe36763",
       "kind": "text",
       "lines": 8092
     },
@@ -937,8 +937,8 @@
     },
     {
       "path": "docs/current/STATUS.md",
-      "bytes": 123777,
-      "sha256": "4b347ccf8a8cc06cbb19fae2e71247b87be53ad91e06ba7e6bd68dbc5e01c129",
+      "bytes": 123851,
+      "sha256": "34bf47951b9f86147825f6863b2bfb05b5158e208a3284884f49d1e053727929",
       "kind": "text",
       "lines": 2375
     },
@@ -951,17 +951,17 @@
     },
     {
       "path": "docs/current/UPGRADE_COMPLETION_20261119.md",
-      "bytes": 7223,
-      "sha256": "4e1d936bf95fbb2dadb80057e7e42289727ce7e4c8380b2b6d93f218261a541f",
+      "bytes": 8842,
+      "sha256": "c03fe6ce8bca3b6bb561bcb013ba548ec0a48ea491cdb882d2d77815739682bc",
       "kind": "text",
-      "lines": 48
+      "lines": 64
     },
     {
       "path": "docs/current/UPGRADE_COMPLETION_EVIDENCE_20261119.json",
-      "bytes": 1599,
-      "sha256": "1eaacd433093774bc5df8f02e24a013926264168545f71a7718dfb7fd2e8443e",
+      "bytes": 3389,
+      "sha256": "1317ffe09516ad4e8ac0127aeaba3771d9163ea333a36a778ec0c1261b714fcd",
       "kind": "text",
-      "lines": 49
+      "lines": 102
     },
     {
       "path": "docs/current/UPGRADE_EVIDENCE_20261118.json",
@@ -1112,8 +1112,8 @@
     },
     {
       "path": "docs/packaging/README.md",
-      "bytes": 3208,
-      "sha256": "21880c33ba8a8d8f1a9148e90e4e72ce526b0c9c7600d6751e4522660429dc99",
+      "bytes": 3261,
+      "sha256": "1181b47b0cb89912c00cc9249c8ebffc99874425515fe4bd7e81071167d2ea2c",
       "kind": "text",
       "lines": 73
     },

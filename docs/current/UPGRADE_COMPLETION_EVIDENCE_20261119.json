@@ -3,8 +3,8 @@
   "version": "40.3.0",
   "baseline_public_commit": "f81a8eb8bc045b77fcb329306601c46c6b379a29",
   "regression": {
-    "discovered": 849,
-    "passed": 846,
+    "discovered": 850,
+    "passed": 847,
     "skipped": 3
   },
   "ocr_runtime_trial": {
@@ -36,9 +36,62 @@
     "inspection_confirm_undo": true,
     "windowed_frozen_regex_timeout_restart": true,
     "offline_selftest": true,
-    "encrypted_original_and_working_copy_guard": true
+    "encrypted_original_and_working_copy_guard": true,
+    "narrow_screen_layout_reentry": true
   },
-  "release_checks": "pending",
+  "release_checks": {
+    "source_sha": "f7cd2dfb920454d656f9d95a7245cfd93ebb4e33",
+    "source_ci_run": 44515530222,
+    "windows_source": "passed",
+    "macos_source": "passed",
+    "windows_portable": {
+      "bytes": 375416217,
+      "zip_members": 5222,
+      "sha256": "69abffb2808aa374bffccb90a06e2aca9af87f665182ae16a7412e0163bbfeb9",
+      "onnxruntime": "1.24.1",
+      "native_binaries": 395,
+      "post_extract_checks": {
+        "windows": {
+          "xml": true,
+          "decimal": true,
+          "docx_image_preview_and_replace": true,
+          "pdf_vector_region_security": true,
+          "isolated_regex_worker": true,
+          "verified_word_and_pixel_pdf_exports": true,
+          "offline_ocr_real_inference": true,
+          "version_resource": true,
+          "mainwindow_and_docx_open_close": true
+        },
+        "offscreen": {
+          "xml": true,
+          "decimal": true,
+          "docx_image_preview_and_replace": true,
+          "pdf_vector_region_security": true,
+          "isolated_regex_worker": true,
+          "verified_word_and_pixel_pdf_exports": true,
+          "offline_ocr_real_inference": true,
+          "version_resource": true,
+          "mainwindow_and_docx_open_close": true
+        }
+      }
+    },
+    "macos_portable": {
+      "macos_archive": "PrivacyGuard-40.3.0-macOS-arm64-portable.zip",
+      "bytes": 322774437,
+      "sha256": "e93d28e477d490a75d3f72ddd1701525b08056c8c0a68eb53a14fc58f6977a1c",
+      "native_binaries": 398,
+      "frozen_self_test": "passed",
+      "libreoffice_reopen": "passed",
+      "artifact_id": 14525283202,
+      "minimum_system": "14.0",
+      "architecture": "arm64",
+      "regression": {
+        "discovered": 850,
+        "passed": 848,
+        "skipped": 2
+      }
+    }
+  },
   "export_recheck": {
     "files": 120,
     "pages": 300,

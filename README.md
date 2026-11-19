@@ -83,7 +83,7 @@ PrivacyGuard 把**智能扫描、手动补充、预览检查和导出**放进同
 前往 **[GitHub Releases](https://github.com/lizilaywer/PrivacyGuard/releases)**，按发布说明选择平台和版本。源码版本与已上传便携包可能不同，请核对发布页中的版本、架构、校验值和已知问题。
 
 - **Windows**：使用对应发布页提供的已验证便携包。历史 **v40.2.3 Windows 包不可分发**，请勿使用或转发。
-- **macOS**：v40.2.5 便携构建目标为 Apple Silicon / macOS 14+，非 Intel / Universal2。构建采用 ad-hoc 签名，未做 Apple 公证；实际可下载资产以 Releases 为准。
+- **macOS** 便携包适用于 Apple Silicon 和 macOS 14 或更新版本，采用 ad-hoc 签名。v40.3.0 原生验证记录和构建产物在 GitHub Actions 中。[Apple Silicon 构建记录](https://github.com/lizilaywer/PrivacyGuard/actions/runs/44515530222)
 - v40.3.0 源码、便携候选包与平台验证状态见 [升级验收记录](docs/current/UPGRADE_COMPLETION_20261119.md)；只有通过原生验证的包才可分发，BuildKit 是源码资料包。
 
 ### 从源码运行（Python 3.11，64 位）
