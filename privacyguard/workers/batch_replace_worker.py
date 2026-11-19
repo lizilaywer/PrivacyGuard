@@ -133,7 +133,8 @@ class WordBatchReplaceWorker(QThread):
         doc = Document(source_docx)
         replace_stats = self._apply_rules_to_document(doc)
         output_path = self._build_output_path(file_path)
-        doc.save(output_path)
+        from privacyguard.utils.export_transaction import save_verified_docx
+        save_verified_docx(doc, output_path, file_path)
         return output_path, replace_stats
 
     def _apply_rules_to_document(self, doc):

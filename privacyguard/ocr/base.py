@@ -11,10 +11,11 @@ import numpy as np
 
 @dataclass
 class CharInfo:
-    """单字符信息（PaddleOCR有，RapidOCR为空列表）"""
+    """可选单字符坐标；start 为原识别文本偏移，未知时不用于精确遮罩。"""
     char: str
     box: List[List[float]]  # 四点坐标 [[x1,y1], [x2,y2], [x3,y3], [x4,y4]]
     confidence: float
+    start: int = -1
 
 
 @dataclass
@@ -22,7 +23,7 @@ class OCRResult:
     """OCR 识别结果 - 统一格式"""
     text: str           # 完整文本
     box: List[List[float]]  # 整行框四点坐标
-    chars: List[CharInfo]   # 字符列表（RapidOCR为空，PaddleOCR有字符级坐标）
+    chars: List[CharInfo]   # 可选字符列表；不可靠或旧引擎返回 []
     confidence: float
     engine: str         # 来源引擎标识 "rapidocr" 或 "paddleocr"
 

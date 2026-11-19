@@ -92,6 +92,15 @@ def iter_ocr_lines(ocr_results):
             yield result[0], result[1]
 
 
+def iter_ocr_records(ocr_results):
+    """Internal rich records; iter_ocr_lines keeps its two-value public contract."""
+    for result in ocr_results or []:
+        if hasattr(result, "box") and hasattr(result, "text"):
+            yield result.box, result.text, getattr(result, "chars", [])
+        elif isinstance(result, (list, tuple)) and len(result) >= 2:
+            yield result[0], result[1], []
+
+
 def collect_image_block_ocr_hits(
     page,
     patterns,
@@ -107,6 +116,8 @@ def collect_image_block_ocr_hits(
     is_cancelled_fn=None,
     shared_person_names=None,
     ocr_lines_sink=None,
+    calculate_char_rect_fn=None,
+    ocr_char_lines_sink=None,
 ):
     """对嵌入图片区域执行 OCR，并返回页面坐标系下的命中矩形。
 
@@ -192,11 +203,13 @@ def collect_image_block_ocr_hits(
             _cover_failed_block(clip_rect, f"OCR 失败 {type(exc).__name__}: {exc}")
             continue
 
-        lines = [(box, text) for box, text in iter_ocr_lines(ocr_results) if text]
+        lines = [(box, text, chars) for box, text, chars in iter_ocr_records(ocr_results) if text]
         # v40.2.3: 行缓存——供 worker 扫描收尾用人名集回填早期页（clip 原点
         # 一并存，补偿时局部 rect → 页面坐标换算用）
         if ocr_lines_sink is not None:
-            ocr_lines_sink.extend((clip_rect, box, text) for box, text in lines)
+            ocr_lines_sink.extend((clip_rect, box, text) for box, text, _chars in lines)
+        if ocr_char_lines_sink is not None:
+            ocr_char_lines_sink.extend((clip_rect, box, text, chars) for box, text, chars in lines)
 
         # cp_person_name 第 1 遍：本块全部行收集称谓人名/机构名
         # v40.2.3: shared_person_names 为 worker 持有的跨页共享集合——本块
@@ -208,7 +221,7 @@ def collect_image_block_ocr_hits(
                 find_person_names_by_pattern, PERSON_NAME_RULE_NAME,
             )
             block_names = set()
-            for _box, text in lines:
+            for _box, text, _chars in lines:
                 for p in pn_patterns:
                     for name, _s, _e in find_person_names_by_pattern(text, p.pattern):
                         block_names.add(name)
@@ -225,7 +238,7 @@ def collect_image_block_ocr_hits(
 
         # 命中发射统一走这里（含称谓人名的 rule_override）
         scan_patterns = [(p, None) for p in compiled_patterns] + block_name_patterns
-        for box, text in lines:
+        for box, text, chars in lines:
             for pattern, rule_override in scan_patterns:
                 # cp57: 仅对银行卡号 pattern 执行 Luhn 校验
                 pattern_str = pattern.pattern if hasattr(pattern, 'pattern') else str(pattern)
@@ -247,7 +260,10 @@ def collect_image_block_ocr_hits(
                         logger.info("[cp70] OCR 命中串(len=%d %s) 未通过校验位校验，跳过",
                                     len(matched_text), _mask(matched_text))
                         continue
-                    local_rect = calculate_rect_fn(box, text, match.span(), scan_img)
+                    local_rect = (calculate_char_rect_fn(box, text, match.span(), scan_img, chars)
+                                  if calculate_char_rect_fn is not None else None)
+                    if local_rect is None:
+                        local_rect = calculate_rect_fn(box, text, match.span(), scan_img)
                     if local_rect is None:
                         continue
                     page_rect = clip_to_page_rect_fn(local_rect, clip_rect)

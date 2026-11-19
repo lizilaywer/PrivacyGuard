@@ -19,6 +19,7 @@ from typing import List, Optional
 import numpy as np
 
 from .base import BaseOCREngine, OCRResult
+from .char_alignment import align_characters
 from privacyguard.utils.exceptions import OCRInspectionError
 
 logger = logging.getLogger("privacyguard.rapidocr")
@@ -34,7 +35,7 @@ class RapidOCREngine(BaseOCREngine):
     """
 
     name = "rapidocr"
-    supports_char_level = False
+    supports_char_level = True
 
     # 类级共享状态（所有实例可见）
     _shared_engine = None
@@ -42,7 +43,10 @@ class RapidOCREngine(BaseOCREngine):
     _shared_init_failed = False
     _shared_last_error: Optional[str] = None
 
-    def __init__(self):
+    def __init__(self, enable_char_boxes=False):
+        # Candidate geometry failed the expanded synthetic non-regression gate. Keep the
+        # stable runtime path by default; explicit opt-in is for evaluation only.
+        self.enable_char_boxes = bool(enable_char_boxes)
         self._engine = None  # 保留属性名兼容（统一走类级共享）
         # cp57: 标记初始化是否已失败，避免每个图片块都重复尝试初始化导致性能退化
         self._init_failed = RapidOCREngine._shared_init_failed
@@ -124,7 +128,16 @@ class RapidOCREngine(BaseOCREngine):
                 self._engine = cls._shared_engine
             # v40.1.4：锁内推理——同一份引擎串行执行，跨线程（扫描 worker 与
             # 主线程框选）安全；顺序场景无锁竞争。
-            output = self._engine(image)
+            if getattr(self, 'enable_char_boxes', False):
+                output = self._engine(image, return_word_box=self.enable_char_boxes,
+                                      return_single_char_box=self.enable_char_boxes)
+            else:
+                # Reset shared mutable options without changing the legacy call
+                # signature (also compatible with injected test engines).
+                if self._engine is cls._shared_engine:
+                    self._engine.return_word_box = False
+                    self._engine.return_single_char_box = False
+                output = self._engine(image)
         results = []
 
         # v37.7.14 cp44: v3.x 返回 RapidOCROutput 对象，需读取分离的 boxes/txts/scores
@@ -132,12 +145,14 @@ class RapidOCREngine(BaseOCREngine):
         boxes = None
         txts = None
         scores = None
+        word_results = None
 
         if hasattr(output, 'boxes') and hasattr(output, 'txts'):
             # v3.x: RapidOCROutput 对象
             boxes = output.boxes
             txts = output.txts
             scores = output.scores if hasattr(output, 'scores') else None
+            word_results = getattr(output, 'word_results', None)
         elif isinstance(output, tuple) and len(output) >= 1 and output[0]:
             # v1.x 兼容: (result, elapse) 二元组
             # v37.7.18 cp50: 防御性修复 - v1.x 回退路径中 box 元素可能是 numpy 标量
@@ -187,10 +202,16 @@ class RapidOCREngine(BaseOCREngine):
                 box_list = [[float(p[0]), float(p[1])] for p in raw_box]
             except (IndexError, TypeError):
                 continue
+            chars = []
+            if getattr(self, 'enable_char_boxes', False) and word_results is not None:
+                try:
+                    chars = align_characters(text, box_list, word_results[i])
+                except (TypeError, IndexError, KeyError):
+                    pass  # optional alignment must never remove its OCR line
             results.append(OCRResult(
                 text=text,
                 box=box_list,
-                chars=[],
+                chars=chars,
                 confidence=confidence,
                 engine="rapidocr"
             ))

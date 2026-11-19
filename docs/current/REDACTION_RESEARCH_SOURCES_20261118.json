@@ -1,0 +1,387 @@
+{
+  "date": "2026-11-18",
+  "scope": "GitHub keyword discovery plus first-party README, guide, selected source and license review. Not an exhaustive GitHub inventory, a full code audit, or runtime validation of competitors.",
+  "queries": [
+    "redaction pdf OCR",
+    "脱敏",
+    "anonymization docx",
+    "pdf redaction offline",
+    "脱敏 PDF",
+    "redaction stars:>100"
+  ],
+  "unique_keyword_candidates": 84,
+  "candidates": [
+    "SteveTheKiller/KillerPDF",
+    "GoogleCloudPlatform/dlp-pdf-redaction",
+    "ltillmann/pdf-redactor",
+    "jasonulbright/Spectra-PDF",
+    "ben-milanko/dart-pdf",
+    "nfsarch33/pdf-mcp-server",
+    "NPCmillionaire/unredact.tools",
+    "udiram/SpectrePDF",
+    "MohitGupta0123/HIN_EN_PDF_Translator",
+    "keithlyding/KanzonasPDF",
+    "tooladda-online/redact-pdf",
+    "InlitX/CoverIt",
+    "F0ran9/src",
+    "nrop19/weiman_app",
+    "houbb/sensitive",
+    "chenhaiyangs/mybatis-encrypt-plugin",
+    "liuchengyin01/LogbackDesensitization",
+    "guohf/DataX-Masking",
+    "tcgdy0201/sensitive-data",
+    "DannyHoo/desensitized",
+    "fizzgate/fizz-gateway-node",
+    "lzhpo/sensitive-spring-boot-starter",
+    "miaoxinwei/mybatis-crypt",
+    "Chen-Yu-Qing2005/tuomin",
+    "LexProTech/LexAnon",
+    "kpshinnik/docs_masked",
+    "openscilab/dmeta",
+    "Lostefra/DocxAnonymizer-core",
+    "schneidermichael/anonymize-documents-with-presidio",
+    "argmaster-dev/docx-anonymizer",
+    "shpilkin/pseudo_anonymization",
+    "arcane-tl/anonymizer",
+    "pczajkowski/anonymizeDOCXComments",
+    "HugoDelval/anonymisation_docx",
+    "xabimr/anonimizador",
+    "pradyumnawarudkar12/docx-anonymizer-api",
+    "Mecsocse/dni-seguro-pdf",
+    "phishdestroy/taylor-wessing-data-breach-toolkit",
+    "cpatil/masker",
+    "philterd/PhilterDesktop",
+    "Noeldixonn1989/taylor-wessing-data-breach-toolkit",
+    "mabdullah-devx/Offline-pdf-redaction-tool",
+    "shruti01-dev/pdf-redaction",
+    "HaidanP/PDF-Redactor",
+    "zhitongblog/solopdf",
+    "rohanvijaykumar/paperwing",
+    "amscotti/redacter",
+    "lastwhispers/pdf-content-replace",
+    "gotoolkits/pdfDtProtector",
+    "rainbow1111-lalala/legal-anonymizer",
+    "lizilaywer/PrivacyGuard",
+    "quanfanpro-code/local-doc-desensitizer",
+    "laofahai/linch-redact",
+    "double6-ai/double6-skills",
+    "MindfulYou/pdf-desensitizer",
+    "zhendong/safe-redact",
+    "oybyte/py-tool",
+    "scomper/opf-web",
+    "lovepli/pdf-content-replace",
+    "tuablove/pdf-content-replace",
+    "guoba371/document-redaction-web",
+    "YYH168/pdf-content-replace",
+    "ttttccxxui/DataInfra-RedactionEverything",
+    "BishopFox/unredacter",
+    "NVIDIA-AI-IOT/redaction_with_deepstream",
+    "davidmarkclements/fast-redact",
+    "OpenPipe/pii-redaction",
+    "freelawproject/x-ray",
+    "JoshData/pdf-redactor",
+    "superagent-ai/vibekit",
+    "goforj/godump",
+    "SivaSaiKrishnaSuryadevara/docker-mcp-guardian",
+    "philterd/phileas",
+    "packyme/privacy-filter",
+    "OpLumina/unredact.py",
+    "spences10/my-pi",
+    "sam247/openredaction",
+    "arcjet/arcjet-js",
+    "ray-amjad/claude-code-mods",
+    "caipeijia833/doc-redaction",
+    "Azure-Samples/azure-ai-document-processing-samples",
+    "ThinkWatchProject/ThinkWatch",
+    "patrickdw123/ParanoiDF",
+    "strugglesky/scrubshot"
+  ],
+  "compared_projects": 13,
+  "metadata": [
+    {
+      "requested": "seanpedrick-case/doc_redaction",
+      "repo": "seanpedrick-case/doc_redaction",
+      "branch": "main",
+      "license": "AGPL-3.0",
+      "archived": false,
+      "pushed": "2026-11-17T22:36:58Z",
+      "url": "https://github.com/seanpedrick-case/doc_redaction"
+    },
+    {
+      "requested": "Stirling-Tools/Stirling-PDF",
+      "repo": "Stirling-Tools/Stirling-PDF",
+      "branch": "main",
+      "license": "NOASSERTION",
+      "archived": false,
+      "pushed": "2026-11-18T05:48:29Z",
+      "url": "https://github.com/Stirling-Tools/Stirling-PDF"
+    },
+    {
+      "requested": "freelawproject/x-ray",
+      "repo": "freelawproject/x-ray",
+      "branch": "main",
+      "license": "BSD-2-Clause",
+      "archived": false,
+      "pushed": "2026-11-16T20:58:37Z",
+      "url": "https://github.com/freelawproject/x-ray"
+    },
+    {
+      "requested": "JoshData/pdf-redactor",
+      "repo": "JoshData/pdf-redactor",
+      "branch": "primary",
+      "license": "CC0-1.0",
+      "archived": false,
+      "pushed": "2024-06-13T06:03:12Z",
+      "url": "https://github.com/JoshData/pdf-redactor"
+    },
+    {
+      "requested": "freedomofpress/dangerzone",
+      "repo": "freedomofpress/dangerzone",
+      "branch": "main",
+      "license": "AGPL-3.0",
+      "archived": false,
+      "pushed": "2026-11-09T01:15:09Z",
+      "url": "https://github.com/freedomofpress/dangerzone"
+    },
+    {
+      "requested": "rainbow1111-lalala/legal-anonymizer",
+      "repo": "rainbow1111-lalala/legal-anonymizer",
+      "branch": "main",
+      "license": "Apache-2.0",
+      "archived": false,
+      "pushed": "2026-08-29T15:19:01Z",
+      "url": "https://github.com/rainbow1111-lalala/legal-anonymizer"
+    },
+    {
+      "requested": "Lostefra/DocxAnonymizer-core",
+      "repo": "Lostefra/DocxAnonymizer-core",
+      "branch": "fast",
+      "license": "Apache-2.0",
+      "archived": false,
+      "pushed": "2022-07-07T23:12:24Z",
+      "url": "https://github.com/Lostefra/DocxAnonymizer-core"
+    },
+    {
+      "requested": "Chen-Yu-Qing2005/tuomin",
+      "repo": "Chen-Yu-Qing2005/tuomin",
+      "branch": "main",
+      "license": "NOASSERTION",
+      "archived": false,
+      "pushed": "2026-11-16T10:15:07Z",
+      "url": "https://github.com/Chen-Yu-Qing2005/tuomin"
+    },
+    {
+      "requested": "philterd/phileas",
+      "repo": "philterd/phileas",
+      "branch": "main",
+      "license": "Apache-2.0",
+      "archived": false,
+      "pushed": "2026-11-17T14:08:43Z",
+      "url": "https://github.com/philterd/phileas"
+    },
+    {
+      "requested": "lastwhispers/pdf-content-replace",
+      "repo": "lastwhispers/pdf-content-replace",
+      "branch": "master",
+      "archived": false,
+      "pushed": "2021-12-19T03:43:10Z",
+      "url": "https://github.com/lastwhispers/pdf-content-replace"
+    },
+    {
+      "requested": "gotoolkits/pdfDtProtector",
+      "repo": "gotoolkits/pdfDtProtector",
+      "branch": "master",
+      "license": "GPL-3.0",
+      "archived": false,
+      "pushed": "2018-10-23T11:10:11Z",
+      "url": "https://github.com/gotoolkits/pdfDtProtector"
+    },
+    {
+      "requested": "firstlookmedia/pdf-redact-tools",
+      "repo": "firstlookmedia/pdf-redact-tools",
+      "branch": "master",
+      "license": "NOASSERTION",
+      "archived": true,
+      "pushed": "2020-05-05T22:31:33Z",
+      "url": "https://github.com/firstlookmedia/pdf-redact-tools"
+    }
+  ],
+  "file_evidence": [
+    {
+      "repo": "seanpedrick-case/doc_redaction",
+      "path": "README.md",
+      "blob_sha": "1d37f6a797effb5a7d1389fe9cff82fa88f71e39",
+      "url": "https://github.com/seanpedrick-case/doc_redaction/blob/main/README.md"
+    },
+    {
+      "repo": "JoshData/pdf-redactor",
+      "path": "README.md",
+      "blob_sha": "7c1152fd9360321b28085439f11ba494330e8302",
+      "url": "https://github.com/JoshData/pdf-redactor/blob/primary/README.md"
+    },
+    {
+      "repo": "freelawproject/x-ray",
+      "path": "README.md",
+      "blob_sha": "1cbfbbd87d0bd06bc7b7f792eaceefdfc87206c2",
+      "url": "https://github.com/freelawproject/x-ray/blob/main/README.md"
+    },
+    {
+      "repo": "freedomofpress/dangerzone",
+      "path": "README.md",
+      "blob_sha": "8579030d573a0b26cdffecce8ba5dd67b3ca7cf4",
+      "url": "https://github.com/freedomofpress/dangerzone/blob/main/README.md"
+    },
+    {
+      "repo": "lastwhispers/pdf-content-replace",
+      "path": "README.md",
+      "blob_sha": "eceb48893d665d97d54dfe96cce82ba812b8a434",
+      "url": "https://github.com/lastwhispers/pdf-content-replace/blob/master/README.md"
+    },
+    {
+      "repo": "gotoolkits/pdfDtProtector",
+      "path": "README.md",
+      "blob_sha": "0540f688eb6ae01383f833a6d5d00fafd2a8ec97",
+      "url": "https://github.com/gotoolkits/pdfDtProtector/blob/master/README.md"
+    },
+    {
+      "repo": "rainbow1111-lalala/legal-anonymizer",
+      "path": "README.md",
+      "blob_sha": "83ca760d0eff4fceb447a5d3c3311cb1aec6c474",
+      "url": "https://github.com/rainbow1111-lalala/legal-anonymizer/blob/main/README.md"
+    },
+    {
+      "repo": "Chen-Yu-Qing2005/tuomin",
+      "path": "README.md",
+      "blob_sha": "3ea3221541f7d24066d15f2f9eb85e2ac967553e",
+      "url": "https://github.com/Chen-Yu-Qing2005/tuomin/blob/main/README.md"
+    },
+    {
+      "repo": "philterd/phileas",
+      "path": "README.md",
+      "blob_sha": "0bac8186174f4eeb0b9aa311ace8c926a4abc1c8",
+      "url": "https://github.com/philterd/phileas/blob/main/README.md"
+    },
+    {
+      "repo": "Lostefra/DocxAnonymizer-core",
+      "path": "README.md",
+      "blob_sha": "8de0912249385eb089bf7cbe499786ae456c8a41",
+      "url": "https://github.com/Lostefra/DocxAnonymizer-core/blob/fast/README.md"
+    },
+    {
+      "repo": "data-privacy-stack/presidio",
+      "path": "README.MD",
+      "blob_sha": "a877d23deed3d2245b8b4afda308deeb10f5b534",
+      "url": "https://github.com/data-privacy-stack/presidio/blob/main/README.MD"
+    },
+    {
+      "repo": "data-privacy-stack/presidio",
+      "path": "presidio-analyzer/presidio_analyzer/pattern_recognizer.py",
+      "blob_sha": "eee0ee07a606fa0fe5212deeb03691ffd643819e",
+      "url": "https://github.com/data-privacy-stack/presidio/blob/main/presidio-analyzer/presidio_analyzer/pattern_recognizer.py"
+    },
+    {
+      "repo": "freelawproject/x-ray",
+      "path": "xray/pdf_utils.py",
+      "blob_sha": "6dde1cc80f221a746ad25039ed9b52212f2f3315",
+      "url": "https://github.com/freelawproject/x-ray/blob/main/xray/pdf_utils.py"
+    },
+    {
+      "repo": "seanpedrick-case/doc_redaction",
+      "path": "tools/redaction_review.py",
+      "blob_sha": "1a782f9a6a37ce71b552d8a09d240f70db0d3d17",
+      "url": "https://github.com/seanpedrick-case/doc_redaction/blob/main/tools/redaction_review.py"
+    },
+    {
+      "repo": "Lostefra/DocxAnonymizer-core",
+      "path": "src/main/java/docxAnonymizer/App.java",
+      "blob_sha": "7e4e965f5a90af11c66ad7640f1ab2560b8756dd",
+      "url": "https://github.com/Lostefra/DocxAnonymizer-core/blob/fast/src/main/java/docxAnonymizer/App.java"
+    },
+    {
+      "repo": "Stirling-Tools/Stirling-PDF",
+      "path": "LICENSE",
+      "blob_sha": "3510a74aa8ac273d4a894c50f7d8b3bd59047ad4",
+      "url": "https://github.com/Stirling-Tools/Stirling-PDF/blob/main/LICENSE"
+    },
+    {
+      "repo": "Chen-Yu-Qing2005/tuomin",
+      "path": "LICENSE",
+      "blob_sha": "81a7f29554aeb3ff1f865c2caa95b26cc7de687f",
+      "url": "https://github.com/Chen-Yu-Qing2005/tuomin/blob/main/LICENSE"
+    }
+  ],
+  "additional_sources": [
+    {
+      "url": "https://presidio.dataprivacystack.org/",
+      "note": "Current official Presidio documentation and community transition; legacy Microsoft path redirects in web."
+    },
+    {
+      "url": "https://github.com/data-privacy-stack/presidio",
+      "note": "Canonical repo README.MD and recognizer source successfully read."
+    },
+    {
+      "url": "https://seanpedrick-case.github.io/doc_redaction/src/user_guide.html",
+      "note": "Review, allow/deny lists, fuzzy matching, OCR reuse."
+    },
+    {
+      "url": "https://docs.stirlingpdf.com/Functionality/Page-Operations/redact/",
+      "note": "Manual/automatic pending redactions and raster output tradeoffs."
+    },
+    {
+      "url": "https://github.com/Stirling-Tools/Stirling-PDF/issues/8847",
+      "note": "Reported remaining links after manual redaction; issue report is not proof of all-version behavior."
+    },
+    {
+      "url": "https://github.com/Stirling-Tools/Stirling-PDF/pull/8451",
+      "note": "Merged change to fail when redaction verification does not pass."
+    },
+    {
+      "url": "https://github.com/firstlookmedia/pdf-redact-tools/blob/master/README.md",
+      "note": "Archived, explicitly unmaintained; do not add dependency."
+    },
+    {
+      "url": "https://github.com/RapidAI/RapidOCR/releases/tag/v3.10.0",
+      "note": "OCR dependency upgrade candidate, separate from model/geometry changes."
+    },
+    {
+      "url": "https://github.com/RapidAI/RapidOCR/blob/v3.9.2/python/rapidocr/config.yaml",
+      "note": "Current engine already supports optional word/single-character boxes."
+    }
+  ],
+  "failed_reads": [
+    {
+      "repo": "quanfanpro-code/local-doc-desensitizer",
+      "path": "README.md",
+      "note": "404 from connector; excluded from compared-project capability claims."
+    },
+    {
+      "repo": "scrubadub/scrubadub",
+      "path": "README.md / README.rst",
+      "note": "404 from connector; excluded from compared-project capability claims."
+    },
+    {
+      "repo": "microsoft/presidio",
+      "path": "README.md / README.MD",
+      "note": "Legacy connector path unreadable; canonical data-privacy-stack path succeeded."
+    }
+  ],
+  "local_baseline": {
+    "commit": "abd4cc747416f52a7d6b2c5233c72c6262e72ab7",
+    "version": "40.2.7",
+    "last_release_tests": {
+      "discovered": 756,
+      "passed": 753,
+      "skipped": 3
+    },
+    "tests_rerun_this_research": false,
+    "ocr": "RapidOCR 3.9.2 / PP-OCRv6 Small",
+    "model_bytes": 31749509,
+    "onnxruntime_required": "1.24.1",
+    "onnxruntime_installed": "1.27.0"
+  },
+  "limitations": [
+    "Metadata and branch content may change after this date.",
+    "No competitor installs or user-document uploads.",
+    "License summaries are engineering notes; verify exact reused files and model versions."
+  ]
+}

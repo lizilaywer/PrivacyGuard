@@ -26,6 +26,7 @@ from privacyguard.ocr.mixed_pdf import (
     collect_image_block_ocr_hits,
 )
 from privacyguard.ocr.text_pdf import collect_text_pdf_hit_boxes, apply_box_adjust_to_hit
+from privacyguard.ocr.char_alignment import character_sub_rect
 # v37.8.11 P1-2: 印章/签名检测算法外提到 ocr/ 模块
 from privacyguard.ocr.seal_detection import (
     detect_seals as _detect_seals_impl,
@@ -678,7 +679,7 @@ class OCRWorker(QThread):
             logger.debug("[DEBUG] _extract_roi_2x 错误: %s", e)
             return None, 1.0, 0, 0
 
-    def calculate_sub_rect(self, box, text, match_span, img_region=None):
+    def calculate_sub_rect(self, box, text, match_span, img_region=None, chars=None):
         """v37.4.0: 计算子字符串的矩形区域（行级计算 + 像素边界检测）
 
         v37.7.18 cp54: 新增 OCR box 宽度限制，避免跨整页的大框产生超大遮罩
@@ -693,6 +694,11 @@ class OCRWorker(QThread):
             QRectF: 子字符串矩形区域（PDF坐标系）
         """
         try:
+            # Explicit legacy geometry adjustments keep their original semantics.
+            if chars and not (self.off_x or self.off_w or self.box_adjust_ratio):
+                precise = character_sub_rect(box, text, chars, match_span, self.scan_scale)
+                if precise is not None:
+                    return QRectF(*precise)
             # cp54: 限制 OCR box 宽度，避免跨整页的大框产生超大遮罩
             # 当 OCR 返回整页大框时，line_x_min/line_x_max 跨整页，
             # 即使只匹配几个字符，权重估算也会产生接近整行宽度的 sub_w
@@ -1049,6 +1055,8 @@ class OCRWorker(QThread):
         self._pn_first_rects = {}   # 页 → 首次结果（回填合并重发用）
         self._pn_text_cache = {}    # 页 → 文字层文本（回填 search_for 用）
         self._pn_lines_cache = {}   # 页 → [(clip_rect, box, text)]（回填行匹配用）
+        self._pn_char_lines_cache = {}
+        self._pn_char_count = 0
         try:
             # v37.4.0: 直接使用 RapidOCR
             from privacyguard.ocr.rapidocr import RapidOCREngine
@@ -1182,6 +1190,10 @@ class OCRWorker(QThread):
                             shared_person_names=self._pn_shared if pn_enabled else None,
                             # v40.2.3 门控：规则关闭时传 None，行缓存不构建（零开销）
                             ocr_lines_sink=self._pn_lines_cache.setdefault(i, []) if pn_enabled else None,
+                            calculate_char_rect_fn=lambda box, text, span, img, chars: self.calculate_sub_rect(
+                                box, text, span, img_region=img, chars=chars) if chars else None,
+                            ocr_char_lines_sink=self._pn_char_lines_cache.setdefault(i, [])
+                            if pn_enabled and getattr(ocr_engine, 'enable_char_boxes', False) else None,
                         )
                         # v37.7.13 cp43: image_hit_rects 现为 [(rect, matched_text, rule_override)]
                         # cp_person_name: rule_override 优先（同文本层路径）
@@ -1190,6 +1202,14 @@ class OCRWorker(QThread):
                                           'replace_text': self._lookup_replace(matched_text),
                                           'rule': rule_override or self._classify_rule(matched_text)})
                         image_hit_count = len(image_hit_rects)
+                        # Character cache is experimental and bounded. Large
+                        # dossiers keep the established line-only backfill.
+                        char_lines = self._pn_char_lines_cache.get(i, [])
+                        char_count = sum(len(line[3]) for line in char_lines)
+                        if self._pn_char_count + char_count <= 20000:
+                            self._pn_char_count += char_count
+                        else:
+                            self._pn_char_lines_cache[i] = [(c, b, t, []) for c, b, t, _ in char_lines]
 
                     if image_clip_rects or (page_text.strip() and rects):
                         logger.info("[OCR] 页面 %s: 文本命中 %s, 图片块 %s, 图片OCR命中 %s",
@@ -1320,10 +1340,13 @@ class OCRWorker(QThread):
                                       'replace_text': self._lookup_replace(n),
                                       'rule': PERSON_NAME_RULE_NAME})
             # OCR 行回填：行文本精确匹配 + 权重路径子矩形（无 img_region 回退）
-            for clip_rect, box, line_text in self._pn_lines_cache.get(pno, []):
+            cached_lines = getattr(self, '_pn_char_lines_cache', {}).get(pno)
+            if cached_lines is None:
+                cached_lines = [(clip, box, text, []) for clip, box, text in self._pn_lines_cache.get(pno, [])]
+            for clip_rect, box, line_text, chars in cached_lines:
                 for n, pat in exact:
                     for m in pat.finditer(line_text):
-                        local = self.calculate_sub_rect(box, line_text, m.span(), img_region=None)
+                        local = self.calculate_sub_rect(box, line_text, m.span(), img_region=None, chars=chars)
                         if local is None:
                             continue
                         extra.append({'rect': QRectF(local.x() + clip_rect[0],

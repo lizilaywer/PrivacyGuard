@@ -9914,7 +9914,8 @@ sudo dnf install antiword
                     encrypt_kwargs = build_encrypt_save_kwargs(
                         self.pdf_open_password, self.pdf_edit_password)
                     save_kwargs.update(encrypt_kwargs)
-                    doc_save.save(fname, **save_kwargs)
+                    from privacyguard.utils.export_transaction import save_verified_pdf
+                    save_verified_pdf(doc_save, fname, save_kwargs, self.page_data, self.file_path)
                     encrypted = bool(encrypt_kwargs)
 
                     # 安全审计 v40.1: 导出成功后删除该文件的会话草稿（含未脱敏原文 pdfsnap）。
@@ -9935,7 +9936,7 @@ sudo dnf install antiword
                         )
                         title = "已保存"
                     else:
-                        body = f"文件已安全保存至：\n{fname}{enc_note}"
+                        body = f"文件已保存，并完成导出复查：\n{fname}{enc_note}"
                         title = "成功"
                     # cp87: 弹窗附脱敏报告（“显示详细信息”原地展开）+ 导出报告按钮
                     report_text = build_redact_report(
@@ -10079,7 +10080,8 @@ sudo dnf install antiword
                 _apply_saved_matches_to_cell(key, cell)
 
             # 保存文档
-            new_doc.save(fname)
+            from privacyguard.utils.export_transaction import save_verified_docx
+            save_verified_docx(new_doc, fname, self.file_path)
 
             QApplication.restoreOverrideCursor()
             box_w = QMessageBox(self)
