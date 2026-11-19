@@ -1140,10 +1140,10 @@
     },
     {
       "path": "main.py",
-      "bytes": 498567,
-      "sha256": "27d2d6b7dd07e64de391a8be561c1a28c23c970c88bbaf1f8da70e312aa9616d",
+      "bytes": 498566,
+      "sha256": "5a111585be3c69d48372dcaa1afc05cb1d3e3f0cf4f504e0408a3db74d40213c",
       "kind": "text",
-      "lines": 10193,
+      "lines": 10192,
       "classes": 7,
       "functions": 243
     },
@@ -3017,12 +3017,12 @@
     },
     {
       "path": "tests/unit/test_toolbar_layout.py",
-      "bytes": 4503,
-      "sha256": "780c62faa2c8bf8de1342e7a4729bbf5e0ec91b19206049e046a1003eef4e7d2",
+      "bytes": 5662,
+      "sha256": "16ae78147638bb8f8ebda1b7bf92a11ccf8216371fffca58e475317f65210d25",
       "kind": "text",
-      "lines": 109,
+      "lines": 133,
       "classes": 2,
-      "functions": 7
+      "functions": 9
     },
     {
       "path": "tests/unit/test_trace_cleaner.py",

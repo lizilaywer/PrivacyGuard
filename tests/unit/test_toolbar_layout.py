@@ -13,6 +13,7 @@ import os
 import sys
 import unittest
 from types import MethodType, SimpleNamespace
+from unittest.mock import patch
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
@@ -62,6 +63,29 @@ class TestToolbarOverflow(unittest.TestCase):
         self.assertEqual(stub._refresh_calls, [])
         self.assertEqual(stub.minimumWidth(), 980)
         stub.deleteLater()
+
+    def test_naturally_narrow_layout_keeps_forced_state_until_screen_fits(self):
+        stub = _make_stub(avail_width=1000)
+        self.addCleanup(stub.deleteLater)
+        stub.toolbar = stub
+        stub.current_ui_mode = "word"
+        stub._get_display_scale_factor = lambda: 1
+        stub._has_word_replacement_candidates = lambda: False
+        stub._count_enabled_word_rules = lambda: 0
+        stub._refresh_toolbar_responsiveness = MethodType(app_main.MainWindow._refresh_toolbar_responsiveness, stub)
+
+        def apply_density(density):
+            # Exercise the real re-entry point at the end of the layout pass
+            # without constructing QtWebEngine in the unit-test process.
+            self.assertTrue(stub._toolbar_forced_narrow)
+            self.assertEqual(density, "narrow")
+            stub._enforce()
+            raise StopIteration
+
+        stub._refresh_windows_density_metrics = apply_density
+        with patch.object(app_main, "resolve_workspace_density_mode", return_value="narrow"):
+            stub._enforce()
+        self.assertEqual(stub.minimumWidth(), 980)
 
     def test_wider_screen_releases_forced_narrow(self):
         stub = _make_stub(avail_width=1000)

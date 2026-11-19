@@ -5171,10 +5171,9 @@ class MainWindow(ReviewMixin, PageViewMixin, WordPreviewMixin, SettingsActionsMi
         # cp85: 屏幕装不下工具栏内容时强制 narrow 档（缩文案+收纳低频按钮），
         # 由 _enforce_toolbar_min_width 置位；窗口变宽到容纳自然档位内容时自动解除
         if getattr(self, "_toolbar_forced_narrow", False):
-            if density_mode == "narrow":
-                self._toolbar_forced_narrow = False  # 自然档已是 narrow，标志冗余
-            else:
-                density_mode = "narrow"
+            # Only the minimum-width pass may release this flag. Clearing it
+            # here when already narrow re-enters the same overflowing layout.
+            density_mode = "narrow"
 
         self.toolbar_density_mode = density_mode
         self._refresh_windows_density_metrics(density_mode)
