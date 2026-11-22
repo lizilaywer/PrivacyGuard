@@ -79,7 +79,8 @@ class AtomicExport:
                 pass  # retain restrictive mode on an occupied temporary file
 
 
-def save_verified_pdf(document, destination, save_kwargs, page_data, source_path=None, policy="preserve"):
+def save_verified_pdf(document, destination, save_kwargs, page_data, source_path=None, policy="preserve",
+                      *, source_revision=None):
     """Atomic PDF save with closed-handle reopen verification; returns check count."""
     from .export_validation import verify_pdf_export
 
@@ -94,11 +95,13 @@ def save_verified_pdf(document, destination, save_kwargs, page_data, source_path
                 if password and saved.authenticate(password) <= 0:
                     raise ExportValidationError("无法认证并复查导出文件。")
                 verify_pdf_policy(saved, policy)
+        if source_revision is not None:
+            source_revision.verify()
         output.commit()
         return checked
 
 
-def save_verified_docx(document, destination, source_path=None):
+def save_verified_docx(document, destination, source_path=None, *, source_revision=None):
     """Reopen DOCX and compare every document part before atomic publication.
 
     This ensures the intended edited package was saved intact; it does not
@@ -109,5 +112,7 @@ def save_verified_docx(document, destination, source_path=None):
     with AtomicExport(destination, source_path) as output:
         document.save(str(output.path))
         checked = verify_docx_export(output.path, document)
+        if source_revision is not None:
+            source_revision.verify()
         output.commit()
         return checked

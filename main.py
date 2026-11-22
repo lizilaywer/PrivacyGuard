@@ -27,6 +27,8 @@ from privacyguard.utils.logger import init_logging, get_logger, _resolve_log_dir
 logger = get_logger("main")
 from privacyguard.utils.temp_manager import TempFileManager
 from privacyguard.utils.app_paths import default_config_path, resource_root
+from privacyguard.utils.document_source import SourceRevision
+from privacyguard.utils.export_transaction import ExportValidationError
 from privacyguard.utils.worker_lifecycle import defer_close_for_workers
 from privacyguard.ui.mixins.review_mixin import ReviewMixin
 from privacyguard.workers.image_merge import ImageMergeWorker
@@ -853,6 +855,7 @@ class MainWindow(ReviewMixin, PageViewMixin, WordPreviewMixin, SettingsActionsMi
         self._targeted_toc_rules = None  # 手动框选"全文遮罩"触发的临时书签规则
         self.word_doc = None  # Word 文档对象
         self._word_input_source_path = None
+        self._source_revision = None
         self._pdf_modified = False
         self.file_path = ""
         self.current_page = 0
@@ -1550,6 +1553,7 @@ class MainWindow(ReviewMixin, PageViewMixin, WordPreviewMixin, SettingsActionsMi
         self.current_page = None
         self.doc_type = None
         self.file_path = None
+        self._source_revision = None
         self.word_compare_mode = False
         self.word_compare_user_hidden = False
         self.image_merge_in_progress = False
@@ -7650,6 +7654,7 @@ class MainWindow(ReviewMixin, PageViewMixin, WordPreviewMixin, SettingsActionsMi
         """内部方法：打开 PDF 文件"""
         self.reset_review()
         self._pdf_modified = False
+        self._source_revision = None
         # 关闭已打开的PDF文档（防止资源泄露）
         if self.doc:
             self.doc.close()
@@ -7672,8 +7677,12 @@ class MainWindow(ReviewMixin, PageViewMixin, WordPreviewMixin, SettingsActionsMi
         # O5: fitz.open 对损坏 PDF 抛 FileDataError（继承 RuntimeError），
         # 上层捕获列表不含该类型会直达全局 exception_hook。此处统一拦截并提示。
         try:
+            revision = SourceRevision.capture(fname)
             self.doc = fitz.open(fname)
+            revision.verify()
         except Exception as e:
+            if self.doc is not None:
+                self.doc.close()
             self.doc = None
             QMessageBox.critical(
                 self, "打开失败",
@@ -7688,6 +7697,7 @@ class MainWindow(ReviewMixin, PageViewMixin, WordPreviewMixin, SettingsActionsMi
         if state["needs_user_pw"] or state["has_owner_restriction"]:
             if not self._authenticate_pdf_on_open(fname, state):
                 return  # 需打开密码且用户取消 → 放弃打开
+        self._source_revision = revision
 
         self.doc_type = 'pdf'
         total = len(self.doc)
@@ -7781,7 +7791,11 @@ class MainWindow(ReviewMixin, PageViewMixin, WordPreviewMixin, SettingsActionsMi
             self._reset_batch_session_state()
             self.word_compare_mode = False
             self.word_compare_user_hidden = False
-            self.word_doc = Document(load_path)
+            revision = SourceRevision.capture(load_path)
+            word_doc = Document(load_path)
+            revision.verify()
+            self.word_doc = word_doc
+            self._source_revision = revision
             self.file_path = load_path  # cp113: 加密文档指向解密临时文件，预览/保存读取一致
             self._word_input_source_path = fname
             self.word_open_password = word_pw
@@ -7814,7 +7828,7 @@ class MainWindow(ReviewMixin, PageViewMixin, WordPreviewMixin, SettingsActionsMi
                     "ℹ️ Word 已打开。导出时不带密码（python-docx 不支持加密保存）"
                 )
 
-        except (IOError, OSError, ValueError, KeyError, PackageNotFoundError, BadZipFile) as e:
+        except (OSError, ValueError, KeyError, PackageNotFoundError, BadZipFile, ExportValidationError) as e:
             # W7: 损坏/伪装 docx 抛 PackageNotFoundError；加密 docx 已在上方提前处理
             QMessageBox.critical(self, "错误", f"打开 Word 文档失败: {str(e)}")
 
@@ -9249,6 +9263,12 @@ sudo dnf install antiword
         if self.active_worker is not None and self.active_worker.isRunning():
             QMessageBox.warning(self, "提示", "正在处理其他任务，请稍候再使用全文遮罩。\n本次已仅遮罩框选区域。")
             return
+        if self._source_revision is not None:
+            try:
+                self._source_revision.verify()
+            except ExportValidationError as error:
+                QMessageBox.warning(self, "请重新打开文件", str(error))
+                return
 
         # cp114: 加密 PDF 若缺编辑权限，弹窗输入 owner 密码解锁
         if self.doc and not self._ensure_edit_permission():
@@ -9400,6 +9420,12 @@ sudo dnf install antiword
         if self.active_worker is not None:
             if self.active_worker.isRunning():
                 QMessageBox.warning(self, "提示", "正在处理中，请稍候...")
+                return
+        if self._source_revision is not None:
+            try:
+                self._source_revision.verify()
+            except ExportValidationError as error:
+                QMessageBox.warning(self, "请重新打开文件", str(error))
                 return
 
         # Permission cancellation must not leave scan controls in a running state.
@@ -9757,6 +9783,7 @@ sudo dnf install antiword
                 from privacyguard.ui.dialogs.pdf_export_options_dialog import choose_pdf_export_policy
                 from privacyguard.utils.pdf_structure import PDF_ENGINE_ERRORS, pdf_export_error_message, reachable_pdf_xrefs
                 try:
+                    self._source_revision.verify()
                     pdf_policy, hidden_report = choose_pdf_export_policy(self, self.doc, pdf_filter)
                 except (ValueError, *PDF_ENGINE_ERRORS) as error:
                     QMessageBox.critical(self, "无法完成导出清点", pdf_export_error_message(error))
@@ -9784,6 +9811,7 @@ sudo dnf install antiword
                 doc_save = None
                 try:
                     QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+                    self._source_revision.verify()
                     # v37.7.11 cp40: 若已被去水印修改过，直接复用 self.doc 的字节流，
                     # 避免重新打开原文件导致水印去除效果丢失
                     if getattr(self, "_pdf_modified", False) and self.doc and not self.doc.is_closed:
@@ -9936,7 +9964,8 @@ sudo dnf install antiword
                         doc_save.close()
                         doc_save = prepared
                     from privacyguard.utils.export_transaction import save_verified_pdf
-                    save_verified_pdf(doc_save, fname, save_kwargs, self.page_data, self.file_path, policy=pdf_policy)
+                    save_verified_pdf(doc_save, fname, save_kwargs, self.page_data, self.file_path,
+                                      policy=pdf_policy, source_revision=self._source_revision)
                     encrypted = bool(encrypt_kwargs)
 
                     # 安全审计 v40.1: 导出成功后删除该文件的会话草稿（含未脱敏原文 pdfsnap）。
@@ -10030,19 +10059,14 @@ sudo dnf install antiword
                 self._save_word(fname)
 
     def _save_word(self, fname):
-        """保存 Word 文档 - v24 改进版：详细错误处理 + 使用 TempFileManager + 合并 OCR 和 Manual 脱敏"""
+        """在内存中打开工作副本，核对原件版本后保存 Word 脱敏结果。"""
         try:
-            import shutil
             from docx import Document
 
             QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
-
-            # 使用 TempFileManager 管理临时文件
-            temp_file = self.temp_manager.create_temp_file()
-            shutil.copy2(self.file_path, temp_file)
-
-            # 打开副本进行修改
-            new_doc = Document(temp_file)
+            self._source_revision.verify()
+            new_doc = Document(self.file_path)
+            self._source_revision.verify()
 
             from privacyguard.utils.word_parts import apply_word_data
             from privacyguard.ui.dialogs.word_coverage_dialog import confirm_word_coverage
@@ -10055,7 +10079,8 @@ sudo dnf install antiword
 
             # 保存文档
             from privacyguard.utils.export_transaction import save_verified_docx
-            save_verified_docx(new_doc, fname, [self.file_path, self._word_input_source_path])
+            save_verified_docx(new_doc, fname, [self.file_path, self._word_input_source_path],
+                               source_revision=self._source_revision)
 
             QApplication.restoreOverrideCursor()
             box_w = QMessageBox(self)
@@ -10070,6 +10095,9 @@ sudo dnf install antiword
                 if not ok:
                     QMessageBox.warning(self, "打开失败", f"无法打开导出的文档：\n{err}")
 
+        except ExportValidationError as error:
+            QApplication.restoreOverrideCursor()
+            QMessageBox.critical(self, "保存失败", str(error))
         except PermissionError:
             QApplication.restoreOverrideCursor()
             QMessageBox.critical(

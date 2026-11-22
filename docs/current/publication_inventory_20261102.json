@@ -32,7 +32,7 @@
     {
       "path": "AGENTS.md",
       "bytes": 16642,
-      "sha256": "55a608824dec7c92e1131c82187fe2026b9b9f1a53c5e7178e44095164588987",
+      "sha256": "a7c5ef1c1e3b45cf27c525a95a768702f8ac5f72d1c0c2be1e83528636e9b51e",
       "kind": "text",
       "lines": 319
     },
@@ -52,10 +52,10 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 158196,
-      "sha256": "1adcd71dc3a6b2a533571e13d4321ddb379a3df5ef8b08c21cc7ee5ce230fabc",
+      "bytes": 158684,
+      "sha256": "907d8dadf54e8eda14cd6db8b943098f4eff94585670e489fb3506c3b7adc33c",
       "kind": "text",
-      "lines": 2813
+      "lines": 2820
     },
     {
       "path": "CLAUDE.md",
@@ -88,14 +88,14 @@
     {
       "path": "README.md",
       "bytes": 10050,
-      "sha256": "c23c19845aaaca91ec8f4e3c2e1131e091b92735fed9731dff1cd3e9666b5f3a",
+      "sha256": "16d3a3dab8cfcdb6a228e746416c33757b90b29677d2501e1ff0489664444d57",
       "kind": "text",
       "lines": 161
     },
     {
       "path": "README_EN.md",
       "bytes": 7269,
-      "sha256": "fe15f8bb28fdda2d0845b47245a5fcd9c4f7d575538c4314b0d627966235b82d",
+      "sha256": "ec1d4fa1d83eba135bc8c13e1a8cfd75ac14cb52af67ae391c8d26b720a13748",
       "kind": "text",
       "lines": 110
     },
@@ -867,10 +867,10 @@
     },
     {
       "path": "docs/current/DEV_LOG.md",
-      "bytes": 348818,
-      "sha256": "90ecf69a0e8172fbf046cd251e650c0f28227543dde111c6d03bf35fb241b5f6",
+      "bytes": 349269,
+      "sha256": "2a0833e99963158cd7870e7cc4724b255591ebabbe4dd91185963aae2ae1acac",
       "kind": "text",
-      "lines": 8099
+      "lines": 8105
     },
     {
       "path": "docs/current/MAIN_PY_REFACTOR_PLAN.md",
@@ -937,10 +937,10 @@
     },
     {
       "path": "docs/current/STATUS.md",
-      "bytes": 124832,
-      "sha256": "e47c276b2ac1b7287156b88c63b0479cada90b10596e52b163ebd51a679859ca",
+      "bytes": 125353,
+      "sha256": "9b619bd927d11feb4cc6da366a1cc53dd94739982b281681e501892d2dc20965",
       "kind": "text",
-      "lines": 2382
+      "lines": 2388
     },
     {
       "path": "docs/current/TODO_WINDOWS_BUILD.txt",
@@ -1113,7 +1113,7 @@
     {
       "path": "docs/packaging/README.md",
       "bytes": 3261,
-      "sha256": "f6fc56484c22289689da7f499659f0e50e90cc027c31adda2f7e8dd317caade0",
+      "sha256": "e7f62f2c52ec2c6657edb2691eed1ba19484532f7f37134c00899e63fb879112",
       "kind": "text",
       "lines": 73
     },
@@ -1140,10 +1140,10 @@
     },
     {
       "path": "main.py",
-      "bytes": 498793,
-      "sha256": "9bd9868ddc699d7ab9ee677b438cf931671871668b935739ab9bc98dcf6b5e79",
+      "bytes": 500173,
+      "sha256": "6ce00016b3101294ed929118a224ed54d307cabaaafd3b47cf454f71c4ac39a5",
       "kind": "text",
-      "lines": 10194,
+      "lines": 10222,
       "classes": 7,
       "functions": 243
     },
@@ -1191,7 +1191,7 @@
     {
       "path": "packaging/macos/scripts/README.txt",
       "bytes": 3713,
-      "sha256": "4e815c84aff19104014e28a6bfa5d75e6c761c2ed3d2e572b70242a10385a05a",
+      "sha256": "28ba955cf774fa99e835cf0e125f38536db8ae84d8cd1b32fb7445a9c51f13b3",
       "kind": "text",
       "lines": 74
     },
@@ -1211,10 +1211,10 @@
     },
     {
       "path": "packaging/macos/scripts/build_portable.sh",
-      "bytes": 1842,
-      "sha256": "4ce638b6e98a227874ccad45c162d0df47e9efba7119430b57e98cc31a0cd7cd",
+      "bytes": 2256,
+      "sha256": "2f1da35ddac3d37214e3711f74ed9e1434198dd9df89a56caad3f73164b41473",
       "kind": "text",
-      "lines": 43
+      "lines": 56
     },
     {
       "path": "packaging/macos/scripts/check_macos_bundle.py",
@@ -1280,7 +1280,7 @@
     {
       "path": "packaging/windows/config/version_info.txt",
       "bytes": 979,
-      "sha256": "e353c6c492c13395c6d5bd4d904a2d28750c34a2fccaa33517f1c77b95551a34",
+      "sha256": "ead9510aed043f5584cb5f7c6f2a39a15eba1911075e2cddafcdb8fb5ecba971",
       "kind": "text",
       "lines": 33
     },
@@ -1322,7 +1322,7 @@
     {
       "path": "packaging/windows/scripts/README.txt",
       "bytes": 1579,
-      "sha256": "4f2aced5f71160278421310a752ea65f201996f431ce0d6fc2aba7afa1157bc4",
+      "sha256": "c3f2e426c1bd7c4f05fa52419ca32767e24ca432bb102a730b5bcbd2cb2534fe",
       "kind": "text",
       "lines": 28
     },
@@ -1401,10 +1401,10 @@
     },
     {
       "path": "privacyguard/diagnostics.py",
-      "bytes": 10641,
-      "sha256": "daa6e24be048a18715d844ebfcf26f04895a3126428865df8acc6e75c8f73176",
+      "bytes": 11960,
+      "sha256": "60a943ff62ba65f899c774aaf6f6d59c829d48e6b02da276565d606ef31578b5",
       "kind": "text",
-      "lines": 186,
+      "lines": 207,
       "classes": 0,
       "functions": 4
     },
@@ -1707,10 +1707,10 @@
     },
     {
       "path": "privacyguard/ui/mixins/extract_mixin.py",
-      "bytes": 25601,
-      "sha256": "eabe7acfff9e714f4fff5f678df144781f26502dce1af60d8da13d17a6e3b29f",
+      "bytes": 25940,
+      "sha256": "556aeeaea1fd4fb5ccd184c47f4a119ee46199486b787d762aa7024d836a1f00",
       "kind": "text",
-      "lines": 519,
+      "lines": 523,
       "classes": 1,
       "functions": 19
     },
@@ -1859,6 +1859,15 @@
       "functions": 4
     },
     {
+      "path": "privacyguard/utils/document_source.py",
+      "bytes": 763,
+      "sha256": "9262f1e78256a0431c57734c600ac72d707924691cbc861884167fac25abe865",
+      "kind": "text",
+      "lines": 26,
+      "classes": 1,
+      "functions": 2
+    },
+    {
       "path": "privacyguard/utils/exceptions.py",
       "bytes": 987,
       "sha256": "47e0936e75978918c1d31288a9508cfc2755638c40f2b4b125fda44c8085ba2f",
@@ -1869,10 +1878,10 @@
     },
     {
       "path": "privacyguard/utils/export_transaction.py",
-      "bytes": 4632,
-      "sha256": "899ec70fd477a48ff37c89225391dc73abf27f626f33a512291426d438115130",
+      "bytes": 4858,
+      "sha256": "2b3bc749869d4281848b6ce5bacc397a5f1dffedb5790c15bc44a6d780e33e20",
       "kind": "text",
-      "lines": 113,
+      "lines": 118,
       "classes": 2,
       "functions": 8
     },
@@ -2675,12 +2684,12 @@
     },
     {
       "path": "tests/unit/test_export_transaction.py",
-      "bytes": 13351,
-      "sha256": "7daf03af470843ae1e4c8044e52bb690b25528618f7e5b74b55c589947774d15",
+      "bytes": 14885,
+      "sha256": "d726ba198ad54336557a89e109494d30218f400192cdf99da04744c855421e9a",
       "kind": "text",
-      "lines": 284,
+      "lines": 317,
       "classes": 3,
-      "functions": 32
+      "functions": 34
     },
     {
       "path": "tests/unit/test_extended_rules.py",
@@ -3158,11 +3167,11 @@
     {
       "path": "version.txt",
       "bytes": 7,
-      "sha256": "90cdbf249dd2eeccde22246ded1223de29c2c3922f8eee5c5a6be668ee86a6fc",
+      "sha256": "00d671fbd7746d4ef74347bd071dc41f7a9e16b508c1c70dab07936a87317b90",
       "kind": "text",
       "lines": 1
     }
   ],
-  "file_count": 408,
+  "file_count": 409,
   "findings": []
 }

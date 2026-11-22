@@ -8,6 +8,7 @@ from unittest.mock import patch
 import fitz
 from PyQt6.QtCore import QRectF
 
+from privacyguard.utils.document_source import SourceRevision
 from privacyguard.utils.export_transaction import AtomicExport, ExportValidationError, save_verified_pdf, save_verified_docx
 from privacyguard.utils.export_validation import verify_pdf_export, verify_docx_export
 
@@ -84,6 +85,38 @@ class TestAtomicExport(unittest.TestCase):
         with self.assertRaises(ExportValidationError):
             with AtomicExport(alias, self.destination):
                 self.fail('Hardlink accepted')
+
+    def test_source_revision_rejects_replacement_and_deletion(self):
+        source = self.root / "reviewed.docx"
+        replacement = self.root / "replacement.docx"
+        source.write_bytes(b"first")
+        revision = SourceRevision.capture(source)
+        revision.verify()
+        replacement.write_bytes(b"later")
+        os.replace(replacement, source)
+        with self.assertRaisesRegex(ExportValidationError, "原件在打开后已更新"):
+            revision.verify()
+        current = SourceRevision.capture(source)
+        source.unlink()
+        with self.assertRaisesRegex(ExportValidationError, "原件在打开后已更新"):
+            current.verify()
+
+    def test_word_export_refuses_changed_original_and_keeps_existing_output(self):
+        from docx import Document
+
+        source = self.root / "reviewed.docx"
+        target = self.root / "existing.docx"
+        reviewed = Document()
+        reviewed.add_paragraph("REVIEWED")
+        reviewed.save(source)
+        target.write_bytes(b"existing result")
+        revision = SourceRevision.capture(source)
+        reviewed.add_paragraph("SOURCE CHANGED")
+        reviewed.save(source)
+        with self.assertRaisesRegex(ExportValidationError, "原件在打开后已更新"):
+            save_verified_docx(reviewed, target, source, source_revision=revision)
+        self.assertEqual(target.read_bytes(), b"existing result")
+        self.assertEqual(list(self.root.glob(".pg-export-*")), [])
 
 
 class TestPDFExportValidation(unittest.TestCase):

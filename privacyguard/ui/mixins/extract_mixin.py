@@ -11,7 +11,7 @@ cp123 重构要点（相对 cp122-fix）：
 接口契约（需 MainWindow 提供）：
     - self.doc, self.canvas_left, self.canvas_right, self.extract_side_panel
     - self._safe_canvas_update, self._safe_canvas_set_mask_color, self.current_color
-    - self._set_info_bar_message
+    - self._set_info_bar_message, self.file_path, self._source_revision
 """
 import os
 
@@ -22,6 +22,8 @@ from PyQt6.QtWidgets import QFileDialog, QMessageBox
 
 from privacyguard.utils.helpers_pdf import build_result_doc_from_segments, build_extract_report
 from privacyguard.utils.helpers_ui import open_path_in_system
+from privacyguard.utils.export_transaction import save_verified_pdf
+from privacyguard.utils.pdf_structure import pdf_export_error_message
 
 
 class ExtractMixin:
@@ -459,9 +461,11 @@ class ExtractMixin:
         if not fname:
             return
         try:
-            doc.save(fname, garbage=4, deflate=True, clean=True)
+            self._source_revision.verify()
+            save_verified_pdf(doc, fname, {"garbage": 4, "deflate": True, "clean": True}, {},
+                              self.file_path, source_revision=self._source_revision)
         except Exception as e:
-            QMessageBox.warning(self, "保存失败", f"{type(e).__name__}: {e}")
+            QMessageBox.warning(self, "保存失败", pdf_export_error_message(e))
             return
         # cp123: 统一弹窗（OK + 打开文档 + 详细信息/导出报告）
         report_text = build_extract_report(self._extract_segments, src_doc=self.doc)

@@ -11,9 +11,9 @@ build_complete.bat 调用 build_portable.py：全量测试、版本资源生成�
 
 产物：
   dist/windows-portable/PrivacyGuard/PrivacyGuard.exe
-  releases/windows/PrivacyGuard-v40.3.1-Windows-Portable.zip
-  releases/windows/PrivacyGuard-v40.3.1-Windows-Portable.zip.sha256
-  releases/windows/PrivacyGuard-v40.3.1-Windows-Portable.validation.json
+  releases/windows/PrivacyGuard-v40.3.2-Windows-Portable.zip
+  releases/windows/PrivacyGuard-v40.3.2-Windows-Portable.zip.sha256
+  releases/windows/PrivacyGuard-v40.3.2-Windows-Portable.validation.json
 缓存：build/windows-portable。不会删除其他平台或安装版产物。
 
 1_init_environment.bat：新建 venv_win 并安装 requirements.txt / requirements-dev.txt。

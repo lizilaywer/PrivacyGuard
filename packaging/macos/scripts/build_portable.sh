@@ -30,14 +30,27 @@ QT_QPA_PLATFORM=offscreen "$PY" -m unittest discover -s tests/unit -t . -p 'test
 # PyInstaller already signs nested Mach-O binaries; seal the final immutable bundle.
 codesign --force --sign - "$APP"
 codesign --verify --deep --strict "$APP"
-QT_QPA_PLATFORM=offscreen QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu \
-    "$APP/Contents/MacOS/PrivacyGuard" --self-test \
-    "--self-test-report=$OUT/PrivacyGuard-$VERSION-macOS-arm64-self-test.json"
 ZIP="$OUT/PrivacyGuard-$VERSION-macOS-arm64-portable.zip"
 if [ -e "$ZIP" ]; then
     echo "Release already exists, refusing to overwrite: $ZIP" >&2
     exit 1
 fi
-ditto -c -k --sequesterRsrc --keepParent "$APP" "$ZIP"
-(cd "$OUT" && shasum -a 256 "$(basename "$ZIP")" > "$(basename "$ZIP").sha256")
+VERIFY="$(mktemp -d "$WORK/verify-archive.XXXXXX")"
+trap 'rm -rf "$VERIFY"' EXIT
+NAME="$(basename "$ZIP")"
+ditto -c -k --sequesterRsrc --keepParent "$APP" "$VERIFY/$NAME"
+ditto -x -k "$VERIFY/$NAME" "$VERIFY/unpacked"
+UNPACKED="$VERIFY/unpacked/PrivacyGuard.app"
+codesign --verify --deep --strict "$UNPACKED"
+mkdir "$VERIFY/profile"
+(
+    cd "$VERIFY"
+    HOME="$VERIFY/profile" CFFIXED_USER_HOME="$VERIFY/profile" \
+        QT_QPA_PLATFORM=offscreen QTWEBENGINE_CHROMIUM_FLAGS=--disable-gpu \
+        "$UNPACKED/Contents/MacOS/PrivacyGuard" --self-test \
+        "--self-test-report=$OUT/PrivacyGuard-$VERSION-macOS-arm64-self-test.json"
+    shasum -a 256 "$NAME" > "$NAME.sha256"
+)
+mv "$VERIFY/$NAME.sha256" "$ZIP.sha256"
+mv "$VERIFY/$NAME" "$ZIP"
 echo "Portable archive: $ZIP"

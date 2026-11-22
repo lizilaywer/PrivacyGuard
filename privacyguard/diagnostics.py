@@ -146,6 +146,27 @@ def run_self_test(window_factory=None, report_path=None):
                     else:
                         raise AssertionError("Missing referenced PDF object was ignored")
                 checks["sparse_pdf_export_and_broken_reference_guard"] = True
+                from privacyguard.utils.document_source import SourceRevision
+                source = root / "reviewed.pdf"
+                source.write_bytes(synthetic_sparse_pdf())
+                revision = SourceRevision.capture(source)
+                output = root / "existing.pdf"
+                output.write_bytes(b"previous export")
+                with fitz.open(stream=source.read_bytes(), filetype="pdf") as reviewed:
+                    with fitz.open() as replacement:
+                        replacement.new_page()
+                        replacement.save(source)
+                    try:
+                        save_verified_pdf(reviewed, output, {"garbage": 2, "clean": True}, {}, source,
+                                          source_revision=revision)
+                    except ExportValidationError as exc:
+                        if "原件在打开后已更新" not in str(exc):
+                            raise
+                    else:
+                        raise AssertionError("Changed source was accepted")
+                if output.read_bytes() != b"previous export" or any(root.glob(".pg-export-*")):
+                    raise AssertionError("Blocked export changed the destination or left a temporary file")
+                checks["reviewed_source_and_destination_guard"] = True
                 img = np.full((180, 900, 3), 255, dtype=np.uint8)
                 cv2.putText(img, "PHONE 13812345678", (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.7, (0, 0, 0), 3)
                 recognized = "".join(r.text for r in RapidOCREngine().recognize(img))
