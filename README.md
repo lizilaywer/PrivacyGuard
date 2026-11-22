@@ -83,8 +83,8 @@ PrivacyGuard 把**智能扫描、手动补充、预览检查和导出**放进同
 前往 **[GitHub Releases](https://github.com/lizilaywer/PrivacyGuard/releases)**，按发布说明选择平台和版本。源码版本与已上传便携包可能不同，请核对发布页中的版本、架构、校验值和已知问题。
 
 - **Windows**：使用对应发布页提供的已验证便携包。历史 **v40.2.3 Windows 包不可分发**，请勿使用或转发。
-- **macOS** v40.3.2 便携包适用于 Apple Silicon 和 macOS 14 或更新版本，采用 ad-hoc 签名。解压后通过原生自检的包可在构建记录的 Artifacts 区域下载，GitHub 保留下载 7 天。[Apple Silicon 构建记录](https://github.com/lizilaywer/PrivacyGuard/actions/runs/44997418272)
-- v40.3.2 的 Windows x64、macOS Apple Silicon 便携包均已构建并解压自检。验收范围见 [当前状态](docs/current/STATUS.md)。
+- **macOS** v40.3.3 便携包适用于 Apple Silicon 和 macOS 14 或更新版本，采用 ad-hoc 签名。解压后通过原生自检的包可在构建记录的 Artifacts 区域下载，GitHub 保留下载 7 天。[Apple Silicon 构建记录](https://github.com/lizilaywer/PrivacyGuard/actions/runs/45025176126)
+- v40.3.3 的 Windows x64、macOS Apple Silicon 便携包均已构建并解压自检。文字 PDF 可从「脱敏复核 → 本页补查」查看银行账号和发票号码候选。验收范围见 [当前状态](docs/current/STATUS.md)。
 - v40.3.0 源码、便携候选包与平台验证状态见 [升级验收记录](docs/current/UPGRADE_COMPLETION_20261119.md)；只有通过原生验证的包才可分发，BuildKit 是源码资料包。
 
 ### 从源码运行（Python 3.11，64 位）
