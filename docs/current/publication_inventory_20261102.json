@@ -87,10 +87,10 @@
     },
     {
       "path": "README.md",
-      "bytes": 10050,
-      "sha256": "16d3a3dab8cfcdb6a228e746416c33757b90b29677d2501e1ff0489664444d57",
+      "bytes": 10106,
+      "sha256": "8d7d12d028b46af1807fd00a47c4d479e5f6bc859ddfcfa898d3b6f0adfe54ad",
       "kind": "text",
-      "lines": 161
+      "lines": 162
     },
     {
       "path": "README_EN.md",
@@ -937,10 +937,10 @@
     },
     {
       "path": "docs/current/STATUS.md",
-      "bytes": 125353,
-      "sha256": "9b619bd927d11feb4cc6da366a1cc53dd94739982b281681e501892d2dc20965",
+      "bytes": 126179,
+      "sha256": "4ab340992735bd4e4d5e6d149a69df6a725a4491a58eb61f7d7c2a56fb143c80",
       "kind": "text",
-      "lines": 2388
+      "lines": 2391
     },
     {
       "path": "docs/current/TODO_WINDOWS_BUILD.txt",
@@ -1119,8 +1119,8 @@
     },
     {
       "path": "docs/packaging/macos-packaging-guide.md",
-      "bytes": 5361,
-      "sha256": "d8edfe11761bd802a3492ce0b06d433def5be4c8bfebfb396f5a6a91a1d67c37",
+      "bytes": 5352,
+      "sha256": "2cee611c352f4a74f0b68a013120c5ab74e5362f1b342573ca325291b39dec8d",
       "kind": "text",
       "lines": 177
     },

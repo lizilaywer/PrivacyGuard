@@ -35,7 +35,7 @@ bash packaging/macos/scripts/build_portable.sh
 ### 推荐完整流程
 
 ```bash
-cd /Users/a49144/Desktop/codexhub/PrivacyGuardApp
+# 在 PrivacyGuard 仓库根目录执行
 bash packaging/macos/scripts/build_complete.sh
 ```
 
