@@ -52,10 +52,10 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 158029,
-      "sha256": "788d515d5e73fc14ddec88b0d22469323afe4ee6231adc7afecef38ddfa4ac5a",
+      "bytes": 158196,
+      "sha256": "1adcd71dc3a6b2a533571e13d4321ddb379a3df5ef8b08c21cc7ee5ce230fabc",
       "kind": "text",
-      "lines": 2812
+      "lines": 2813
     },
     {
       "path": "CLAUDE.md",
@@ -867,10 +867,10 @@
     },
     {
       "path": "docs/current/DEV_LOG.md",
-      "bytes": 348679,
-      "sha256": "c20684b21a701656a6fcad7d0014cf7bc6eccf54f9becca632d929858a9280a5",
+      "bytes": 348818,
+      "sha256": "90ecf69a0e8172fbf046cd251e650c0f28227543dde111c6d03bf35fb241b5f6",
       "kind": "text",
-      "lines": 8098
+      "lines": 8099
     },
     {
       "path": "docs/current/MAIN_PY_REFACTOR_PLAN.md",
@@ -937,8 +937,8 @@
     },
     {
       "path": "docs/current/STATUS.md",
-      "bytes": 124415,
-      "sha256": "481ed349e440621c397882c3a3cf5c7539d2ca339872a3aab5e55d63ec4d79f2",
+      "bytes": 124526,
+      "sha256": "5d42ec58b66fae61235de688b56f899e192c4de88f85c317f880777b1fa1c154",
       "kind": "text",
       "lines": 2381
     },
@@ -1905,10 +1905,10 @@
     },
     {
       "path": "privacyguard/utils/helpers_pdf.py",
-      "bytes": 29087,
-      "sha256": "8d41237e5efdf1bf2e3cd79aeefa6a77cb11c7a8d1ee298d609b5930abdda468",
+      "bytes": 29170,
+      "sha256": "ea7508349adeb26fef721de528c965995d168b74e4c45a73e17c65fca38a9203",
       "kind": "text",
-      "lines": 750,
+      "lines": 751,
       "classes": 0,
       "functions": 27
     },
@@ -2675,12 +2675,12 @@
     },
     {
       "path": "tests/unit/test_export_transaction.py",
-      "bytes": 12259,
-      "sha256": "267d9f8a2803627b6a37066ff7b5a2b69f828463e9c20fe95b093d0b588b4183",
+      "bytes": 13351,
+      "sha256": "7daf03af470843ae1e4c8044e52bb690b25528618f7e5b74b55c589947774d15",
       "kind": "text",
-      "lines": 264,
+      "lines": 284,
       "classes": 3,
-      "functions": 30
+      "functions": 32
     },
     {
       "path": "tests/unit/test_extended_rules.py",
@@ -2882,10 +2882,10 @@
     },
     {
       "path": "tests/unit/test_pdf_sparse_xref_export.py",
-      "bytes": 3487,
-      "sha256": "c5bc2fce78913d8fa50cb2dfc1c950f793616305a697220bf4bd04165bc9c29e",
+      "bytes": 3485,
+      "sha256": "464e20ef303e5846173749ebba429416f422116addf20e970979901a9c3d8b48",
       "kind": "text",
-      "lines": 66,
+      "lines": 64,
       "classes": 2,
       "functions": 5
     },

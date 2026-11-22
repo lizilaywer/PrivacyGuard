@@ -173,6 +173,7 @@ def build_encrypt_save_kwargs(open_pw, edit_pw):
         permissions = int(
             fitz.PDF_PERM_PRINT | fitz.PDF_PERM_MODIFY | fitz.PDF_PERM_COPY
             | fitz.PDF_PERM_ANNOTATE | fitz.PDF_PERM_ACCESSIBILITY
+            | fitz.PDF_PERM_FORM | fitz.PDF_PERM_ASSEMBLE | fitz.PDF_PERM_PRINT_HQ
         )
     return {
         "encryption": fitz.PDF_ENCRYPT_AES_256,

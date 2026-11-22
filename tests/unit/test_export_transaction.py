@@ -174,6 +174,26 @@ class TestPDFExportValidation(unittest.TestCase):
             self.assertTrue(saved.needs_pass)
             self.assertGreater(saved.authenticate('open'),0)
 
+    def test_open_password_without_edit_password_roundtrips(self):
+        from privacyguard.utils.helpers_pdf import build_encrypt_save_kwargs
+
+        options = build_encrypt_save_kwargs("public-test-pass", "")
+        save_verified_pdf(self.doc, self.path, options, {})
+        with fitz.open(self.path) as saved:
+            self.assertTrue(saved.needs_pass)
+            self.assertGreater(saved.authenticate("public-test-pass"), 0)
+            permissions = int(saved.xref_get_key(-1, "Encrypt/P")[1])
+            self.assertTrue(permissions & fitz.PDF_PERM_FORM)
+            self.assertTrue(permissions & fitz.PDF_PERM_ASSEMBLE)
+            self.assertTrue(permissions & fitz.PDF_PERM_PRINT_HQ)
+
+    def test_same_passwords_cannot_pass_restricted_edit_verification(self):
+        from privacyguard.utils.helpers_pdf import build_encrypt_save_kwargs
+
+        options = build_encrypt_save_kwargs("same-test-pass", "same-test-pass")
+        with self.assertRaisesRegex(ExportValidationError, "编辑权限验证未通过"):
+            save_verified_pdf(self.doc, self.path, options, {})
+
     def test_owner_only_encryption_roundtrips(self):
         kwargs={'encryption':fitz.PDF_ENCRYPT_AES_256,'owner_pw':'owner','user_pw':'',
                 'permissions':fitz.PDF_PERM_PRINT}

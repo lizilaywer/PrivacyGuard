@@ -14,8 +14,6 @@ from privacyguard.utils.pdf_sanitize import prepare_pdf_output
 from privacyguard.utils.pdf_structure import pdf_export_error_message
 
 
-
-
 class PdfSparseXrefExportTests(unittest.TestCase):
     def test_unused_slots_allow_checked_preserve_and_sanitize_exports(self):
         raw = synthetic_sparse_pdf()
