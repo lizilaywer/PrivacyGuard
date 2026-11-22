@@ -172,16 +172,16 @@ def resolve_word_ocr_replacements(ocr_matches, custom_keyword_rules, default_rep
             find_text = str(rule.get("find", "") or "").strip()
             replace_text = str(rule.get("replace", "") or "").strip()
             if find_text and replace_text:
-                keyword_map.setdefault(find_text, replace_text)
+                keyword_map[find_text] = replace_text
                 # 关键词匹配为 IGNORECASE，英文命中大小写可能与 find 不同
-                keyword_map.setdefault(find_text.casefold(), replace_text)
+                keyword_map[find_text.casefold()] = replace_text
 
     fallback_text = default_replacement_text if isinstance(default_replacement_text, str) and default_replacement_text else None
 
     resolved = []
     for item in ocr_matches:
         if isinstance(item, dict):
-            hit_text = str(item.get("text", "") or "")
+            hit_text = str(item.get("keyword") or item.get("text") or "")
             inline_replace = keyword_map.get(hit_text) or keyword_map.get(hit_text.casefold())
             if inline_replace:
                 item = dict(item, replacement=inline_replace)

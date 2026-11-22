@@ -8,6 +8,7 @@ import numpy as np
 
 from .text_pdf import _is_valid_luhn, _looks_like_idcard, _is_bank_card_pattern, verify_hit_by_pattern, _mask
 from privacyguard.utils.exceptions import OCRInspectionError
+from privacyguard.utils.literal_keywords import KEYWORD_RULE, iter_keyword_matches
 
 # cp118: 统一日志（替代模块内散落的 print）
 logger = logging.getLogger(__name__)
@@ -118,6 +119,7 @@ def collect_image_block_ocr_hits(
     ocr_lines_sink=None,
     calculate_char_rect_fn=None,
     ocr_char_lines_sink=None,
+    keyword_patterns=(),
 ):
     """对嵌入图片区域执行 OCR，并返回页面坐标系下的命中矩形。
 
@@ -138,7 +140,7 @@ def collect_image_block_ocr_hits(
     P2: is_cancelled_fn 可选取消谓词；每个图片块 OCR 前检查，密集混合页可及时响应取消。
     """
     compiled_all = compile_active_patterns(patterns)
-    if not compiled_all:
+    if not compiled_all and not keyword_patterns:
         return []
 
     # cp_person_name: 分流称谓人名 pattern（编译后 groupindex 含 lead；
@@ -239,6 +241,16 @@ def collect_image_block_ocr_hits(
         # 命中发射统一走这里（含称谓人名的 rule_override）
         scan_patterns = [(p, None) for p in compiled_patterns] + block_name_patterns
         for box, text, chars in lines:
+            for start, end, term in iter_keyword_matches(text, keyword_patterns):
+                span = start, end
+                local_rect = (calculate_char_rect_fn(box, text, span, scan_img, chars)
+                              if calculate_char_rect_fn is not None else None)
+                if local_rect is None:
+                    local_rect = calculate_rect_fn(box, text, span, scan_img)
+                if local_rect is not None:
+                    page_rect = clip_to_page_rect_fn(local_rect, clip_rect)
+                    if page_rect is not None:
+                        hit_rects.append((page_rect, term, KEYWORD_RULE))
             for pattern, rule_override in scan_patterns:
                 # cp57: 仅对银行卡号 pattern 执行 Luhn 校验
                 pattern_str = pattern.pattern if hasattr(pattern, 'pattern') else str(pattern)

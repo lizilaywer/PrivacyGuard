@@ -160,6 +160,34 @@ class TestPDFExportValidation(unittest.TestCase):
             save_verified_pdf(self.doc,self.path,{},self.data)
         self.assertEqual(self.path.read_bytes(),b'PREVIOUS_GOOD')
 
+    def test_warned_export_can_be_saved_by_explicit_confirmation(self):
+        seen = []
+
+        def confirm(pages):
+            seen.append(pages)
+            return True
+
+        self.assertEqual(save_verified_pdf(self.doc, self.path, {}, self.data,
+                                          confirm_text_warnings=confirm), 1)
+        self.assertEqual(seen, [(1,)])
+        with fitz.open(self.path) as saved:
+            self.assertIn("SECRET", saved[0].get_text())
+
+    def test_returning_to_review_leaves_previous_result_unchanged(self):
+        self.path.write_bytes(b"PREVIOUS_GOOD")
+        self.assertIsNone(save_verified_pdf(self.doc, self.path, {}, self.data,
+                                           confirm_text_warnings=lambda _pages: False))
+        self.assertEqual(self.path.read_bytes(), b"PREVIOUS_GOOD")
+        self.assertEqual(list(self.path.parent.glob(".pg-export-*")), [])
+
+    def test_structure_errors_are_not_offered_the_text_override(self):
+        called = []
+        bad_masks = {6: self.data[0]}
+        with self.assertRaisesRegex(ExportValidationError, "遮罩页码"):
+            save_verified_pdf(self.doc, self.path, {}, bad_masks, confirm_text_warnings=called.append)
+        self.assertEqual(called, [])
+        self.assertFalse(self.path.exists())
+
     def test_changed_bookmark_is_rejected(self):
         with fitz.open(stream=self.doc.tobytes(),filetype='pdf') as other:
             other.set_toc([])

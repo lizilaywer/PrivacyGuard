@@ -80,13 +80,15 @@ class AtomicExport:
 
 
 def save_verified_pdf(document, destination, save_kwargs, page_data, source_path=None, policy="preserve",
-                      *, source_revision=None):
-    """Atomic PDF save with closed-handle reopen verification; returns check count."""
+                      *, source_revision=None, confirm_text_warnings=None):
+    """Return verified mask count, or None when a user returns to review."""
     from .export_validation import verify_pdf_export
 
     with AtomicExport(destination, source_path) as output:
         document.save(str(output.path), **save_kwargs)
-        checked = verify_pdf_export(output.path, document, page_data, save_kwargs)
+        warning_pages = [] if confirm_text_warnings is not None else None
+        checked = verify_pdf_export(output.path, document, page_data, save_kwargs,
+                                    text_warning_pages=warning_pages)
         if policy != "preserve":
             import fitz
             from .pdf_sanitize import verify_pdf_policy
@@ -95,6 +97,12 @@ def save_verified_pdf(document, destination, save_kwargs, page_data, source_path
                 if password and saved.authenticate(password) <= 0:
                     raise ExportValidationError("无法认证并复查导出文件。")
                 verify_pdf_policy(saved, policy)
+        if warning_pages:
+            verified_identity = _file_identity(output.path)
+            if not confirm_text_warnings(tuple(warning_pages)):
+                return None
+            if _file_identity(output.path) != verified_identity:
+                raise ExportValidationError("临时导出结果已改变，请重新导出。")
         if source_revision is not None:
             source_revision.verify()
         output.commit()

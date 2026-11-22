@@ -370,7 +370,7 @@ class SettingsDialog(SettingsLayoutMixin, SettingsActionsMixin, QDialog):
         left_panel.setSpacing(10)
         left_title = QLabel("关键词列表")
         left_title.setObjectName("settingsFieldTitle")
-        left_note = QLabel("每行一个关键词。如需替换文本，用 | 分隔，例如：张三|张某某\n不带 | 表示纯遮罩不叠加替换文本。")
+        left_note = QLabel("每行填一个完整的查找词或短语。用 | 分开查找内容与替换内容，例如 2025年|2026。留空时 PDF 仅遮罩，Word 使用统一替换文字。")
         left_note.setObjectName("settingsFieldNote")
         left_note.setWordWrap(True)
         self.settings_left_field_note = left_note

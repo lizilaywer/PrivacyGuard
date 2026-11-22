@@ -383,21 +383,8 @@ def merge_word_matches_with_priority(text, rules, default_replacement_text,
 
 
 def split_targeted_search_terms(text):
-    """cp65: 把识别/编辑后的文字拆成全文查找关键词列表。
-
-    按任意空白（含换行）拆分、去重、去空；OCRWorker 内部同样按空白切分关键词，
-    这里先行拆分保证 find→replace 映射逐词对齐。
-    """
-    if not isinstance(text, str):
-        return []
-    terms = []
-    seen = set()
-    for token in text.split():
-        token = token.strip()
-        if token and token not in seen:
-            seen.add(token)
-            terms.append(token)
-    return terms
+    """One file-wide search target is the complete phrase confirmed in the dialog."""
+    return [text.strip()] if isinstance(text, str) and text.strip() else []
 
 
 def build_targeted_keyword_rules(terms, replace_text):

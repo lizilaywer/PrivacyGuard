@@ -10,6 +10,7 @@ import re
 from PyQt6.QtCore import QThread, pyqtSignal
 
 from privacyguard.utils.logger import get_logger
+from privacyguard.utils.literal_keywords import compile_keyword_patterns, configured_keywords, iter_keyword_matches
 
 logger = get_logger("word_worker")
 
@@ -25,14 +26,15 @@ class WordWorker(QThread):
     finished_signal = pyqtSignal(dict)
     progress_signal = pyqtSignal(int)
 
-    def __init__(self, word_doc, word_data, rules, custom_keywords, replacement_text, default_rules=None, parent=None):
+    def __init__(self, word_doc, word_data, rules, custom_keywords, replacement_text, default_rules=None, parent=None,
+                 *, custom_keyword_rules=None):
         super().__init__(parent)
         self.word_doc = word_doc
         self.word_data = word_data
         self.rules = list(rules or [])
-        # 安全修复: custom_keywords 可能为 None（与 OCRWorker 一致的 None 守卫）
-        raw_keywords = (custom_keywords or "").replace('\n', ' ').split()
-        self.custom_keywords = [re.escape(k.strip()) for k in raw_keywords if k.strip()]
+        self.keyword_replacements = configured_keywords(custom_keywords, custom_keyword_rules)
+        self.keyword_patterns = compile_keyword_patterns(self.keyword_replacements)
+        self.custom_keywords = [re.escape(term) for term in self.keyword_replacements]
         self.replacement_text = replacement_text
         self.default_rules = default_rules or {}
 
@@ -136,25 +138,31 @@ class WordWorker(QThread):
         """
         matches = []
         seen_spans = set()
-        all_patterns = self.rules + self.custom_keywords
+        all_patterns = self.rules
 
         # cp57: 延迟导入，避免循环依赖
         from privacyguard.ocr.text_pdf import _is_valid_luhn, _looks_like_idcard, _is_bank_card_pattern, verify_hit_by_pattern, _mask
 
-        def _append_match(pattern, rule_name, start, end, matched_text):
+        def _append_match(pattern, rule_name, start, end, matched_text, keyword=None):
             span_key = (start, end)
             if span_key in seen_spans:
                 return
             seen_spans.add(span_key)
-            matches.append({
+            entry = {
                 'pattern': pattern,
                 'rule_name': rule_name,
                 'start': start,
                 'end': end,
                 'text': matched_text,
                 'replacement': self.replacement_text
-            })
+            }
+            if keyword is not None:
+                entry["keyword"] = keyword
+                entry["replacement"] = self.keyword_replacements[keyword] or self.replacement_text
+            matches.append(entry)
 
+        for start, end, term in iter_keyword_matches(text, self.keyword_patterns):
+            _append_match(re.escape(term), "自定义", start, end, text[start:end], keyword=term)
         for pattern in all_patterns:
             # cp_person_name: 称谓人名 pattern 分流——取人名子串，跳过 Luhn/校验位
             if "(?P<lead>" in pattern:

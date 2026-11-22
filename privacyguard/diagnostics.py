@@ -182,6 +182,30 @@ def run_self_test(window_factory=None, report_path=None):
                     if page.get_textbox(area).strip() != number:
                         raise AssertionError("Finance candidate missed its original character geometry")
                 checks["position_scoped_financial_candidates"] = True
+                from privacyguard.ocr.pdf_keyword_hits import collect_pdf_keyword_hits
+                from privacyguard.utils.literal_keywords import compile_keyword_patterns
+                with fitz.open() as phrases:
+                    page = phrases.new_page()
+                    page.insert_text((30, 60), "2025 年预算与2026 年预算", fontname="china-s")
+                    matches = list(collect_pdf_keyword_hits(page, compile_keyword_patterns(["2025年"])))
+                    if len(matches) != 1 or page.get_textbox(matches[0][0]).strip() != "2025 年":
+                        raise AssertionError("Full PDF keyword was split or wrong occurrence located")
+                    area = matches[0][0]
+                    masks = {0: {"manual": [QRectF(area.x0, area.y0, area.width, area.height)]}}
+                    warned = root / "warned.pdf"
+                    warned.write_bytes(b"previous output")
+                    if save_verified_pdf(phrases, warned, {}, masks,
+                                         confirm_text_warnings=lambda pages: pages != (1,)) is not None:
+                        raise AssertionError("Returning to review published an export")
+                    if warned.read_bytes() != b"previous output":
+                        raise AssertionError("Warning choice changed the previous output")
+                    if save_verified_pdf(phrases, warned, {}, masks,
+                                         confirm_text_warnings=lambda pages: pages == (1,)) != 1:
+                        raise AssertionError("Explicit warning confirmation did not publish")
+                    with fitz.open(warned) as saved:
+                        if "2026 年预算" not in saved[0].get_text():
+                            raise AssertionError("Confirmed warning output failed reopen check")
+                checks["literal_phrase_and_export_warning_choice"] = True
                 img = np.full((180, 900, 3), 255, dtype=np.uint8)
                 cv2.putText(img, "PHONE 13812345678", (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.7, (0, 0, 0), 3)
                 recognized = "".join(r.text for r in RapidOCREngine().recognize(img))

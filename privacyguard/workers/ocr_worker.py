@@ -19,13 +19,14 @@ import numpy as np
 import cv2
 import fitz
 from PyQt6.QtCore import QThread, pyqtSignal, QRectF
-import re
 
 from privacyguard.ocr.mixed_pdf import (
     collect_embedded_image_clip_rects,
     collect_image_block_ocr_hits,
 )
 from privacyguard.ocr.text_pdf import collect_text_pdf_hit_boxes, apply_box_adjust_to_hit
+from privacyguard.ocr.pdf_keyword_hits import collect_pdf_keyword_hits
+from privacyguard.utils.literal_keywords import KEYWORD_RULE, compile_keyword_patterns, configured_keywords
 from privacyguard.ocr.char_alignment import character_sub_rect
 # v37.8.11 P1-2: 印章/签名检测算法外提到 ocr/ 模块
 from privacyguard.ocr.seal_detection import (
@@ -48,6 +49,10 @@ PROGRESS_UPDATE_INTERVAL = 0.05
 
 class OCREngineUnavailableError(RuntimeError):
     """OCR 引擎不可用（依赖缺失/初始化失败）。"""
+
+
+def _unreadable_keyword_image(_clip):
+    raise OCRInspectionError("图片区域无法完成关键词复查，请手工检查该区域。")
 
 
 def _rects_iou(a, b):
@@ -123,19 +128,14 @@ class OCRWorker(QThread):
         # cp57: None 防御，避免 config 损坏时崩溃
         self.rules = list(rules) if rules else []
         self.use_enhance = use_enhance
-        raw_keywords = (custom_keywords or "").replace('\n', ' ').split()
-        self.custom_keywords = [re.escape(k.strip()) for k in raw_keywords if k.strip()]
+        keywords = configured_keywords(custom_keywords, custom_keyword_rules)
+        self.keyword_patterns = compile_keyword_patterns(keywords)
+        self.custom_keywords = [pattern.pattern for _, pattern in self.keyword_patterns]
         # cp87: 规则名反查表 [(规则名, pattern)]，命中项携带 'rule' 供脱敏报告分类
         self.rule_name_pairs = list(rule_name_pairs) if rule_name_pairs else []
-        self._raw_custom_keywords = [k.strip() for k in raw_keywords if k.strip()]
+        self._raw_custom_keywords = list(keywords)
         # v37.7.13 cp43: 构建查找→替换映射（用于命中后携带 replace_text）
-        self.keyword_replace_map = {}
-        if custom_keyword_rules:
-            for rule in custom_keyword_rules:
-                if not isinstance(rule, dict):
-                    continue
-                if rule.get("enabled", True) and rule.get("find"):
-                    self.keyword_replace_map[rule["find"]] = rule.get("replace", "")
+        self.keyword_replace_map = {term: text or "" for term, text in keywords.items()}
         self.scan_scale = scan_scale
         self.off_x = off_x
         self.off_w = off_w
@@ -1107,8 +1107,8 @@ class OCRWorker(QThread):
                         break
 
                     page = doc[i]
-                    rects = []
-                    all_patterns = self.rules + self.custom_keywords
+                    rects, literal_hits = [], []
+                    all_patterns = self.rules
                     # v40.2.3 门控：仅称谓人名规则启用时才构建回填缓存
                     # （行缓存每条 ~812B，248 页 ~10MB/1000 页最坏 ~62MB——
                     # 规则关闭时这些缓存无人消费，违背"关闭零开销"承诺）
@@ -1131,6 +1131,10 @@ class OCRWorker(QThread):
                         image_clip_rects = rotated_clips
 
                     if page_text.strip():
+                        for area, term in collect_pdf_keyword_hits(page, self.keyword_patterns):
+                            literal_hits.append({'rect': QRectF(area.x0, area.y0, area.width, area.height),
+                                                 'replace_text': self._lookup_replace(term),
+                                                 'rule': self._classify_rule(term)})
                         hit_boxes = collect_text_pdf_hit_boxes(page, all_patterns, page_text=page_text,
                                                               shared_person_names=self._pn_shared)
                         # v37.7.13 cp43: hit_boxes 现为 6 元组 (x,y,w,h,found_str,rule_override)
@@ -1142,7 +1146,7 @@ class OCRWorker(QThread):
                             if self.box_adjust_ratio:
                                 x, y, w, h = apply_box_adjust_to_hit(x, y, w, h, self.box_adjust_ratio)
                             rects.append({'rect': QRectF(x, y, w, h),
-                                          'replace_text': self._lookup_replace(found_str),
+                                          'replace_text': '',
                                           'rule': rule_override or self._classify_rule(found_str)})
 
                     if not image_clip_rects and not page_text.strip() and page.get_contents():
@@ -1185,7 +1189,8 @@ class OCRWorker(QThread):
                             # 原因：当 clip_rect 是整页（扫描件兜底）时，OCR 失败会生成
                             #   覆盖整页的大矩形，产生"一大块"遮罩遮挡正常内容
                             # 修复：超过页面面积 30% 的 clip_rect 不触发整块覆盖
-                            on_block_failure_fn=self._make_block_failure_fn(page.rect),
+                            on_block_failure_fn=self._make_block_failure_fn(page.rect)
+                            if self.rules else _unreadable_keyword_image,
                             is_cancelled_fn=self.isInterruptionRequested,
                             shared_person_names=self._pn_shared if pn_enabled else None,
                             # v40.2.3 门控：规则关闭时传 None，行缓存不构建（零开销）
@@ -1194,13 +1199,18 @@ class OCRWorker(QThread):
                                 box, text, span, img_region=img, chars=chars) if chars else None,
                             ocr_char_lines_sink=self._pn_char_lines_cache.setdefault(i, [])
                             if pn_enabled and getattr(ocr_engine, 'enable_char_boxes', False) else None,
+                            keyword_patterns=self.keyword_patterns,
                         )
                         # v37.7.13 cp43: image_hit_rects 现为 [(rect, matched_text, rule_override)]
                         # cp_person_name: rule_override 优先（同文本层路径）
                         for rect_q, matched_text, rule_override in image_hit_rects:
-                            rects.append({'rect': rect_q,
-                                          'replace_text': self._lookup_replace(matched_text),
-                                          'rule': rule_override or self._classify_rule(matched_text)})
+                            if rule_override == KEYWORD_RULE:
+                                literal_hits.append({'rect': rect_q,
+                                                     'replace_text': self._lookup_replace(matched_text),
+                                                     'rule': self._classify_rule(matched_text)})
+                            else:
+                                rects.append({'rect': rect_q, 'replace_text': '',
+                                              'rule': rule_override or self._classify_rule(matched_text)})
                         image_hit_count = len(image_hit_rects)
                         # Character cache is experimental and bounded. Large
                         # dossiers keep the established line-only backfill.
@@ -1255,6 +1265,7 @@ class OCRWorker(QThread):
 
                     # P2 跨源去重：文本层 / 图块 OCR / 印章 / 签名 可能命中同一区域，
                     # 合并后按 IoU>=0.5 抑制重复，避免重叠遮罩与报告计数虚高。
+                    rects = literal_hits + rects
                     if len(rects) > 1:
                         rects = dedup_page_rects(rects)
 
@@ -1337,7 +1348,7 @@ class OCRWorker(QThread):
                             hit = fitz.Rect(hit) * page.rotation_matrix
                             hit.normalize()
                         extra.append({'rect': QRectF(hit.x0, hit.y0, hit.width, hit.height),
-                                      'replace_text': self._lookup_replace(n),
+                                      'replace_text': '',
                                       'rule': PERSON_NAME_RULE_NAME})
             # OCR 行回填：行文本精确匹配 + 权重路径子矩形（无 img_region 回退）
             cached_lines = getattr(self, '_pn_char_lines_cache', {}).get(pno)
@@ -1352,7 +1363,7 @@ class OCRWorker(QThread):
                         extra.append({'rect': QRectF(local.x() + clip_rect[0],
                                                       local.y() + clip_rect[1],
                                                       local.width(), local.height()),
-                                      'replace_text': self._lookup_replace(n),
+                                      'replace_text': '',
                                       'rule': PERSON_NAME_RULE_NAME})
             if extra:
                 self.page_result_signal.emit(pno, list(first) + extra)

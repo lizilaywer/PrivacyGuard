@@ -555,11 +555,11 @@ class TestResolveWordOcrReplacements(unittest.TestCase):
 class TestTargetedMaskHelpers(unittest.TestCase):
     """cp65: 手动框选全文遮罩的纯函数辅助。"""
 
-    def test_split_terms_basic(self):
-        """按空白/换行拆分、去重、去空。"""
+    def test_full_phrase_keeps_internal_whitespace(self):
+        """内部空白属于同一短语，只去除首尾空白。"""
         self.assertEqual(
             split_targeted_search_terms("原告 被告\n原告  张三\n\n"),
-            ["原告", "被告", "张三"],
+            ["原告 被告\n原告  张三"],
         )
 
     def test_split_terms_empty_and_invalid(self):

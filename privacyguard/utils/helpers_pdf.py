@@ -68,6 +68,27 @@ def _make_hit(rect, replace_text=''):
     return {'rect': rect, 'replace_text': replace_text or ''}
 
 
+def effective_pdf_export_masks(page_data):
+    """At identical positions, export the topmost mask that the preview shows."""
+    result = {}
+    for page, entry in page_data.items():
+        seen = set()
+        selected = {}
+        for source in ("manual", "ocr"):
+            kept = []
+            for item in reversed(entry.get(source, [])):
+                rect = _hit_rect(item)
+                if rect is not None:
+                    key = tuple(round(value, 4) for value in (rect.x(), rect.y(), rect.width(), rect.height()))
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                kept.append(item)
+            selected[source] = kept[::-1]
+        result[page] = selected
+    return result
+
+
 def compute_replace_text_fontsize(rect_w, rect_h, text, text_length, min_size=6.0):
     """cp65 修复：计算替换文本在导出 PDF 中的字号，与屏幕预览对齐。
 

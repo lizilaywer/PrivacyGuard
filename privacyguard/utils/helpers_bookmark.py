@@ -10,9 +10,8 @@ cp_bookmark: 为新增"书签栏"功能提供无 UI 依赖的核心逻辑：
 便于单元测试与跨场景复用。fitz 的 TOC 格式为
 [[level, title, page], ...]（simple 模式），level>=1，page 从 1 起。
 """
-import re
-
 from privacyguard.utils.helpers_word_rules import normalize_custom_keyword_rules
+from privacyguard.utils.literal_keywords import compile_keyword_patterns, iter_keyword_matches
 
 __all__ = [
     "redact_toc_titles",
@@ -59,28 +58,16 @@ def redact_toc_titles(toc, rules):
 
 
 def _apply_rules_to_title(title, enabled_rules):
-    """对单个标题应用规则（大小写不敏感子串替换）。
-
-    cp_bookmark 审计 A3 修复：与正文/OCR 路径（helpers_word_rules.
-    build_word_rule_matches 用 re.IGNORECASE）对齐，避免同一条规则在
-    正文上能脱、在书签上漏脱（如 find="Zhang" 命中不了 "zhang san"）。
-    多条规则顺序应用：先应用的规则改写后的文本仍可被后续规则命中。
-    """
-    result = title
-    for rule in enabled_rules:
-        find_text = rule["find"]
-        replace_text = rule.get("replace", "")
-        if not isinstance(replace_text, str):
-            replace_text = ""
-        if not find_text:
-            continue
-        try:
-            # escape 防止 find 含正则元字符；IGNORECASE 与正文路径一致
-            result = re.sub(re.escape(find_text), lambda _m: replace_text, result, flags=re.IGNORECASE)
-        except re.error:
-            # 极端情况下回退到普通 str.replace（大小写敏感）
-            result = result.replace(find_text, replace_text)
-    return result
+    """Apply whole keywords to the original title in one pass."""
+    replacements = {rule["find"]: rule.get("replace") for rule in enabled_rules if rule.get("find")}
+    parts = []
+    cursor = 0
+    for start, end, term in iter_keyword_matches(title, compile_keyword_patterns(replacements)):
+        value = replacements[term]
+        parts.extend((title[cursor:start], value if isinstance(value, str) else ""))
+        cursor = end
+    parts.append(title[cursor:])
+    return "".join(parts)
 
 
 def find_bookmark_matches(toc, query):

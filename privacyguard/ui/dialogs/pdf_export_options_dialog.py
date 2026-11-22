@@ -1,6 +1,7 @@
 """A single optional export choice with a text-free hidden-content inventory."""
-from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QRadioButton,
+from PyQt6.QtWidgets import (QApplication, QDialog, QVBoxLayout, QLabel, QRadioButton,
                              QDialogButtonBox, QButtonGroup, QMessageBox)
+from PyQt6.QtCore import Qt
 
 from privacyguard.utils.pdf_inventory import inventory_pdf, inventory_summary
 
@@ -56,3 +57,25 @@ def choose_pdf_export_policy(parent, document, selected_filter=""):
         if reply != QMessageBox.StandardButton.Yes:
             return None, ""
     return policy, "隐藏部件清点（导出前）：\n" + inventory_summary(counts) + "\n处理方式：" + {"preserve": "保持版式，附加内容未净化", "sanitize": "清理隐藏信息", "raster": "纯图重建，不复制原对象"}[policy]
+
+
+def confirm_pdf_text_warnings(parent, pages, accepted_pages):
+    """Ask once, before the verified temporary file replaces the destination."""
+    shown = "、".join(str(page) for page in pages[:10])
+    location = f"第 {shown} 页" if len(pages) <= 10 else f"第 {shown} 页等 {len(pages)} 页"
+    dialog = QMessageBox(QMessageBox.Icon.Warning, "导出复查提醒",
+                         f"{location}的遮罩区域检测到额外文字，可能仍有原文。"
+                         "\n你可以返回复核，或保存当前结果。", parent=parent)
+    go_back = dialog.addButton("返回复核", QMessageBox.ButtonRole.RejectRole)
+    proceed = dialog.addButton("仍然导出", QMessageBox.ButtonRole.AcceptRole)
+    dialog.setDefaultButton(go_back)
+    dialog.setEscapeButton(go_back)
+    QApplication.restoreOverrideCursor()
+    try:
+        dialog.exec()
+    finally:
+        QApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+    if dialog.clickedButton() is proceed:
+        accepted_pages.extend(pages)
+        return True
+    return False

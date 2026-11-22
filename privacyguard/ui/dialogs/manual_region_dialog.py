@@ -84,7 +84,7 @@ class ManualRegionRedactDialog(QDialog):
             pass
         else:
             search_hint = QLabel(
-                "勾选后：按上方文字（以你编辑后的为准）在整个 PDF 查找并遮罩所有出现位置；"
+                "勾选后，以上方文字为一个整体，在整个 PDF 查找并遮罩。"
                 "扫描件会自动逐页 OCR，耗时与智能扫描相当。"
             )
             search_hint.setWordWrap(True)

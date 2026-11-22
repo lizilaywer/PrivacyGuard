@@ -782,9 +782,11 @@ class WebViewBridge(QObject):
 class WordWorker(_ModularWordWorker):
     """Word 文档智能脱敏线程（兼容层：自动注入 DEFAULT_RULES）"""
 
-    def __init__(self, word_doc, word_data, rules, custom_keywords, replacement_text, parent=None):
+    def __init__(self, word_doc, word_data, rules, custom_keywords, replacement_text, parent=None,
+                 *, custom_keyword_rules=None):
         super().__init__(word_doc, word_data, rules, custom_keywords,
-                         replacement_text, default_rules=DEFAULT_RULES, parent=parent)
+                         replacement_text, default_rules=DEFAULT_RULES, parent=parent,
+                         custom_keyword_rules=custom_keyword_rules)
 
 # === Word 预览交互式 JavaScript 代码常量 ===
 # v36.4: 提取为常量; v37.8.11 Phase 3: 外部化为 assets/js/ 文件
@@ -9200,21 +9202,17 @@ sudo dnf install antiword
             return
 
         replace_text = dlg.replacement_text
+        if dlg.search_whole_doc:
+            terms = split_targeted_search_terms(dlg.recognized_text)
+            if terms:
+                self._start_targeted_mask_scan(terms, replace_text)
+                return
+            QMessageBox.information(self, "提示", "识别文字为空，无法全文查找。已仅遮罩框选区域。")
         canvas.rects_manual.append(_make_hit(rect, replace_text))
         self.render_view()
         if hasattr(self, "btn_save"):
             self.btn_save.setEnabled(True)
-
-        if dlg.search_whole_doc:
-            terms = split_targeted_search_terms(dlg.recognized_text)
-            if not terms:
-                QMessageBox.information(self, "提示", "识别文字为空，无法全文查找。已仅遮罩框选区域。")
-                self._capture_undo_state()  # cp83: 仅框选遮罩，立即快照
-                return
-            # 全文遮罩：快照由 targeted scan 完成后统一捕捉（避免双快照）
-            self._start_targeted_mask_scan(terms, replace_text, page_idx, rect)
-        else:
-            self._capture_undo_state()  # cp83: 仅框选遮罩，立即快照
+        self._capture_undo_state()
 
     def _prepare_region_text(self, page_idx, rect):
         """cp65/v40.1.4（F3）：框选区域文字提取的准备阶段（主线程，轻量）。
@@ -9254,14 +9252,14 @@ sudo dnf install antiword
             logger.error("[cp65] 区域文字提取失败: %s: %s", type(e).__name__, e)
             return ("none", "")
 
-    def _start_targeted_mask_scan(self, terms, replace_text, origin_page, origin_rect):
+    def _start_targeted_mask_scan(self, terms, replace_text):
         """cp65: 按识别文字全文查找并遮罩。
 
         复用 OCRWorker 管线（文字层秒搜 + 扫描页逐页 OCR），但命中结果进
         manual 列表（可右键单个撤销），不覆盖已有的智能扫描 OCR 结果。
         """
         if self.active_worker is not None and self.active_worker.isRunning():
-            QMessageBox.warning(self, "提示", "正在处理其他任务，请稍候再使用全文遮罩。\n本次已仅遮罩框选区域。")
+            QMessageBox.warning(self, "提示", "正在处理其他任务，请稍候再使用全文遮罩。")
             return
         if self._source_revision is not None:
             try:
@@ -9275,8 +9273,6 @@ sudo dnf install antiword
             self._set_info_bar_message("⏹️ 已取消——需要编辑密码")
             return
 
-        self._targeted_origin_page = origin_page
-        self._targeted_origin_rect = QRectF(origin_rect)
         self._targeted_hit_count = 0
         preview = format_targeted_terms_preview(terms)
         self._set_info_bar_message(f"🔍 正在全文查找并遮罩：{preview}")
@@ -9291,7 +9287,7 @@ sudo dnf install antiword
         # cp_bookmark: 若开启"支持搜索识别书签栏"，把识别词同步应用到书签标题
         # （与全文遮罩语义对称：页面正文遮罩 + 书签标题替换/删除）
         self.apply_targeted_terms_to_bookmarks(terms, replace_text)
-        self.worker = OCRWorker(self.file_path, [], self.use_enhance, "\n".join(terms),
+        self.worker = OCRWorker(self.file_path, [], self.use_enhance, "",
                                 self.scan_level, self.offset_x, self.offset_w,
                                 custom_keyword_rules=keyword_rules,
                                 # cp87: 全文查找遮罩命中统一归类“全文查找”
@@ -9311,16 +9307,12 @@ sudo dnf install antiword
     def _on_targeted_page_result(self, page_num: int, rects: list):
         """cp65: 全文遮罩命中逐页并入 manual 列表（不覆盖已有 OCR 结果）。
 
-        与原框选区域及已有 manual 命中重叠 >50% 的跳过，避免重复遮罩。
+        与已有 manual 命中重叠 >50% 的跳过，避免重复遮罩。
         """
         if page_num not in self.page_data:
             return
         manual_list = self.page_data[page_num]['manual']
         existing_rects = [_hit_rect(item) for item in manual_list]
-        if page_num == getattr(self, "_targeted_origin_page", None):
-            origin_rect = getattr(self, "_targeted_origin_rect", None)
-            if origin_rect is not None:
-                existing_rects.append(origin_rect)
         accepted = merge_targeted_hits(deduplicate_rects(rects), existing_rects)
         manual_list.extend(accepted)
         self._targeted_hit_count += len(accepted)
@@ -9359,7 +9351,7 @@ sudo dnf install antiword
             return
         QMessageBox.information(
             self, "全文遮罩完成",
-            f"已根据识别文字在全文新增 {count} 处遮罩（不含原框选区域）。\n"
+            f"已按完整文字在全文新增 {count} 处遮罩。\n"
             "如有误遮罩，可在页面上右键单个遮罩进行撤销。"
         )
 
@@ -9486,7 +9478,8 @@ sudo dnf install antiword
         # Word 处理
         elif self.word_doc:
             self.worker = WordWorker(self.word_doc, self.word_data, self.active_rules,
-                                     self.custom_keywords, self.replacement_text, parent=self)
+                                     self.custom_keywords, self.replacement_text, parent=self,
+                                     custom_keyword_rules=self.custom_keyword_rules)
             self.active_worker = self.worker  # 追踪线程
             self.worker.progress_signal.connect(self.progress.setValue)
             # 先连接原有的完成处理，再连接清理
@@ -9780,7 +9773,9 @@ sudo dnf install antiword
                 # cp114: 加密 PDF 若缺编辑权限，弹窗输入 owner 密码解锁
                 if not self._ensure_edit_permission():
                     return
-                from privacyguard.ui.dialogs.pdf_export_options_dialog import choose_pdf_export_policy
+                from privacyguard.ui.dialogs.pdf_export_options_dialog import (
+                    choose_pdf_export_policy, confirm_pdf_text_warnings,
+                )
                 from privacyguard.utils.pdf_structure import PDF_ENGINE_ERRORS, pdf_export_error_message, reachable_pdf_xrefs
                 try:
                     self._source_revision.verify()
@@ -9834,6 +9829,8 @@ sudo dnf install antiword
                                     "请重新打开文档并输入正确密码。"
                                 )
                     reachable_pdf_xrefs(doc_save)
+                    from privacyguard.utils.helpers_pdf import effective_pdf_export_masks
+                    export_masks = effective_pdf_export_masks(self.page_data)
                     # v37.7.10 cp39: 按 current_color 实际 RGB 归一化（fitz fill 接受 0-1 浮点元组）
                     c = self.current_color
                     fill_col = (c.red() / 255.0, c.green() / 255.0, c.blue() / 255.0)
@@ -9843,7 +9840,7 @@ sudo dnf install antiword
 
                         # v37.3.1: 修复内部编辑功能 - 使用副本避免修改原始数据
                         # 从 page_data 中获取脱敏区域列表（O8: .get 兜底，避免缺页时 KeyError）
-                        page_entry = self.page_data.get(i, {})
+                        page_entry = export_masks.get(i, {})
                         ocr_list = page_entry.get('ocr', [])
                         manual_list = page_entry.get('manual', [])
 
@@ -9900,6 +9897,10 @@ sudo dnf install antiword
                                     replace_text, fontname="china-s", fontsize=fs)
                             except Exception:
                                 actual_w = text_w * (fs / base_fs if base_fs else 1)
+                            available = max(0.5, rect.width - 1)
+                            if actual_w > available:
+                                fs *= available / actual_w
+                                actual_w = available
                             start_x = (rect.x0 + rect.x1) / 2 - actual_w / 2
                             # 垂直居中：baseline = 矩形垂直中心 + 字号*0.35
                             # （中文字 ascent 约占字号 0.35，经验值，与屏幕 AlignCenter 视觉一致）
@@ -9964,14 +9965,24 @@ sudo dnf install antiword
                         doc_save.close()
                         doc_save = prepared
                     from privacyguard.utils.export_transaction import save_verified_pdf
-                    save_verified_pdf(doc_save, fname, save_kwargs, self.page_data, self.file_path,
-                                      policy=pdf_policy, source_revision=self._source_revision)
+                    warned_pages = []
+                    checked = save_verified_pdf(
+                        doc_save, fname, save_kwargs, export_masks, self.file_path,
+                        policy=pdf_policy, source_revision=self._source_revision,
+                        confirm_text_warnings=lambda pages: confirm_pdf_text_warnings(self, pages, warned_pages),
+                    )
+                    if checked is None:
+                        QApplication.restoreOverrideCursor()
+                        self._set_info_bar_message("已返回复核，未保存本次结果。")
+                        return
                     encrypted = bool(encrypt_kwargs)
 
                     # 安全审计 v40.1: 导出成功后删除该文件的会话草稿（含未脱敏原文 pdfsnap）。
                     # 用户已完成脱敏导出，草稿（崩溃恢复用）不再需要，及时清理避免原文残留。
                     if self.file_path and hasattr(self, "_session_store"):
                         try:
+                            if self._draft_timer.isActive():
+                                self._draft_timer.stop()
                             self._session_store.delete_draft(self.file_path)
                         except Exception:
                             pass  # 草稿删除失败不影响导出成功
@@ -9985,19 +9996,26 @@ sudo dnf install antiword
                             f"未扫描页面未做智能脱敏，请自行确认其安全性。"
                         )
                         title = "已保存"
+                    elif warned_pages:
+                        body = f"已按你的选择保存至：\n{fname}{enc_note}"
+                        title = "已保存"
                     else:
                         body = f"文件已保存，并完成导出复查：\n{fname}{enc_note}"
                         title = "成功"
+                    if warned_pages:
+                        body += f"\n\n有 {len(warned_pages)} 页的遮罩文字需要复核。"
                     # cp87: 弹窗附脱敏报告（“显示详细信息”原地展开）+ 导出报告按钮
                     report_text = build_redact_report(
                         os.path.basename(self.file_path or ""),
                         total_pages,
-                        self.page_data,
+                        export_masks,
                         fname,
                         encrypted=encrypted,
                         now_str=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     )
                     report_text += "\n\n" + hidden_report
+                    if warned_pages:
+                        report_text += "\n\n遮罩文字待复核页：" + "、".join(map(str, warned_pages))
                     box = QMessageBox(self)
                     box.setIcon(QMessageBox.Icon.Information)
                     box.setWindowTitle(title)

@@ -23,7 +23,8 @@ def _hit_rect(item):
 
 
 def _chars(page):
-    for block in page.get_text("rawdict").get("blocks", []):
+    flags = fitz.TEXTFLAGS_RAWDICT & ~fitz.TEXT_PRESERVE_IMAGES
+    for block in page.get_text("rawdict", flags=flags).get("blocks", []):
         for line in block.get("lines", []):
             for span in line.get("spans", []):
                 for char in span.get("chars", []):
@@ -31,7 +32,7 @@ def _chars(page):
                         yield char["c"], fitz.Rect(char["bbox"])
 
 
-def verify_pdf_export(path, expected_document, page_data, save_kwargs):
+def verify_pdf_export(path, expected_document, page_data, save_kwargs, *, text_warning_pages=None):
     """Validate saved geometry, TOC, encryption and text in marked rectangles.
 
     Text explicitly requested as replacement is permitted. This does not claim
@@ -89,6 +90,7 @@ def verify_pdf_export(path, expected_document, page_data, save_kwargs):
                     replacement = hit.get("replace_text", "") if isinstance(hit, dict) else ""
                     areas.append((area, replacement))
                 characters = list(_chars(page))
+                page_has_warning = False
                 for area, _replacement in areas:
                     allowed = "".join(str(text) for other, text in areas if other.intersects(area))
                     allowed = "".join(c for c in allowed if not c.isspace())
@@ -98,9 +100,13 @@ def verify_pdf_export(path, expected_document, page_data, save_kwargs):
                     # a portion of adjacent replacement runs, hence subsequence.
                     remaining = iter(allowed)
                     if any(not any(candidate == char for candidate in remaining) for char in observed):
-                        raise ExportValidationError(
-                            f"第 {index + 1} 页遮罩区域仍有未预期文字，导出已中止。")
+                        if text_warning_pages is None:
+                            raise ExportValidationError(
+                                f"第 {index + 1} 页遮罩区域仍有未预期文字，导出已中止。")
+                        page_has_warning = True
                     checked += 1
+                if page_has_warning:
+                    text_warning_pages.append(index + 1)
             return checked
     except ExportValidationError:
         raise
