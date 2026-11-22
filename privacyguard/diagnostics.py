@@ -8,6 +8,36 @@ from pathlib import Path
 from unittest.mock import patch
 
 
+def synthetic_sparse_pdf(*, reference_missing=False, explicitly_free=False):
+    """Object 12 is absent, but item 13 makes it part of the numeric range."""
+    data = bytearray(b"%PDF-1.4\n")
+    offsets = {}
+
+    def add(number, value):
+        offsets[number] = len(data)
+        data.extend(f"{number} 0 obj\n".encode() + value + b"\nendobj\n")
+
+    add(1, b"<< /Type /Catalog /Pages 2 0 R /Metadata 13 0 R >>")
+    add(2, b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>")
+    contents = b"[5 0 R 12 0 R]" if reference_missing else b"5 0 R"
+    add(3, b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 300 400] "
+           b"/Resources << /Font << /F1 4 0 R >> >> /Contents " + contents + b" >>")
+    add(4, b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
+    stream = b"BT /F1 12 Tf 20 350 Td (TEST_SECRET) Tj 0 -30 Td (KEEP_VISIBLE) Tj ET"
+    add(5, b"<< /Length %d >>\nstream\n%s\nendstream" % (len(stream), stream))
+    xml = b"<metadata>XML_TEST_CANARY</metadata>"
+    add(13, b"<< /Type /Metadata /Subtype /XML /Length %d >>\nstream\n%s\nendstream" % (len(xml), xml))
+    xref = len(data)
+    data.extend(b"xref\n0 6\n0000000000 65535 f \n")
+    for number in range(1, 6):
+        data.extend(f"{offsets[number]:010d} 00000 n \n".encode())
+    if explicitly_free:
+        data.extend(b"6 7\n" + b"0000000000 00000 f \n" * 7)
+    data.extend(f"13 1\n{offsets[13]:010d} 00000 n \ntrailer\n"
+                f"<< /Size 14 /Root 1 0 R >>\nstartxref\n{xref}\n%%EOF\n".encode())
+    return bytes(data)
+
+
 def run_self_test(window_factory=None, report_path=None):
     import cv2
     import fitz
@@ -90,6 +120,32 @@ def run_self_test(window_factory=None, report_path=None):
                     finally:
                         rebuilt.close()
                 checks["verified_word_and_pixel_pdf_exports"] = True
+                from privacyguard.utils.pdf_inventory import inventory_pdf
+                from privacyguard.utils.export_transaction import ExportValidationError
+                with fitz.open(stream=synthetic_sparse_pdf(), filetype="pdf") as sparse:
+                    if inventory_pdf(sparse)["xml"] != 1:
+                        raise AssertionError("Sparse PDF inventory lost attached metadata")
+                    page = sparse[0]
+                    region = page.search_for("TEST_SECRET")[0]
+                    page.add_redact_annot(region, fill=(0, 0, 0))
+                    page.apply_redactions()
+                    from PyQt6.QtCore import QRectF
+                    masks = {0: {"manual": [QRectF(region.x0, region.y0, region.width, region.height)]}}
+                    prepare_pdf_output(sparse, "sanitize")
+                    target = root / "sparse-verified.pdf"
+                    save_verified_pdf(sparse, target, {"garbage": 2, "clean": True}, masks, policy="sanitize")
+                    with fitz.open(target) as saved:
+                        text = saved[0].get_text()
+                        if "TEST_SECRET" in text or "KEEP_VISIBLE" not in text or saved.get_xml_metadata():
+                            raise AssertionError("Sparse PDF export verification failed")
+                with fitz.open(stream=synthetic_sparse_pdf(reference_missing=True), filetype="pdf") as incomplete:
+                    try:
+                        inventory_pdf(incomplete)
+                    except ExportValidationError:
+                        pass
+                    else:
+                        raise AssertionError("Missing referenced PDF object was ignored")
+                checks["sparse_pdf_export_and_broken_reference_guard"] = True
                 img = np.full((180, 900, 3), 255, dtype=np.uint8)
                 cv2.putText(img, "PHONE 13812345678", (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.7, (0, 0, 0), 3)
                 recognized = "".join(r.text for r in RapidOCREngine().recognize(img))

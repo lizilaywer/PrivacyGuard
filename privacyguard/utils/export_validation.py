@@ -9,6 +9,7 @@ import math
 import fitz
 
 from .export_transaction import ExportValidationError
+from .pdf_structure import reachable_pdf_xrefs
 
 
 def _hit_rect(item):
@@ -54,6 +55,7 @@ def verify_pdf_export(path, expected_document, page_data, save_kwargs):
             # temporarily grants all permissions in PyMuPDF's runtime view.
             if encrypted and saved.authenticate(save_kwargs.get("user_pw", "")) <= 0:
                 raise ExportValidationError("导出打开密码验证未通过，未保存文件。")
+            reachable_pdf_xrefs(saved)
             if "permissions" in save_kwargs:
                 known = (fitz.PDF_PERM_PRINT | fitz.PDF_PERM_MODIFY | fitz.PDF_PERM_COPY
                          | fitz.PDF_PERM_ANNOTATE | fitz.PDF_PERM_FORM | fitz.PDF_PERM_ASSEMBLE

@@ -5,6 +5,7 @@ import fitz
 
 from .export_transaction import ExportValidationError
 from .pdf_inventory import inventory_pdf
+from .pdf_structure import reachable_pdf_xrefs
 
 POLICIES = ("preserve", "sanitize", "raster")
 
@@ -35,14 +36,24 @@ def prepare_pdf_output(doc, policy="preserve", dpi=180):
         raise ExportValidationError("存在表单、图层、隐藏文字、结构或签名等复杂内容，无法可靠执行保留文字净化。请选择纯图导出，或保留版式后自行复核附加内容。")
     toc = doc.get_toc(simple=True)
     doc.scrub(attached_files=True, clean_pages=False, embedded_files=True,
-              hidden_text=False, javascript=True, metadata=True, redactions=False,
+              hidden_text=False, javascript=False, metadata=True, redactions=False,
               remove_links=True, reset_fields=False, reset_responses=False,
-              thumbnails=False, xml_metadata=True)
+              thumbnails=False, xml_metadata=False)
+    # These scrub options would enumerate every xref slot. Clean metadata and
+    # actions from the live objects instead, even in PDFs with sparse tables.
+    doc.del_xml_metadata()
     doc.xref_set_key(-1, "Info", "null")
-    for xref in range(1, doc.xref_length()):
+    for xref in reachable_pdf_xrefs(doc):
         if not doc.xref_object(xref).startswith("<<"):
             continue
-        for key in ("A", "AA", "OpenAction", "JS", "Thumb", "PieceInfo"):
+        if doc.xref_get_key(xref, "S")[1] == "/JavaScript":
+            doc.update_object(xref, "<<>>")
+            continue
+        if doc.xref_get_key(xref, "Type")[1] == "/Metadata":
+            doc.update_object(xref, "<<>>")
+            doc.update_stream(xref, b"", new=True)
+            continue
+        for key in ("A", "AA", "OpenAction", "JS", "Thumb", "PieceInfo", "Metadata"):
             if doc.xref_get_key(xref, key)[0] != "null":
                 doc.xref_set_key(xref, key, "null")
     catalog = doc.pdf_catalog()

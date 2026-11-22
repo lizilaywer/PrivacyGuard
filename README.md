@@ -9,7 +9,7 @@
 一个由中国基层律师从真实文书工作需求出发、借助 AI 持续开发的开源桌面工具。
 
 [![CI](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml/badge.svg)](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-40.3.0-167d89)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-40.3.1-167d89)](CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue)](LICENSE)
 [![Desktop](https://img.shields.io/badge/desktop-Windows%20%7C%20macOS-526479)](#下载与运行)
 [![Stars](https://img.shields.io/github/stars/lizilaywer/PrivacyGuard?style=social)](https://github.com/lizilaywer/PrivacyGuard/stargazers)
@@ -83,7 +83,7 @@ PrivacyGuard 把**智能扫描、手动补充、预览检查和导出**放进同
 前往 **[GitHub Releases](https://github.com/lizilaywer/PrivacyGuard/releases)**，按发布说明选择平台和版本。源码版本与已上传便携包可能不同，请核对发布页中的版本、架构、校验值和已知问题。
 
 - **Windows**：使用对应发布页提供的已验证便携包。历史 **v40.2.3 Windows 包不可分发**，请勿使用或转发。
-- **macOS** 便携包适用于 Apple Silicon 和 macOS 14 或更新版本，采用 ad-hoc 签名。v40.3.0 原生验证记录和构建产物在 GitHub Actions 中。[Apple Silicon 构建记录](https://github.com/lizilaywer/PrivacyGuard/actions/runs/44515530222)
+- **macOS** 便携包适用于 Apple Silicon 和 macOS 14 或更新版本，采用 ad-hoc 签名。v40.3.1 修复部分 PDF 导出时的对象编号报错。通过原生自检的包可在对应工作流记录的 Artifacts 区域下载。[Apple Silicon 构建记录](https://github.com/lizilaywer/PrivacyGuard/actions/workflows/ci.yml)
 - v40.3.0 源码、便携候选包与平台验证状态见 [升级验收记录](docs/current/UPGRADE_COMPLETION_20261119.md)；只有通过原生验证的包才可分发，BuildKit 是源码资料包。
 
 ### 从源码运行（Python 3.11，64 位）

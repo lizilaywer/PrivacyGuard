@@ -32,7 +32,7 @@
     {
       "path": "AGENTS.md",
       "bytes": 16642,
-      "sha256": "ff38c10a7eea107d357b360d4a453515eb2e91e68dc9a786114f8aa428644926",
+      "sha256": "55a608824dec7c92e1131c82187fe2026b9b9f1a53c5e7178e44095164588987",
       "kind": "text",
       "lines": 319
     },
@@ -52,10 +52,10 @@
     },
     {
       "path": "CHANGELOG.md",
-      "bytes": 157558,
-      "sha256": "dfb53f0e011e2d260bb7b6bdae42d99973f301463eadc64cfe6af6bfeeeb6942",
+      "bytes": 158029,
+      "sha256": "788d515d5e73fc14ddec88b0d22469323afe4ee6231adc7afecef38ddfa4ac5a",
       "kind": "text",
-      "lines": 2806
+      "lines": 2812
     },
     {
       "path": "CLAUDE.md",
@@ -87,15 +87,15 @@
     },
     {
       "path": "README.md",
-      "bytes": 9911,
-      "sha256": "4b1d1869a70fd004239867bf9452947371e496c97a66e722ff4446f47d4cf8ce",
+      "bytes": 9983,
+      "sha256": "2451bdffd4d87a17d7cfbdfe2d0ecb04cb10f7165be939e5ec207fdfed5cb6be",
       "kind": "text",
       "lines": 161
     },
     {
       "path": "README_EN.md",
       "bytes": 7269,
-      "sha256": "31225084257e923ae66460bbdf3105a23397e878eddf4bb0a443f079afadeedb",
+      "sha256": "fe15f8bb28fdda2d0845b47245a5fcd9c4f7d575538c4314b0d627966235b82d",
       "kind": "text",
       "lines": 110
     },
@@ -867,10 +867,10 @@
     },
     {
       "path": "docs/current/DEV_LOG.md",
-      "bytes": 348097,
-      "sha256": "a2a480f6fea9b43eb3ddd247a3b38104d5cc7d94201b79abd18f97ae0fe36763",
+      "bytes": 348679,
+      "sha256": "c20684b21a701656a6fcad7d0014cf7bc6eccf54f9becca632d929858a9280a5",
       "kind": "text",
-      "lines": 8092
+      "lines": 8098
     },
     {
       "path": "docs/current/MAIN_PY_REFACTOR_PLAN.md",
@@ -937,10 +937,10 @@
     },
     {
       "path": "docs/current/STATUS.md",
-      "bytes": 123851,
-      "sha256": "34bf47951b9f86147825f6863b2bfb05b5158e208a3284884f49d1e053727929",
+      "bytes": 124415,
+      "sha256": "481ed349e440621c397882c3a3cf5c7539d2ca339872a3aab5e55d63ec4d79f2",
       "kind": "text",
-      "lines": 2375
+      "lines": 2381
     },
     {
       "path": "docs/current/TODO_WINDOWS_BUILD.txt",
@@ -1113,7 +1113,7 @@
     {
       "path": "docs/packaging/README.md",
       "bytes": 3261,
-      "sha256": "1181b47b0cb89912c00cc9249c8ebffc99874425515fe4bd7e81071167d2ea2c",
+      "sha256": "f6fc56484c22289689da7f499659f0e50e90cc027c31adda2f7e8dd317caade0",
       "kind": "text",
       "lines": 73
     },
@@ -1140,10 +1140,10 @@
     },
     {
       "path": "main.py",
-      "bytes": 498566,
-      "sha256": "5a111585be3c69d48372dcaa1afc05cb1d3e3f0cf4f504e0408a3db74d40213c",
+      "bytes": 498793,
+      "sha256": "9bd9868ddc699d7ab9ee677b438cf931671871668b935739ab9bc98dcf6b5e79",
       "kind": "text",
-      "lines": 10192,
+      "lines": 10194,
       "classes": 7,
       "functions": 243
     },
@@ -1190,8 +1190,8 @@
     },
     {
       "path": "packaging/macos/scripts/README.txt",
-      "bytes": 3721,
-      "sha256": "800155b266f86ecd8a2dfdc5c95d944299010b9f70f1d33866a18c0fb7478a20",
+      "bytes": 3713,
+      "sha256": "4e815c84aff19104014e28a6bfa5d75e6c761c2ed3d2e572b70242a10385a05a",
       "kind": "text",
       "lines": 74
     },
@@ -1280,7 +1280,7 @@
     {
       "path": "packaging/windows/config/version_info.txt",
       "bytes": 979,
-      "sha256": "1e3c292cc6bd25e734392e52e0d7ecd4f10e5512214fe0128bf39983e58e9073",
+      "sha256": "e353c6c492c13395c6d5bd4d904a2d28750c34a2fccaa33517f1c77b95551a34",
       "kind": "text",
       "lines": 33
     },
@@ -1322,7 +1322,7 @@
     {
       "path": "packaging/windows/scripts/README.txt",
       "bytes": 1579,
-      "sha256": "b088a42d5d82cb7aa05c7eb1de4e7e020cdf65dee11a1cd50982585f7b4e81a7",
+      "sha256": "4f2aced5f71160278421310a752ea65f201996f431ce0d6fc2aba7afa1157bc4",
       "kind": "text",
       "lines": 28
     },
@@ -1401,12 +1401,12 @@
     },
     {
       "path": "privacyguard/diagnostics.py",
-      "bytes": 7367,
-      "sha256": "c8345b396f57e3a68d293aa6de2d91b1c0d129e1c3afd4f0545c50c108acaf80",
+      "bytes": 10641,
+      "sha256": "daa6e24be048a18715d844ebfcf26f04895a3126428865df8acc6e75c8f73176",
       "kind": "text",
-      "lines": 130,
+      "lines": 186,
       "classes": 0,
-      "functions": 2
+      "functions": 4
     },
     {
       "path": "privacyguard/ocr/__init__.py",
@@ -1878,10 +1878,10 @@
     },
     {
       "path": "privacyguard/utils/export_validation.py",
-      "bytes": 7756,
-      "sha256": "360a8775000b3852f5caedf508d329877798039a89df0afb5a81706b1bfb6e2c",
+      "bytes": 7842,
+      "sha256": "5375e112eb3e171ee325981584bc8a442cd11025870bbf5df6be130554d4e06c",
       "kind": "text",
-      "lines": 137,
+      "lines": 139,
       "classes": 0,
       "functions": 4
     },
@@ -1968,8 +1968,8 @@
     },
     {
       "path": "privacyguard/utils/pdf_inventory.py",
-      "bytes": 2328,
-      "sha256": "4f70c52b399fe15fac4f113426345d4b2f760a3ea0d34f9d98ecffae05a1f5d4",
+      "bytes": 2243,
+      "sha256": "e86ad1301ecf2f3c62f3ad5c002d6315e87c638268799a5f2fcf545070ab6066",
       "kind": "text",
       "lines": 50,
       "classes": 0,
@@ -1986,12 +1986,21 @@
     },
     {
       "path": "privacyguard/utils/pdf_sanitize.py",
-      "bytes": 3114,
-      "sha256": "8410ab1566e2f2b72cd0092c6b728fc603f27575d79ed2526e88eebd1b7e204f",
+      "bytes": 3657,
+      "sha256": "7db12cc31145e4f404000fbf3d9624a13ec7c85a97678920ee7cad18b18a056d",
       "kind": "text",
-      "lines": 64,
+      "lines": 75,
       "classes": 0,
       "functions": 2
+    },
+    {
+      "path": "privacyguard/utils/pdf_structure.py",
+      "bytes": 3134,
+      "sha256": "2eb749b7daf95a337b695b18861542fa1e2b5769d75adeb71824c08c6c75fd45",
+      "kind": "text",
+      "lines": 77,
+      "classes": 0,
+      "functions": 3
     },
     {
       "path": "privacyguard/utils/regex_service.py",
@@ -2872,6 +2881,15 @@
       "functions": 6
     },
     {
+      "path": "tests/unit/test_pdf_sparse_xref_export.py",
+      "bytes": 3487,
+      "sha256": "c5bc2fce78913d8fa50cb2dfc1c950f793616305a697220bf4bd04165bc9c29e",
+      "kind": "text",
+      "lines": 66,
+      "classes": 2,
+      "functions": 5
+    },
+    {
       "path": "tests/unit/test_pdf_text_hit_dedup.py",
       "bytes": 7174,
       "sha256": "3afb63673dd05b28aa13840f160358e1dbf15451c4b48e31e9fa6430a2ac782e",
@@ -3140,11 +3158,11 @@
     {
       "path": "version.txt",
       "bytes": 7,
-      "sha256": "b71068c6a15446421ce22e41426d378cae58b79b6d9f0232928e6eab44755822",
+      "sha256": "90cdbf249dd2eeccde22246ded1223de29c2c3922f8eee5c5a6be668ee86a6fc",
       "kind": "text",
       "lines": 1
     }
   ],
-  "file_count": 406,
+  "file_count": 408,
   "findings": []
 }

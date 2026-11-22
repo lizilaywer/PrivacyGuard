@@ -6,6 +6,7 @@ objects contain no sensitive data. Pixel export is the object-isolation option.
 import re
 
 from .export_transaction import ExportValidationError
+from .pdf_structure import reachable_pdf_xrefs
 
 LABELS = {
     "metadata": "文档属性", "xml": "XML 元数据", "attachments": "附件",
@@ -17,8 +18,7 @@ LABELS = {
 
 def inventory_pdf(doc):
     counts = dict.fromkeys(LABELS, 0)
-    if doc.xref_length() > 50000:
-        raise ExportValidationError("PDF 对象过多，无法完成隐藏内容清点，请分册后重试。")
+    xrefs = reachable_pdf_xrefs(doc)
     counts["metadata"] = int(doc.xref_get_key(-1, "Info")[0] != "null")
     counts["xml"] = int(bool(doc.get_xml_metadata()))
     counts["attachments"] = doc.embfile_count()
@@ -31,7 +31,7 @@ def inventory_pdf(doc):
             1 for span in page.get_texttrace()
             if span.get("type") == 3 or span.get("opacity", 1) == 0)
     object_bytes = 0
-    for xref in range(1, doc.xref_length()):
+    for xref in xrefs:
         obj = doc.xref_object(xref)
         object_bytes += len(obj)
         if object_bytes > 32 * 1024 * 1024:

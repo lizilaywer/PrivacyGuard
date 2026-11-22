@@ -9755,10 +9755,11 @@ sudo dnf install antiword
                 if not self._ensure_edit_permission():
                     return
                 from privacyguard.ui.dialogs.pdf_export_options_dialog import choose_pdf_export_policy
+                from privacyguard.utils.pdf_structure import PDF_ENGINE_ERRORS, pdf_export_error_message, reachable_pdf_xrefs
                 try:
                     pdf_policy, hidden_report = choose_pdf_export_policy(self, self.doc, pdf_filter)
-                except (ValueError, RuntimeError) as error:
-                    QMessageBox.critical(self, "无法完成导出清点", str(error))
+                except (ValueError, *PDF_ENGINE_ERRORS) as error:
+                    QMessageBox.critical(self, "无法完成导出清点", pdf_export_error_message(error))
                     return
                 if pdf_policy is None:
                     return
@@ -9804,6 +9805,7 @@ sudo dnf install antiword
                                     "文档加密密码错误，无法保存脱敏结果。\n"
                                     "请重新打开文档并输入正确密码。"
                                 )
+                    reachable_pdf_xrefs(doc_save)
                     # v37.7.10 cp39: 按 current_color 实际 RGB 归一化（fitz fill 接受 0-1 浮点元组）
                     c = self.current_color
                     fill_col = (c.red() / 255.0, c.green() / 255.0, c.blue() / 255.0)
@@ -9989,9 +9991,9 @@ sudo dnf install antiword
                         ok, err = open_path_in_system(fname)
                         if not ok:
                             QMessageBox.warning(self, "打开失败", f"无法打开导出的文档：\n{err}")
-                except (IOError, OSError, ValueError, RuntimeError, KeyError) as e:
+                except (OSError, ValueError, KeyError, *PDF_ENGINE_ERRORS) as e:
                     QApplication.restoreOverrideCursor()
-                    QMessageBox.critical(self, "失败", str(e))
+                    QMessageBox.critical(self, "导出失败", pdf_export_error_message(e))
                 finally:
                     if doc_save:
                         doc_save.close()
