@@ -8,10 +8,12 @@ New document opens call reset_review(); no worker touches review widgets.
 import copy
 import json
 
+import fitz
 from PyQt6.QtCore import Qt, QTimer, QRectF
 from PyQt6.QtWidgets import QDockWidget, QMessageBox
 
 from privacyguard.ui.panels.redaction_review_panel import RedactionReviewPanel
+from privacyguard.utils.export_transaction import ExportValidationError
 from privacyguard.utils.review_decisions import (geometry, page_fingerprint, word_match_key,
                                                  WordReviewStore)
 
@@ -43,6 +45,7 @@ class ReviewMixin:
         self._review_pdf_fingerprints = {}
         self._review_signature = None
         self._inspection_candidates = []
+        self._inspection_fingerprint = None
         self._inspection_status = ""
         self._rule_review_cache = (None, [])
         self._rule_review_failed = None
@@ -129,6 +132,8 @@ class ReviewMixin:
     def review_locate(self, row):
         if self.review_busy():
             return
+        if row["source"] == "candidate" and not self._inspection_page_current(row):
+            return
         if self.doc is not None and "page" in row:
             self.current_page = row["page"]
             if getattr(self, "page_view_mode", False):
@@ -148,12 +153,7 @@ class ReviewMixin:
         if row["source"] in ("status", "rule"):
             return
         if row["source"] == "candidate":
-            if row not in self._inspection_candidates or self.doc is None:
-                return
-            if page_fingerprint(self.doc[row["page"]]) != row["fingerprint"]:
-                self._inspection_candidates.remove(row)
-                self._set_info_bar_message("页面已变化，请重新补查。")
-                self.refresh_review()
+            if not self._inspection_page_current(row):
                 return
             if state == "confirmed":
                 self.page_data[row["page"]]["manual"].append({"rect": QRectF(*row["geometry"]), "replace_text": ""})
@@ -288,16 +288,38 @@ class ReviewMixin:
         self._word_review_redo.clear()
         self.refresh_word_review_buttons()
 
+    def _inspection_page_current(self, row):
+        if row not in self._inspection_candidates or self.doc is None:
+            return False
+        index = row["page"]
+        try:
+            self._source_revision.verify()
+            if index in self.page_data and 0 <= index < len(self.doc):
+                if page_fingerprint(self.doc[index]) == row["fingerprint"]:
+                    return True
+        except (OSError, ValueError, RuntimeError, fitz.mupdf.FzErrorBase):
+            pass
+        self._inspection_candidates.remove(row)
+        self._set_info_bar_message("原件或页面已变化，请重新打开或补查。")
+        self.refresh_review()
+        return False
+
     def start_page_inspection(self):
         if self.doc is None or self.review_busy() or not self._ensure_edit_permission():
             return
         from privacyguard.workers.inspection_worker import InspectionWorker
         try:
+            self._source_revision.verify()
+            fingerprint = page_fingerprint(self.doc[self.current_page])
             worker = InspectionWorker(self.doc.tobytes(), self.current_page, self)
-        except (ValueError, RuntimeError):
+        except ExportValidationError as error:
+            self._set_info_bar_message(str(error))
+            return
+        except (IndexError, ValueError, RuntimeError, fitz.mupdf.FzErrorBase):
             self._set_info_bar_message("无法创建补查快照，请重试。")
             return
-        self._inspection_fingerprint = page_fingerprint(self.doc[self.current_page])
+        self._inspection_candidates = []
+        self._inspection_fingerprint = fingerprint
         self._inspection_status = "正在补查当前页，只生成候选，不自动遮罩。"
         self.active_worker = worker
         self.active_task_type = "inspection"
@@ -307,24 +329,27 @@ class ReviewMixin:
         worker.result.connect(self._receive_inspection)
         worker.failed.connect(self._inspection_failed)
         worker.finished.connect(self._finish_inspection)
+        worker.finished.connect(worker.deleteLater)
         worker.start()
         self.refresh_review()
 
     def _receive_inspection(self, page, candidates, status):
+        if self.sender() is not self.active_worker or self._inspection_fingerprint is None:
+            return
         self._inspection_candidates = [dict(c, page=page, source="candidate", state="pending",
                                            label=f'第 {page+1} 页 · 补查{c["kind"]}',
                                            fingerprint=self._inspection_fingerprint) for c in candidates]
         self._inspection_status = status
 
     def _inspection_failed(self, message):
-        self._inspection_status = message
+        if self.sender() is self.active_worker:
+            self._inspection_status = message
 
     def _finish_inspection(self):
-        worker = self.active_worker
+        if self.sender() is not self.active_worker:
+            return
         self.active_worker = None
         self.active_task_type = None
         self.btn_scan.setEnabled(True)
         self.btn_cancel_scan.hide()
-        if worker:
-            worker.deleteLater()
         self.refresh_review()

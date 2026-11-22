@@ -167,6 +167,21 @@ def run_self_test(window_factory=None, report_path=None):
                 if output.read_bytes() != b"previous export" or any(root.glob(".pg-export-*")):
                     raise AssertionError("Blocked export changed the destination or left a temporary file")
                 checks["reviewed_source_and_destination_guard"] = True
+                from privacyguard.ocr.financial_candidates import collect_financial_candidates
+                with fitz.open() as fields_pdf:
+                    page = fields_pdf.new_page()
+                    number = "１２３４ ５６７８-９０１２"
+                    page.insert_text((30, 60), "银行账号：" + number, fontname="china-s")
+                    page.insert_text((30, 90), "订单编号：" + number, fontname="china-s")
+                    page.set_rotation(90)
+                    hits, limited = collect_financial_candidates(page)
+                    if limited or len(hits) != 1 or number in repr(hits):
+                        raise AssertionError("Labeled finance field was not isolated")
+                    x, y, width, height = hits[0]["geometry"]
+                    area = fitz.Rect(x, y, x + width, y + height) * page.derotation_matrix
+                    if page.get_textbox(area).strip() != number:
+                        raise AssertionError("Finance candidate missed its original character geometry")
+                checks["position_scoped_financial_candidates"] = True
                 img = np.full((180, 900, 3), 255, dtype=np.uint8)
                 cv2.putText(img, "PHONE 13812345678", (20, 100), cv2.FONT_HERSHEY_SIMPLEX, 1.7, (0, 0, 0), 3)
                 recognized = "".join(r.text for r in RapidOCREngine().recognize(img))

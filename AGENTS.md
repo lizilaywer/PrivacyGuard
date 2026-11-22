@@ -7,7 +7,7 @@ This file is the primary development guide for Codex and other coding agents wor
 ## Project Overview
 
 **Project**: PrivacyGuard 脱敏卫士  
-**Current Version**: v40.3.2
+**Current Version**: v40.3.3
 **Last Updated**: 2026-11-22
 **Status**: 后续稳健升级已接入：PDF 隐藏部件清点/显式净化/纯图导出，Word 共用 XML 内容映射，位置复核与草稿，模板及逐文件计划，正则进程超时，本页补查和混合页搜索。发布验证与剩余边界见 docs/current/UPGRADE_COMPLETION_20261119.md。OCR 字符候选仍默认关闭；3.10.0 试验未证实识别收益，保留原版本与模型；v40.2.3 Windows 包仍不可分发。
 

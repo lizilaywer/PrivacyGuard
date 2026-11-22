@@ -18,8 +18,8 @@ class RedactionReviewPanel(QWidget):
         self.status = QLabel()
         self.status.setWordWrap(True)
         layout.addWidget(self.status)
-        self.inspect_button = QPushButton("本页小字 / 二维码补查（可选）")
-        self.inspect_button.setToolTip("使用当前模型局部放大，只生成候选；选中候选点确认才添加遮罩。")
+        self.inspect_button = QPushButton("本页补查（可选）")
+        self.inspect_button.setToolTip("补查本页小字、二维码及文字层中的银行账号和发票号码。选中候选并点确认才添加遮罩。")
         self.inspect_button.clicked.connect(self.inspect_requested)
         layout.addWidget(self.inspect_button)
         self.filter = QComboBox()
@@ -54,7 +54,14 @@ class RedactionReviewPanel(QWidget):
             item = QTreeWidgetItem([entry["label"], {"pending": "待复核", "confirmed": "已确认", "excluded": "已排除", "checked": "已扫描", "unchecked": "未扫描", "stale": "已失效"}.get(entry["state"], "待复核")])
             item.setData(0, Qt.ItemDataRole.UserRole, entry)
             confidence = entry.get("confidence")
-            item.setToolTip(0, f"识别置信度：{confidence:.2f}（仍需人工复核）" if isinstance(confidence, (int,float)) else "该来源未提供可靠置信度，请定位后复核。")
+            reason = entry.get("reason")
+            if reason:
+                tooltip = reason + "。请定位后复核。"
+            elif isinstance(confidence, (int, float)):
+                tooltip = f"识别置信度：{confidence:.2f}（仍需人工复核）"
+            else:
+                tooltip = "该来源未提供可靠置信度，请定位后复核。"
+            item.setToolTip(0, tooltip)
             self.tree.addTopLevelItem(item)
             if old and all(entry.get(key) == old.get(key) for key in ("page", "key", "source", "geometry", "match_key")):
                 self.tree.setCurrentItem(item)
