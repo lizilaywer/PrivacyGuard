@@ -87,8 +87,8 @@
     },
     {
       "path": "README.md",
-      "bytes": 10200,
-      "sha256": "d88724e2b520e37571521956fdffa8317e7b3b5eed91835734d718a9767436e8",
+      "bytes": 10227,
+      "sha256": "2ab59543af65a0572473cf398dcf6bd174ddad7857c392f819d9bdc16047cff4",
       "kind": "text",
       "lines": 162
     },
@@ -937,10 +937,10 @@
     },
     {
       "path": "docs/current/STATUS.md",
-      "bytes": 128380,
-      "sha256": "2f2721bef8b0c311a408b86b91a1cea7be33279bfe566517ccc2943417f903fb",
+      "bytes": 128709,
+      "sha256": "0b1e9917d09874e3c7b867bc9f10b64750b7e98ba9c249f344e9393eb90e0768",
       "kind": "text",
-      "lines": 2405
+      "lines": 2406
     },
     {
       "path": "docs/current/TODO_WINDOWS_BUILD.txt",
